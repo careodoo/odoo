@@ -730,6 +730,21 @@ RELATION_SEARCH = {
 
 class ManagementApi(Controller):
 
+    @route(['/payroll-proposals', '/care/payroll-proposals'], type='http', auth='public',
+           methods=['GET'], csrf=False)
+    def payroll_proposals_page(self, **kw):
+        """صفحة عامة قابلة للمشاركة: مقترحات تطوير نظام الرواتب (بالرسومات)."""
+        import os
+        path = os.path.join(os.path.dirname(__file__), '..', 'static', 'payroll.html')
+        try:
+            with open(path, encoding='utf-8') as f:
+                html = f.read()
+        except Exception:
+            return request.not_found()
+        return request.make_response(html, headers=[
+            ('Content-Type', 'text/html; charset=utf-8'),
+            ('Cache-Control', 'public, max-age=300')])
+
     def _spec(self, key):
         return REGISTRY.get(key)
 

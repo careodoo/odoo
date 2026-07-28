@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>مقترحات تطوير نظام الرواتب — CARE</title>
+<meta property="og:title" content="مقترحات تطوير نظام الرواتب — CARE"/>
+<meta property="og:description" content="تصميم كامل لنظام الرواتب بالرسومات الحقيقية"/>
+</head>
+<body>
+<style>
+:root{--navy:#0f2447;--navy2:#1e3a5f;--g:#16A34A;--gd:#14532D;--amber:#F59E0B;--red:#E11D48;--blue:#2563EB;
+  --cyan:#0891B2;--violet:#7C3AED;--bg:#eef2f7;--card:#fff;--ink:#0f172a;--slate:#64748b;--line:#e2e8f0;}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:radial-gradient(1200px 560px at 50% -10%,#dbe6f5,#eef2f7 60%);color:var(--ink);
+  font-family:"Segoe UI","Noto Kufi Arabic",Tahoma,system-ui,sans-serif;line-height:1.6;direction:rtl}
+.wrap{max-width:1160px;margin:0 auto;padding:30px 16px 80px}
+.hero{text-align:center;padding:26px 14px 22px}
+.brand{font-weight:800;letter-spacing:.5px;color:var(--slate);font-size:13px}.brand span{color:#F0663C}
+.hero h1{font-size:clamp(26px,5vw,42px);font-weight:900;margin:12px 0 8px;color:var(--navy);text-wrap:balance}
+.hero p{color:var(--slate);font-size:15px;max-width:700px;margin:0 auto}
+.tags{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:16px}
+.tag{background:#fff;border:1px solid var(--line);border-radius:20px;padding:6px 14px;font-size:12px;font-weight:700;color:var(--navy2);box-shadow:0 2px 6px rgba(15,36,71,.05)}
+.secH{display:flex;align-items:center;gap:10px;margin:40px 0 18px}
+.secH .b{width:6px;height:26px;border-radius:4px;background:var(--g)}
+.secH h2{font-size:22px;font-weight:900;color:var(--navy)}
+.secH .n{margin-inline-start:auto;font-size:12px;color:var(--slate);font-weight:700}
+/* full cycle */
+.cycle{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+.step{flex:1;min-width:150px;background:#fff;border:1px solid var(--line);border-radius:16px;padding:14px;text-align:center;position:relative;box-shadow:0 3px 10px rgba(15,23,42,.05)}
+.step .k{position:absolute;top:-10px;inset-inline-start:14px;background:var(--navy);color:#fff;width:24px;height:24px;border-radius:50%;font-size:12px;font-weight:900;display:flex;align-items:center;justify-content:center}
+.step .ic{font-size:26px;margin-top:4px}
+.step .t{font-weight:800;font-size:13.5px;color:var(--navy);margin-top:6px}
+.step .d{font-size:11px;color:var(--slate);margin-top:3px}
+/* cards grid */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:14px}
+.fc{background:#fff;border:1px solid var(--line);border-radius:16px;padding:16px;box-shadow:0 3px 10px rgba(15,23,42,.05);transition:transform .15s}
+.fc:hover{transform:translateY(-3px)}
+.fc .h{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.fc .e{width:40px;height:40px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:20px;flex:0 0 auto}
+.fc .h b{font-size:14.5px;color:var(--navy);font-weight:900}
+.fc p{font-size:12.5px;color:#475569}
+.fc .new{margin-inline-start:auto;font-size:9.5px;font-weight:900;background:var(--g);color:#fff;padding:2px 7px;border-radius:20px}
+/* screen mockups */
+.screen{background:#fff;border:1px solid var(--line);border-radius:18px;overflow:hidden;box-shadow:0 12px 34px rgba(15,36,71,.12);margin-bottom:8px}
+.winbar{background:#f1f5f9;padding:9px 14px;display:flex;align-items:center;gap:6px;border-bottom:1px solid var(--line)}
+.winbar i{width:11px;height:11px;border-radius:50%;display:inline-block}
+.winbar .u{margin-inline-start:auto;font-size:11px;color:var(--slate);background:#fff;border:1px solid var(--line);border-radius:8px;padding:3px 10px}
+.sTitle{padding:14px 16px 4px;font-weight:900;color:var(--navy);font-size:15px;display:flex;align-items:center;gap:8px}
+.sSub{padding:0 16px 12px;font-size:12px;color:var(--slate)}
+.sBody{padding:0 16px 16px}
+.mockcap{text-align:center;font-size:12.5px;color:var(--slate);margin:8px 0 26px}
+.mockcap b{color:var(--navy)}
+/* form-ish */
+.frow{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+.field{flex:1;min-width:130px}
+.field label{display:block;font-size:11px;color:var(--slate);font-weight:700;margin-bottom:4px}
+.field .inp{background:#f8fafc;border:1px solid var(--line);border-radius:9px;padding:9px 11px;font-size:13px;font-weight:700;color:var(--ink);display:flex;justify-content:space-between;align-items:center}
+.field .inp .c{color:var(--slate);font-size:16px}
+.field .inp.g{border-color:#bbf7d0;background:#f0fdf4;color:var(--gd)}
+/* table */
+table.t{width:100%;border-collapse:collapse;font-size:12.5px}
+table.t th{background:var(--navy);color:#fff;padding:9px 10px;text-align:right;font-weight:700;white-space:nowrap}
+table.t td{padding:8px 10px;border-bottom:1px solid var(--line)}
+table.t tr:last-child td{border:none}
+.chip{display:inline-block;padding:2px 9px;border-radius:20px;font-size:10.5px;font-weight:800}
+.c-b{background:#dbeafe;color:#1d4ed8}.c-a{background:#fef3c7;color:#b45309}.c-g{background:#dcfce7;color:#15803d}.c-r{background:#ffe4e6;color:#be123c}.c-v{background:#ede9fe;color:#6d28d9}
+.tot td{background:#ecfdf5;font-weight:900;color:var(--gd)}
+/* assignment grid */
+.agrid{overflow-x:auto}
+.agrid table{min-width:560px}
+.cellp{border-radius:7px;padding:4px 6px;font-size:10.5px;font-weight:800;text-align:center;color:#fff}
+/* kpi strip */
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-bottom:12px}
+.kpi{border-radius:13px;padding:12px;color:#fff}
+.kpi .v{font-size:22px;font-weight:900}.kpi .l{font-size:11px;opacity:.92}
+/* payslip */
+.slip{background:#fff;border:1px solid var(--line);border-radius:14px;overflow:hidden;max-width:430px;margin:0 auto}
+.slip .sh{background:linear-gradient(135deg,var(--navy),var(--navy2));color:#fff;padding:12px 14px;display:flex;justify-content:space-between;align-items:center}
+.sr{display:flex;justify-content:space-between;font-size:12px;padding:5px 14px;border-bottom:1px dashed var(--line)}
+.sr.plus b{color:var(--g)}.sr.minus b{color:var(--red)}
+.sr.net{font-weight:900;font-size:14.5px;color:var(--navy);border-top:2px solid var(--navy);margin-top:4px;padding-top:9px}
+.split{display:flex;gap:10px;padding:12px 14px}
+.splitc{flex:1;border-radius:11px;padding:9px;text-align:center;color:#fff}
+.splitc.bank{background:var(--blue)}.splitc.cash{background:var(--g)}
+.splitc .v{font-weight:900;font-size:17px}.splitc .l{font-size:10.5px;opacity:.9}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:720px){.two{grid-template-columns:1fr}}
+.foot{text-align:center;color:var(--slate);font-size:12.5px;margin-top:44px;padding-top:22px;border-top:1px solid var(--line)}
+</style>
+
+<div class="wrap">
+  <div class="hero">
+    <div class="brand">🟢 <span>CARE</span> · نظام الموارد البشرية والرواتب</div>
+    <h1>نظام الرواتب — التصميم الكامل بالرسومات</h1>
+    <p>رؤية شاملة لتنظيم عملية الرواتب من إعداد المشروع حتى الصرف — أفكار موسّعة، دورة عمل واضحة، ورسومات حقيقية لكل شاشة توضّح «كيف ستتم» خطوةً بخطوة.</p>
+    <div class="tags"><span class="tag">تعيينات المشاريع</span><span class="tag">دورة اعتماد</span><span class="tag">صرف بنك/نقد</span><span class="tag">تكامل البصمة</span><span class="tag">لوحات تحليلية</span><span class="tag">تنبيهات ذكية</span></div>
+  </div>
+
+  <!-- FULL CYCLE -->
+  <div class="secH"><span class="b"></span><h2>دورة العملية الكاملة</h2><span class="n">7 خطوات مؤتمتة</span></div>
+  <div class="cycle">
+    <div class="step"><span class="k">1</span><div class="ic">⚙️</div><div class="t">إعداد المشاريع</div><div class="d">فئة راتب · معدّل إضافي · خصم غياب</div></div>
+    <div class="step"><span class="k">2</span><div class="ic">🗓️</div><div class="t">توزيع العمال</div><div class="d">تعيين شهري لكل عامل على مشاريعه</div></div>
+    <div class="step"><span class="k">3</span><div class="ic">👆</div><div class="t">البصمة والحضور</div><div class="d">أيام العمل والغياب لكل مشروع تلقائياً</div></div>
+    <div class="step"><span class="k">4</span><div class="ic">➕</div><div class="t">الإضافي والبدلات</div><div class="d">تُسجَّل على مشروعها بقيمها</div></div>
+    <div class="step"><span class="k">5</span><div class="ic">🧮</div><div class="t">تشغيل الرواتب</div><div class="d">المحرّك يحسب لكل موظف</div></div>
+    <div class="step"><span class="k">6</span><div class="ic">✅</div><div class="t">المراجعة والاعتماد</div><div class="d">HR ثم المالية</div></div>
+    <div class="step"><span class="k">7</span><div class="ic">🏦</div><div class="t">الصرف</div><div class="d">كشف بنكي + كشف نقدي</div></div>
+  </div>
+
+  <!-- MORE IDEAS -->
+  <div class="secH"><span class="b"></span><h2>أفكار وإضافات لتنظيم العملية</h2><span class="n">جديد</span></div>
+  <div class="grid">
+    <div class="fc"><div class="h"><span class="e" style="background:#dbeafe">🗓️</span><b>لوحة توزيع العمال</b><span class="new">جديد</span></div><p>شبكة شهرية تُظهر كل عامل ومشاريعه وأيامه — بالسحب والإفلات بين المشاريع، هي قلب تنظيم العملية.</p></div>
+    <div class="fc"><div class="h"><span class="e" style="background:#dcfce7">✅</span><b>دورة اعتماد</b><span class="new">جديد</span></div><p>مسودّة ← مراجعة HR ← اعتماد المالية ← قفل الفترة. لا صرف قبل الاعتماد، وكل خطوة موثّقة.</p></div>
+    <div class="fc"><div class="h"><span class="e" style="background:#fef3c7">👆</span><b>تكامل البصمة</b><span class="new">جديد</span></div><p>أيام العمل والغياب لكل مشروع تُجلب تلقائياً من أجهزة البصمة والسجل اليومي — بلا إدخال يدوي.</p></div>
+    <div class="fc"><div class="h"><span class="e" style="background:#ffe4e6">➖</span><b>الخصومات والجزاءات</b><span class="new">جديد</span></div><p>غياب · جزاءات المشروع · سُلف · تصاريح — كلها مركزية وتظهر مفصّلة في الكشف.</p></div>
+    <div class="fc"><div class="h"><span class="e" style="background:#ede9fe">💵</span><b>السُّلف والقروض</b><span class="new">جديد</span></div><p>سلفة بأقساط تُخصم شهرياً تلقائياً حتى السداد، مع تتبّع الرصيد المتبقّي.</p></div>
+    <div class="fc"><div class="h"><span class="e" style="background:#cffafe">🎁</span><b>مكافأة نهاية الخدمة</b><span class="new">جديد</span></div><p>احتساب مكافأة نهاية الخدمة حسب مدة العمل وآخر راتب — جاهزة عند الاستقالة/الإنهاء.</p></div>
+    <div class="fc"><div class="h"><span class="e" style="background:#fae8ff">🏛️</span><b>التأمينات (للعمالة المحلية)</b><span class="new">جديد</span></div><p>حسم/إضافة التأمينات الاجتماعية للموظفين المحليين المكفولين، دون التأثير على غيرهم.</p></div>
+    <div class="fc"><div class="h"><span class="e" style="background:#dbeafe">📱</span><b>كشف الراتب الذاتي</b><span class="new">جديد</span></div><p>يعرض كل موظف كشف راتبه في التطبيق ويشاركه/يطبعه — يقلّل مراجعات HR.</p></div>
+    <div class="fc"><div class="h"><span class="e" style="background:#fef3c7">🚨</span><b>تنبيهات ذكية</b><span class="new">جديد</span></div><p>تنبيه قبل الإغلاق: موظف بلا تعيين مشروع · صافي سالب · غياب مرتفع · بدل غير مصروف.</p></div>
+    <div class="fc"><div class="h"><span class="e" style="background:#dcfce7">📊</span><b>لوحات تحليلية</b><span class="new">جديد</span></div><p>إجمالي الرواتب لكل مشروع/شهر/مركز تكلفة، والإضافي، ومقارنات — لاتخاذ القرار.</p></div>
+    <div class="fc"><div class="h"><span class="e" style="background:#e2e8f0">🔒</span><b>سجل تدقيق</b><span class="new">جديد</span></div><p>كل تعديل على راتب أو بدل مسجّل (من/متى/ماذا) — شفافية كاملة للمراجعة.</p></div>
+    <div class="fc"><div class="h"><span class="e" style="background:#dcfce7">📁</span><b>مراكز التكلفة</b></div><p>ربط رواتب كل مشروع بمركز تكلفته للتقارير المالية وربط الميزانية.</p></div>
+  </div>
+
+  <!-- HOW IT WORKS — REAL MOCKUPS -->
+  <div class="secH"><span class="b"></span><h2>كيف ستتم العملية — بالرسومات الحقيقية</h2><span class="n">شاشات فعلية</span></div>
+
+  <!-- 1: project config -->
+  <div class="screen">
+    <div class="winbar"><i style="background:#ff5f57"></i><i style="background:#febc2e"></i><i style="background:#28c840"></i><span class="u">👤 مدير الموارد البشرية</span></div>
+    <div class="sTitle">⚙️ إعداد المشروع — «برج جاسم»</div>
+    <div class="sSub">تُحدَّد فئة الراتب والإضافي والغياب مرة واحدة لكل مشروع، فيَحتسب النظام تلقائياً.</div>
+    <div class="sBody">
+      <div class="frow">
+        <div class="field"><label>ساعات الدوام</label><div class="inp">12 ساعة <span class="c">▾</span></div></div>
+        <div class="field"><label>فئة الراتب الشهري (د.ك)</label><div class="inp g">112.500</div></div>
+        <div class="field"><label>مركز التكلفة</label><div class="inp">برج جاسم — 2026 <span class="c">▾</span></div></div>
+      </div>
+      <div class="frow">
+        <div class="field"><label>معدّل العمل الإضافي (لليوم)</label><div class="inp g">7.500</div></div>
+        <div class="field"><label>قيمة خصم يوم الغياب</label><div class="inp" style="border-color:#fecaca;background:#fef2f2;color:#be123c">6.000</div></div>
+        <div class="field"><label>احتساب رصيد الإجازة</label><div class="inp">مُفعّل ✓ <span class="c">▾</span></div></div>
+      </div>
+    </div>
+  </div>
+  <div class="mockcap">① <b>لكل مشروع إعداداته</b> — تُدخَل مرة واحدة، ويعتمد عليها المحرّك في كل شهر.</div>
+
+  <!-- 2: assignment grid -->
+  <div class="screen">
+    <div class="winbar"><i style="background:#ff5f57"></i><i style="background:#febc2e"></i><i style="background:#28c840"></i><span class="u">🗓️ يوليو 2026</span></div>
+    <div class="sTitle">🗓️ لوحة توزيع العمال على المشاريع</div>
+    <div class="sSub">قلب النظام: كل عامل وأيامه في كل مشروع خلال الشهر. الانتقال بين المشاريع بالسحب.</div>
+    <div class="sBody agrid">
+      <table class="t">
+        <tr><th>العامل</th><th>الأسبوع 1</th><th>الأسبوع 2</th><th>الأسبوع 3</th><th>الأسبوع 4</th><th>أيام/مشروع</th></tr>
+        <tr><td>أحمد محمد</td>
+          <td><div class="cellp" style="background:var(--blue)">برج جاسم</div></td>
+          <td><div class="cellp" style="background:var(--blue)">برج جاسم</div></td>
+          <td><div class="cellp" style="background:var(--violet)">المنيرة</div></td>
+          <td><div class="cellp" style="background:var(--violet)">المنيرة</div></td>
+          <td><span class="chip c-b">جاسم 15</span> <span class="chip c-v">منيرة 15</span></td></tr>
+        <tr><td>راجيش كومار</td>
+          <td><div class="cellp" style="background:var(--g)">لوذان</div></td>
+          <td><div class="cellp" style="background:var(--g)">لوذان</div></td>
+          <td><div class="cellp" style="background:var(--g)">لوذان</div></td>
+          <td><div class="cellp" style="background:var(--g)">لوذان</div></td>
+          <td><span class="chip c-g">لوذان 30</span></td></tr>
+        <tr><td>سائق — علي</td>
+          <td><div class="cellp" style="background:var(--blue)">جاسم</div></td>
+          <td><div class="cellp" style="background:var(--amber)">إضافي: صفاة</div></td>
+          <td><div class="cellp" style="background:var(--blue)">جاسم</div></td>
+          <td><div class="cellp" style="background:var(--amber)">إضافي: منيرة</div></td>
+          <td><span class="chip c-b">جاسم 15</span> <span class="chip c-a">إضافي ×2</span></td></tr>
+      </table>
+    </div>
+  </div>
+  <div class="mockcap">② <b>التوزيع الشهري</b> — العامل قد يعمل في أكثر من مشروع؛ النظام يعرف أيامه في كلٍّ منها لاحتساب راتبه بالتناسب.</div>
+
+  <!-- 3: payroll batch -->
+  <div class="screen">
+    <div class="winbar"><i style="background:#ff5f57"></i><i style="background:#febc2e"></i><i style="background:#28c840"></i><span class="u">🧮 دورة رواتب يوليو</span></div>
+    <div class="sTitle">🧮 تشغيل الرواتب — المراجعة والاعتماد</div>
+    <div class="sSub">المحرّك يحسب لكل موظف من تعييناته وبصمته وإضافيه وبدلاته. HR يراجع ثم المالية تعتمد.</div>
+    <div class="sBody">
+      <div class="kpis">
+        <div class="kpi" style="background:var(--navy)"><div class="v">184</div><div class="l">موظف</div></div>
+        <div class="kpi" style="background:var(--g)"><div class="v">21,340</div><div class="l">إجمالي الرواتب (د.ك)</div></div>
+        <div class="kpi" style="background:var(--amber)"><div class="v">2,180</div><div class="l">أعمال إضافية</div></div>
+        <div class="kpi" style="background:var(--red)"><div class="v">960</div><div class="l">خصومات غياب</div></div>
+      </div>
+      <table class="t">
+        <tr><th>الموظف</th><th>الأساسي (مشاريع)</th><th>إضافي</th><th>بدلات</th><th>غياب</th><th>الصافي</th><th>الحالة</th></tr>
+        <tr><td>أحمد محمد</td><td>105.000</td><td>130.000</td><td>20.000</td><td>−18.000</td><td><b>237.000</b></td><td><span class="chip c-g">مُعتمد</span></td></tr>
+        <tr><td>راجيش كومار</td><td>112.500</td><td>15.000</td><td>10.000</td><td>0</td><td><b>137.500</b></td><td><span class="chip c-a">مراجعة</span></td></tr>
+        <tr><td>سائق — علي</td><td>56.250</td><td>110.000</td><td>25.000</td><td>−6.000</td><td><b>185.250</b></td><td><span class="chip c-a">مراجعة</span></td></tr>
+        <tr class="tot"><td colspan="5">إجمالي الدورة</td><td>21,340</td><td></td></tr>
+      </table>
+    </div>
+  </div>
+  <div class="mockcap">③ <b>دورة الرواتب</b> — كل موظف مفصّل، مع اعتماد متدرّج قبل الصرف.</div>
+
+  <!-- payslip + sheets -->
+  <div class="two">
+    <div>
+      <div class="screen"><div class="winbar"><i style="background:#ff5f57"></i><i style="background:#febc2e"></i><i style="background:#28c840"></i><span class="u">🧾 كشف راتب</span></div>
+        <div class="sBody" style="padding-top:14px">
+          <div class="slip">
+            <div class="sh"><b>كشف راتب — يوليو 2026</b><span style="font-size:12px">أحمد محمد</span></div>
+            <div class="sr plus"><span>أساسي: برج جاسم (15ي)</span><b>56.250</b></div>
+            <div class="sr plus"><span>أساسي: المنيرة (15ي)</span><b>48.750</b></div>
+            <div class="sr plus"><span>إضافي: مشروع الصفاة</span><b>130.000</b></div>
+            <div class="sr plus"><span>بدل طبيعة عمل</span><b>20.000</b></div>
+            <div class="sr minus"><span>خصم غياب (3×6)</span><b>−18.000</b></div>
+            <div class="sr" style="color:var(--slate)"><span>بدل مواصلات</span><span>مصروف مقدّماً</span></div>
+            <div class="sr net"><span>صافي المستحق</span><b>237.000</b></div>
+            <div class="split">
+              <div class="splitc bank"><div class="v">180.000</div><div class="l">🏦 بنكي</div></div>
+              <div class="splitc cash"><div class="v">57.000</div><div class="l">💵 نقدي</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="mockcap">④ <b>كشف الراتب</b> — يفصّل كل مشروع + الإضافي والبدلات والخصومات، وتقسيم الصرف.</div>
+    </div>
+    <div>
+      <div class="screen"><div class="winbar"><i style="background:#ff5f57"></i><i style="background:#febc2e"></i><i style="background:#28c840"></i><span class="u">🏦 كشوف الصرف</span></div>
+        <div class="sTitle" style="font-size:13.5px">🏦 كشف التحويل البنكي</div>
+        <div class="sBody">
+          <table class="t">
+            <tr><th>الموظف</th><th>IBAN</th><th>المبلغ البنكي</th></tr>
+            <tr><td>أحمد محمد</td><td>KW..1234</td><td><b>180.000</b></td></tr>
+            <tr><td>راجيش كومار</td><td>KW..5678</td><td><b>137.500</b></td></tr>
+            <tr class="tot"><td colspan="2">إجمالي التحويل</td><td>317.500</td></tr>
+          </table>
+          <div class="sTitle" style="font-size:13.5px;padding-inline:0;margin-top:8px">💵 كشف الصرف النقدي</div>
+          <table class="t">
+            <tr><th>الموظف</th><th>المشروع</th><th>المبلغ النقدي</th></tr>
+            <tr><td>أحمد محمد</td><td>برج جاسم</td><td><b>57.000</b></td></tr>
+            <tr><td>سائق — علي</td><td>برج جاسم</td><td><b>185.250</b></td></tr>
+            <tr class="tot"><td colspan="2">إجمالي النقد</td><td>242.250</td></tr>
+          </table>
+        </div>
+      </div>
+      <div class="mockcap">⑤ <b>كشوف الصرف</b> — البنكي (للتحويل) والنقدي (للتوقيع)، كلٌّ بمبلغه من التقسيم.</div>
+    </div>
+  </div>
+
+  <!-- dashboard -->
+  <div class="screen">
+    <div class="winbar"><i style="background:#ff5f57"></i><i style="background:#febc2e"></i><i style="background:#28c840"></i><span class="u">📊 لوحة الرواتب</span></div>
+    <div class="sTitle">📊 لوحة تحكّم الرواتب</div>
+    <div class="sBody">
+      <div class="kpis">
+        <div class="kpi" style="background:var(--navy)"><div class="v">21,340</div><div class="l">رواتب الشهر (د.ك)</div></div>
+        <div class="kpi" style="background:var(--blue)"><div class="v">317K</div><div class="l">تحويل بنكي</div></div>
+        <div class="kpi" style="background:var(--g)"><div class="v">242K</div><div class="l">صرف نقدي</div></div>
+        <div class="kpi" style="background:var(--violet)"><div class="v">12</div><div class="l">مشاريع</div></div>
+        <div class="kpi" style="background:var(--amber)"><div class="v">2,180</div><div class="l">إضافي</div></div>
+      </div>
+      <table class="t">
+        <tr><th>المشروع</th><th>عمّال</th><th>إجمالي الرواتب</th><th>الإضافي</th><th>مركز التكلفة</th></tr>
+        <tr><td>برج جاسم</td><td>32</td><td>4,180</td><td>520</td><td><span class="chip c-b">CC-جاسم</span></td></tr>
+        <tr><td>المنيرة</td><td>18</td><td>2,240</td><td>310</td><td><span class="chip c-v">CC-منيرة</span></td></tr>
+        <tr><td>مستشفى لوذان</td><td>41</td><td>5,660</td><td>640</td><td><span class="chip c-g">CC-لوذان</span></td></tr>
+      </table>
+    </div>
+  </div>
+  <div class="mockcap">⑥ <b>لوحة تحكّم</b> — إجمالي الرواتب والصرف والإضافي لكل مشروع/مركز تكلفة لحظياً.</div>
+
+  <div class="foot">
+    CARE — نظام الموارد البشرية والرواتب · وثيقة تصميم للمراجعة والاعتماد<br/>
+    كل شاشة أعلاه قابلة للتنفيذ فعلياً على النظام — حدّد الأولويات لنبدأ البناء.
+  </div>
+</div>
+
+</body>
+</html>
