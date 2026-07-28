@@ -15,4 +15,24 @@
     <field name="groups" eval="[(4, ref('base.group_portal'))]"/>
     <field name="domain_force">['|',('contact_id','=',user.partner_id.commercial_partner_id.id),('contact_id','=',user.partner_id.id)]</field>
   </record>
+
+  <!-- طاقم التشغيل (مدير عمليات/سائق/مستلِم) يرون طلبات ورحلات مشاريعهم — على
+       مستوى الطلب أو على مستوى المشروع. بدونها كانوا لا يرون شيئاً (بورتال). -->
+  <record id="waste_order_staff_rule" model="ir.rule">
+    <field name="name">Waste orders: staff roles (ops/driver/receiver)</field>
+    <field name="model_id" ref="model_cafm_waste_order"/>
+    <field name="groups" eval="[(4, ref('base.group_portal'))]"/>
+    <field name="perm_create" eval="False"/>
+    <field name="perm_unlink" eval="False"/>
+    <field name="domain_force">['|','|','|','|','|','|',('ops_manager_id','=',user.id),('driver_id','=',user.id),('receiver_id','=',user.id),('available_driver_ids','in',user.id),('project_id.default_ops_manager_id','=',user.id),('project_id.default_receiver_id','=',user.id),('project_id.driver_user_ids','in',user.id)]</field>
+  </record>
+
+  <record id="waste_trip_staff_rule" model="ir.rule">
+    <field name="name">Waste trips: staff roles (driver/ops/receiver)</field>
+    <field name="model_id" ref="model_cafm_waste_trip"/>
+    <field name="groups" eval="[(4, ref('base.group_portal'))]"/>
+    <field name="perm_create" eval="False"/>
+    <field name="perm_unlink" eval="False"/>
+    <field name="domain_force">['|','|','|',('driver_id','=',user.id),('project_id.default_ops_manager_id','=',user.id),('project_id.default_receiver_id','=',user.id),('project_id.driver_user_ids','in',user.id)]</field>
+  </record>
 </odoo>
