@@ -384,13 +384,25 @@ class WasteClientApi(Controller):
         # عمليات المشروع الافتراضي (وإلا لا يرى إلا القليل المُسنَد له مباشرةً).
         dom = ['|', ('ops_manager_id', '=', uid), ('project_id.default_ops_manager_id', '=', uid)]
         f = kw.get('filter') or 'open'
-        if f == 'unassigned':
-            dom += [('driver_id', '=', False), ('states', 'not in', ('completed', 'cancelled'))]
+        state = (kw.get('state') or '').strip()
+        q = (kw.get('q') or '').strip()
+        month = (kw.get('month') or '').strip()   # YYYY-MM للأرشيف
+        if q:
+            dom.append(('serial', 'ilike', q))
+        if state and state != 'all':
+            dom.append(('states', '=', state))
+        elif f == 'pending':          # بانتظار اعتماد المدير
+            dom.append(('states', '=', 'draft'))
+        elif f == 'unassigned':
+            dom += [('driver_id', '=', False), ('states', 'not in', ('completed', 'cancelled', 'draft'))]
         elif f == 'open':
-            dom.append(('states', 'in', ('draft', 'scheduled', 'pickuped', 'arrived', 'processing')))
-        elif f == 'done':
+            dom.append(('states', 'in', ('scheduled', 'pickuped', 'arrived', 'processing')))
+        elif f == 'done' or f == 'archive':
             dom.append(('states', 'in', ('delivered', 'completed')))
-        recs = O.search(dom, order='serial desc', limit=100)
+        if month and len(month) == 7:
+            dom += [('request_datetime', '>=', month + '-01 00:00:00'),
+                    ('request_datetime', '<=', month + '-31 23:59:59')]
+        recs = O.search(dom, order='serial desc', limit=300)
         st = _sel(O, 'states')
         return _ok([{
             'id': o.id, 'serial': o.serial, 'project': o.project_id.name or None,
@@ -407,6 +419,10 @@ class WasteClientApi(Controller):
             'qty_total': round(sum(l.quantity or 0 for l in o.effective_lines()), 1),
             'weight_total': round(sum((l.quantity or 0) * (l.weight or 0) for l in o.effective_lines()), 1),
             'state': o.states, 'state_label': st.get(o.states, o.states or ''),
+            'can_approve': o.states == 'draft',
+            'is_done': o.states in ('delivered', 'completed'),
+            # التقرير الكامل متاح للمدير عند اكتمال الطلب
+            'report_path': ('/waste/ops/order/%s/report' % o.id) if o.states in ('delivered', 'completed') else None,
         } for o in recs])
 
     @route(API + '/waste/ops/drivers', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
@@ -449,6 +465,81 @@ class WasteClientApi(Controller):
             return _err('هذا السائق غير مسجّل في المشروع', 422)
         o.assign_driver(driver)
         return _ok({'id': o.id, 'driver': driver.name, 'state': o.states})
+
+    def _ops_projects(self, env):
+        """مشاريع النفايات التي يديرها هذا المستخدم (مدير عمليات افتراضي)."""
+        WP = env['cafm.waste.project'].sudo()
+        if self._is_mgr(env):
+            return WP.search([])
+        return WP.search([('default_ops_manager_id', '=', env.user.id)])
+
+    def _ops_can(self, env, o):
+        return bool(o) and (o.ops_manager_id.id == env.user.id
+                            or o.project_id.default_ops_manager_id.id == env.user.id
+                            or self._is_mgr(env))
+
+    @route(API + '/waste/ops/order/<int:oid>/approve', type='http', auth='public', methods=['POST'], csrf=False, cors='*')
+    def waste_ops_approve(self, oid, **kw):
+        """اعتماد المدير للطلب الوارد من العميل (مسودّة → مجدوَل)، تمهيداً للإسناد."""
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        o = env['cafm.waste.order'].sudo().browse(int(oid)).exists()
+        if not self._ops_can(env, o):
+            return _err('غير مصرّح', 403)
+        if o.states != 'draft':
+            return _err('الطلب معتمد سلفاً', 422)
+        try:
+            o.action_to_schedule()
+        except Exception as e:
+            return _err(str(e) or 'تعذّر الاعتماد', 422)
+        return _ok({'id': o.id, 'state': o.states})
+
+    @route(API + '/waste/ops/order/<int:oid>/report', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
+    def waste_ops_order_report(self, oid, token=None, **kw):
+        """التقرير الكامل للطلب/الرحلة — لمدير عمليات المشروع فقط."""
+        env = _auth()
+        if not env:
+            return request.not_found()
+        o = env['cafm.waste.order'].sudo().browse(int(oid)).exists()
+        if not self._ops_can(env, o):
+            return request.make_response('لا صلاحية', status=403)
+        try:
+            pdf, _t = env['ir.actions.report'].sudo()._render_qweb_pdf(
+                'care_cafm_waste.report_waste_order_doc', [o.id])
+        except Exception as e:
+            return request.make_response(str(e), status=500)
+        return request.make_response(pdf, headers=[
+            ('Content-Type', 'application/pdf'),
+            ('Content-Disposition', 'inline; filename="waste-order-%s.pdf"' % oid)])
+
+    @route(API + '/waste/ops/monthly-report', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
+    def waste_ops_monthly_report(self, token=None, **kw):
+        """التقرير الشهري لمشاريع المدير — إجماليات وتوزيع حسب الحالة/الصنف."""
+        env = _auth()
+        if not env:
+            return request.not_found()
+        month = (kw.get('month') or '').strip()   # YYYY-MM
+        projs = self._ops_projects(env)
+        if not projs:
+            return request.make_response('لا مشاريع', status=404)
+        dom = [('project_id', 'in', projs.ids)]
+        if month and len(month) == 7:
+            dom += [('request_datetime', '>=', month + '-01 00:00:00'),
+                    ('request_datetime', '<=', month + '-31 23:59:59')]
+        orders = env['cafm.waste.order'].sudo().search(dom)
+        if not orders:
+            return request.make_response('لا طلبات في هذه الفترة', status=404)
+        data = {'date_from': (month + '-01') if month else None,
+                'date_to': (month + '-31') if month else None}
+        try:
+            pdf, _t = env['ir.actions.report'].sudo().with_context(
+                )._render_qweb_pdf('care_cafm_waste.report_waste_period_doc', orders.ids, data=data)
+        except Exception as e:
+            return request.make_response(str(e), status=500)
+        return request.make_response(pdf, headers=[
+            ('Content-Type', 'application/pdf'),
+            ('Content-Disposition', 'inline; filename="waste-monthly-%s.pdf"' % (month or 'all'))])
 
     @route(API + '/waste/driver/trips', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
     def waste_driver_trips(self, **kw):
