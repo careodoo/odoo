@@ -80,6 +80,15 @@ class CafmDashboard extends Component {
         });
     }
 
+    // فتح اختصار من الشريط العلوي: عبر إجراء القائمة إن وُجد، وإلا عبر الموديل
+    openShortcut(sc) {
+        if (sc.action_id) {
+            this.action.doAction(sc.action_id);
+        } else if (sc.model) {
+            this.openModel(sc.model, sc.label);
+        }
+    }
+
     openModel(model, name) {
         this.action.doAction({
             type: "ir.actions.act_window",

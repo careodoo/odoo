@@ -22,7 +22,7 @@
                 <!-- شريط الأيقونات العلوي: اختصار لكل الخدمات والأقسام المهمة -->
                 <div class="o_cafm_shortcuts" t-if="state.data.shortcuts">
                     <t t-foreach="state.data.shortcuts" t-as="sc" t-key="sc_index">
-                        <div class="o_cafm_sc" t-on-click="() => this.openModel(sc.model, sc.label)" t-att-title="sc.label">
+                        <div class="o_cafm_sc" t-on-click="() => this.openShortcut(sc)" t-att-title="sc.label">
                             <div class="sc_ic" t-esc="sc.icon"/>
                             <div class="sc_l" t-esc="sc.label"/>
                         </div>

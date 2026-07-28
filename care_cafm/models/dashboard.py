@@ -163,34 +163,114 @@ class CafmWorkorder(models.Model):
                                         'pct': round(100.0 * c / total, 1) if total else 0,
                                         'color': prio_color.get(pv, '#64748b')})
 
-        # ---- شريط الأيقونات العلوي: اختصارات لكل الخدمات والأقسام المهمة ----
-        _sc = [
-            ('🔧', 'أوامر العمل', 'care.cafm.workorder'),
-            ('📥', 'طلبات الخدمة', 'care.cafm.service.request'),
-            ('🏢', 'المرافق', 'care.cafm.facility'),
-            ('📁', 'العملاء', 'care.cafm.client'),
-            ('🗂️', 'المشاريع', 'care.cafm.project'),
-            ('👥', 'فرق الخدمة', 'care.cafm.team'),
-            ('🏗️', 'الأصول', 'care.cafm.asset'),
-            ('🛠️', 'الصيانة الوقائية', 'care.cafm.ppm'),
-            ('⭐', 'الجودة', 'care.cafm.observation'),
-            ('🔩', 'الأعطال', 'care.cafm.maint.fault'),
-            ('🧹', 'النظافة', 'care.cafm.workorder'),
-            ('🛎️', 'الضيافة', 'care.hosp.order'),
-            ('🐜', 'مكافحة الحشرات', 'care.pest.program'),
-            ('🏊', 'المسابح', 'care.pool.pool'),
-            ('🚰', 'خزانات المياه', 'care.tank.tank'),
-            ('🧴', 'التعقيم', 'care.disinfect.round'),
-            ('🚗', 'صف السيارات', 'care.valet.ticket'),
-            ('📦', 'المناولة', 'care.handling.job'),
-            ('🌳', 'الزراعة', 'care.cafm.agri.species'),
-            ('♻️', 'النفايات', 'cafm.waste.trip'),
-            ('🛡️', 'فرق الأمن', 'security.team'),
-            ('👮', 'الحرّاس', 'security.guard'),
-            ('🚨', 'البلاغات الأمنية', 'security.incident.report'),
-            ('📷', 'المسح الميداني', 'care.cafm.scan'),
+        # ---- شريط الأيقونات العلوي: اختصار لكل قوائم إدارة المرافق تلقائياً ----
+        # نبني الشريط ديناميكياً من شجرة قوائم تطبيق إدارة المرافق (كل قائمة لها
+        # إجراء) حتى لا تُترك أي أيقونة، ونحترم صلاحية المستخدم (بحث ir.ui.menu
+        # كالمستخدم الحالي يُظهر فقط ما يراه). نستخرج الإيموجي من اسم القائمة.
+        import re as _re
+
+        def _split_icon(name):
+            name = (name or '').strip()
+            m = _re.match(r'^([^\w\s؀-ۿ]+)\s*(.*)$', name)
+            if m and m.group(1).strip():
+                rest = (m.group(2) or '').strip()
+                return m.group(1).strip(), (rest or name)
+            return None, name
+
+        _fallback_icons = [
+            ('حشر', '🐜'), ('نظاف', '🧹'), ('ضياف', '🛎️'), ('مسبح', '🏊'), ('مسابح', '🏊'),
+            ('خزان', '🚰'), ('مياه', '🚰'), ('تعقيم', '🧴'), ('سيار', '🚗'), ('مناول', '📦'),
+            ('زراع', '🌳'), ('حديق', '🌳'), ('شجر', '🌳'), ('نبات', '🌳'), ('ريّ', '💧'), ('ري ', '💧'),
+            ('واجه', '🧼'), ('نفاي', '♻️'), ('أمن', '🛡️'), ('حراس', '🛡️'), ('حارس', '👮'),
+            ('دوري', '🚶'), ('جولات', '🚶'), ('بلاغ', '🚨'), ('مفاتيح', '🔑'), ('مفتاح', '🔑'),
+            ('تفتيش', '🔎'), ('تدقيق', '🔎'), ('فحص', '🔎'), ('فحوص', '🔎'), ('عهد', '📋'),
+            ('زوّار', '🚪'), ('زوار', '🚪'), ('زيار', '🚪'), ('تصريح', '🚪'), ('صيان', '🔧'),
+            ('عطل', '🔩'), ('أصول', '🏗️'), ('وقائ', '🛠️'), ('قطع', '⚙️'), ('مرفق', '🏢'),
+            ('مبان', '🏢'), ('طابق', '🏢'), ('أدوار', '🏢'), ('وحدات', '🚪'), ('موقع', '📍'),
+            ('عميل', '📁'), ('عملاء', '📁'), ('مشروع', '🗂️'), ('مشاريع', '🗂️'), ('فريق', '👥'),
+            ('فِرَق', '👥'), ('فرق', '👥'), ('أعضاء', '👥'), ('موظف', '🧑‍🔧'), ('عامل', '🧑‍🔧'),
+            ('حضور', '🕐'), ('وردي', '🕐'), ('التحاق', '🔁'), ('إشعار', '🔔'), ('اشعار', '🔔'),
+            ('طلب', '📥'), ('أمر', '🔧'), ('عمل', '🔧'), ('مهام', '✅'), ('مهم', '✅'),
+            ('جودة', '⭐'), ('ملاحظ', '⭐'), ('كتالوج', '📚'), ('برامج', '🗓️'), ('محطّ', '📍'),
+            ('محط', '📍'), ('مطهّر', '🧪'), ('مطهر', '🧪'), ('قراء', '🌡️'), ('استهلاك', '📉'),
+            ('مواد', '📦'), ('صنف', '📦'), ('مخز', '📦'), ('مخازن', '🏬'), ('رصيد', '📦'),
+            ('حرك', '🔄'), ('صرف', '🧾'), ('سند', '🧾'), ('نقد', '💵'), ('كاش', '💵'),
+            ('دفع', '💳'), ('تذاكر', '🎫'), ('تذكرة', '🎫'), ('رحل', '🚛'), ('جمع', '🚛'),
+            ('وسائط', '🖼️'), ('قسم', '🗄️'), ('أقسام', '🗄️'), ('تقرير', '📄'), ('تقارير', '📄'),
+            ('لوحة', '📊'), ('إحصائ', '📊'), ('تحليل', '📈'), ('إعداد', '⚙️'), ('اعداد', '⚙️'),
+            ('مشتري', '🛒'), ('بوابة', '📱'), ('مسح', '📷'), ('عقد', '📄'), ('عقود', '📄'),
+            ('حذف', '🗑️'), ('ارتفاع', '🪜'), ('جدول', '🗓️'), ('روست', '🗓️'),
+            # كلمات إنجليزية (نظام الأمن الكامل)
+            ('Key', '🔑'), ('Patrol', '🚶'), ('Guard', '👮'), ('Team', '👥'), ('Incident', '🚨'),
+            ('Inspection', '🔎'), ('Gate', '🚪'), ('Visit', '🚪'), ('Cashier', '💵'), ('Cash', '💵'),
+            ('Payment', '💳'), ('Floor', '🏢'), ('Unit', '🚪'), ('Premise', '🏢'), ('Client', '📁'),
+            ('Contact', '📇'), ('Schedule', '🗓️'), ('Shift', '🕐'), ('Task', '✅'), ('Dashboard', '📊'),
+            ('Report', '📄'), ('Handling', '📦'), ('Equipment', '🧰'), ('Scanner', '📷'),
+            ('Assignment', '🗓️'), ('Point', '📍'), ('Summary', '📊'), ('Activity', '📈'),
+            ('Parking', '🅿️'), ('Vehicle', '🚗'), ('Security', '🛡️'), ('Attendance', '🕐'),
         ]
-        shortcuts = [{'icon': i, 'label': l, 'model': m} for (i, l, m) in _sc if m in env]
+
+        def _icon_for(label):
+            lo = label or ''
+            for kw, ic in _fallback_icons:
+                if kw in lo:
+                    return ic
+            return '📌'
+
+        # نستبعد: النظام القديم (Studio)، وأشجار الإعداد/التقنية، والتصنيفات/المراحل/
+        # الوسوم — فنُبقي القوائم الوظيفية فقط (خدمات وعمليات وأمن…).
+        _stop_branch = ('إعداد', 'اعداد', 'Configuration', 'Config', 'Setting',
+                        'تقني', 'Technical', 'القديم', 'Studio', 'الإعداد')
+        _stop_leaf = ('Tag', 'Stage', 'Category', 'تصنيف', 'مرحل', 'مراحل', 'وسم',
+                      'وسوم', 'فئة', 'فئات', 'أنواع', 'Made', 'Type', 'Plate', 'category')
+        try:
+            legacy_root = env.ref('care_cafm.menu_cafm_root', raise_if_not_found=False)
+        except Exception:
+            legacy_root = None
+
+        def _excluded(menu):
+            m = menu
+            hops = 0
+            while m and hops < 12:
+                nm = m.name or ''
+                if any(s in nm for s in _stop_branch):
+                    return True
+                m = m.parent_id
+                hops += 1
+            return any(s in (menu.name or '') for s in _stop_leaf)
+
+        shortcuts = []
+        try:
+            root = env.ref('care_cafm.menu_cafm_root')
+
+            def _depth(menu):
+                d, m = 0, menu
+                while m and m.id != root.id and d < 12:
+                    m = m.parent_id
+                    d += 1
+                return d
+
+            Menu = env['ir.ui.menu']  # بحث كالمستخدم الحالي => يحترم الصلاحيات
+            menus = Menu.search([('id', 'child_of', root.id)], order='sequence, id')
+            seen = set()
+            for m in menus:
+                act = m.action
+                if not act or act._name not in ('ir.actions.act_window', 'ir.actions.client'):
+                    continue
+                key = (act._name, act.id)
+                # عمق ≤3 (قسم → مجموعة → عنصر) لإبقاء القوائم الوظيفية الرئيسية فقط
+                if key in seen or _excluded(m) or _depth(m) > 3:
+                    continue
+                seen.add(key)
+                icon, label = _split_icon(m.name)
+                if not icon:
+                    icon = _icon_for(label)
+                shortcuts.append({
+                    'icon': icon, 'label': label,
+                    'action_id': act.id, 'action_type': act._name,
+                })
+        except Exception:
+            shortcuts = [{'icon': '🔧', 'label': 'أوامر العمل', 'model': 'care.cafm.workorder'}]
 
         # ---- مؤشّرات الأمن والتشغيل الإضافية ----
         security_kpis = {
