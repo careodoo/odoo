@@ -23,6 +23,7 @@
         'views/notification_views.xml',
         'views/account_deletion_views.xml',
         'views/cafm_security_integration_views.xml',
+        'views/project_task_extra_views.xml',
         'reports/orders_report.xml',
         'reports/permit_card.xml',
     ],
