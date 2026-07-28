@@ -572,6 +572,41 @@ EMP_GROUPS = [
 ]
 
 
+# ترجمة عربية لتسميات الحقول القياسية (ترجمات hr/base غير محمّلة، فتظهر إنجليزية
+# في تطبيق الإدارة). تُطبَّق فقط حين تكون لغة التطبيق عربية.
+_FIELD_AR = {
+    'name': 'الاسم', 'display_name': 'الاسم', 'work_phone': 'هاتف العمل', 'mobile_phone': 'الجوال',
+    'work_email': 'بريد العمل', 'job_title': 'المسمى الوظيفي', 'job_id': 'الوظيفة', 'department_id': 'القسم',
+    'company_id': 'الشركة', 'marital': 'الحالة الاجتماعية', 'gender': 'الجنس', 'birthday': 'تاريخ الميلاد',
+    'place_of_birth': 'مكان الميلاد', 'country_id': 'الجنسية', 'country_of_birth': 'بلد الميلاد',
+    'identification_id': 'رقم الهوية', 'passport_id': 'رقم الجواز', 'ssnid': 'الرقم التأميني',
+    'permit_no': 'رقم التصريح', 'visa_no': 'رقم التأشيرة', 'visa_expire': 'انتهاء التأشيرة',
+    'work_permit_expiration_date': 'انتهاء تصريح العمل', 'coach_id': 'الموجّه', 'parent_id': 'المدير المباشر',
+    'resource_calendar_id': 'ساعات العمل', 'tz': 'المنطقة الزمنية', 'employee_type': 'نوع الموظف',
+    'pin': 'رمز الدخول', 'barcode': 'الباركود', 'children': 'عدد الأطفال', 'emergency_contact': 'شخص للطوارئ',
+    'emergency_phone': 'هاتف الطوارئ', 'km_home_work': 'المسافة (كم)', 'study_field': 'التخصص',
+    'study_school': 'الجامعة/المدرسة', 'certificate': 'المؤهل', 'address_home_id': 'العنوان',
+    'private_email': 'البريد الشخصي', 'private_phone': 'الهاتف الشخصي', 'bank_account_id': 'الحساب البنكي',
+    'active': 'نشط', 'state': 'الحالة', 'registration_number': 'الرقم الوظيفي',
+    'departure_reason_id': 'سبب المغادرة', 'departure_date': 'تاريخ المغادرة', 'first_contract_date': 'تاريخ أول عقد',
+    'contract_id': 'العقد', 'category_ids': 'الوسوم', 'user_id': 'المستخدم', 'employee_id': 'الموظف',
+    'date': 'التاريخ', 'note': 'ملاحظة', 'notes': 'ملاحظات', 'amount': 'المبلغ', 'partner_id': 'جهة الاتصال',
+    'phone': 'الهاتف', 'email': 'البريد', 'mobile': 'الجوال', 'city': 'المدينة', 'street': 'الشارع',
+    'street2': 'الشارع 2', 'zip': 'الرمز البريدي', 'function': 'المنصب', 'title': 'اللقب', 'lang': 'اللغة',
+    'currency_id': 'العملة', 'manager_id': 'المدير', 'wage': 'الراتب', 'religion': 'الديانة',
+    'blood_type': 'فصيلة الدم', 'spouse_complete_name': 'اسم الزوج/الزوجة', 'spouse_birthdate': 'ميلاد الزوج/الزوجة',
+    'children_count': 'عدد الأطفال', 'age': 'العمر', 'joining_date': 'تاريخ الالتحاق', 'hire_date': 'تاريخ التعيين',
+}
+
+
+def _flabel(fname, default, env=None):
+    """تسمية الحقل بالعربية إن كانت لغة التطبيق عربية ووُجدت ترجمة، وإلا الأصل."""
+    lang = (env.context.get('lang') if env is not None else None) or 'ar'
+    if str(lang).startswith('ar'):
+        return _FIELD_AR.get(fname, default)
+    return default
+
+
 # Config-driven "create new" for systems without a bespoke create form.
 # many2one: 'search' → live search (relation whitelist); 'model' → inline options.
 CREATE_SPECS = {
@@ -1438,7 +1473,7 @@ class ManagementApi(Controller):
                 continue
             # Editable field spec (type + choices) so the app can render a form.
             if fname in editset:
-                em = {'name': fname, 'label': f.string, 'type': f.type,
+                em = {'name': fname, 'label': _flabel(fname, f.string, env), 'type': f.type,
                       'value': self._raw_edit_val(rec, fname)}
                 if f.type == 'selection':
                     try:
@@ -1453,7 +1488,7 @@ class ManagementApi(Controller):
                 continue  # header already shows these
             if v in (None, '', False):
                 continue
-            meta = {'name': fname, 'label': f.string, 'value': v, 'type': f.type}
+            meta = {'name': fname, 'label': _flabel(fname, f.string, env), 'value': v, 'type': f.type}
             fields.append(meta)
             sec = ('amounts' if f.type in ('monetary', 'float')
                    else 'dates' if f.type in ('date', 'datetime')
@@ -1934,7 +1969,7 @@ class ManagementApi(Controller):
                     continue
                 if v in (None, '', False):
                     continue
-                pairs.append({'label': f.string, 'value': v, 'type': f.type})
+                pairs.append({'label': _flabel(f.name, f.string, recs.env), 'value': v, 'type': f.type})
             out.append({'name': (title or '').split('\n')[0][:90], 'pairs': pairs})
             if len(out) >= 200:
                 break
@@ -3461,7 +3496,7 @@ class ManagementApi(Controller):
                     grp = gi
                     break
             assigned.setdefault(grp if grp is not None else 99, []).append(
-                {'name': fname, 'label': f.string, 'value': v, 'type': f.type})
+                {'name': fname, 'label': _flabel(fname, f.string, env), 'value': v, 'type': f.type})
         sections = []
         for gi, (ar, en, _kw) in enumerate(EMP_GROUPS):
             if assigned.get(gi):
