@@ -8,7 +8,7 @@
     'category': 'Services/Facility Management',
     'version': '17.0.1.0.0',
     'license': 'LGPL-3',
-    'depends': ['care_cafm', 'security_management', 'portal'],
+    'depends': ['care_cafm', 'care_pms', 'security_management', 'portal'],
     'data': [
         'security/ir.model.access.csv',
         'security/mobile_rules.xml',
