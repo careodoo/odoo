@@ -31,6 +31,25 @@ class CafmFacility(models.Model):
     sla_compliance = fields.Float(string='التزام SLA %', compute='_compute_sla')
     wo_overdue_count = fields.Integer(string='متأخرة SLA', compute='_compute_sla')
 
+    # ---- تكامل خدمة الأمن: فرق الأمن على منشآت هذا المرفق (security.premise) ----
+    security_team_ids = fields.Many2many('security.team', string='فرق الأمن',
+                                         compute='_compute_facility_security', store=False,
+                                         help='فرق الأمن المرتبطة بمنشآت هذا المرفق.')
+    security_team_count = fields.Integer(compute='_compute_facility_security', string='فرق الأمن')
+    security_guard_count = fields.Integer(compute='_compute_facility_security', string='أفراد الأمن')
+
+    def _compute_facility_security(self):
+        has_sec = 'security.team' in self.env and 'security.premise' in self.env
+        ST = self.env['security.team'].sudo() if 'security.team' in self.env else None
+        for f in self:
+            teams = ST.browse() if ST is not None else False
+            if has_sec and f.id:
+                prems = self.env['security.premise'].sudo().search([('cafm_facility_id', '=', f.id)])
+                teams = ST.search([('premise_id', 'in', prems.ids)]) if prems else ST.browse()
+            f.security_team_ids = [(6, 0, teams.ids)] if teams else [(5, 0, 0)]
+            f.security_team_count = len(teams) if teams else 0
+            f.security_guard_count = len(teams.mapped('member_ids')) if teams else 0
+
     def _compute_sla(self):
         WO = self.env['care.cafm.workorder']
         for rec in self:

@@ -57,6 +57,21 @@
                     <group><field name="code"/><field name="address"/><field name="active"/></group>
                 </group>
                 <notebook>
+                    <page string="🛡️ فرق الأمن" name="security_teams">
+                        <div class="alert alert-info" role="alert">
+                            فرق الأمن على منشآت هذا المرفق —
+                            <field name="security_team_count" class="oe_inline"/> فريق ·
+                            <field name="security_guard_count" class="oe_inline"/> فرد.
+                        </div>
+                        <field name="security_team_ids" readonly="1">
+                            <tree>
+                                <field name="name"/>
+                                <field name="premise_id"/>
+                                <field name="leader_id"/>
+                                <field name="member_ids" widget="many2many_tags"/>
+                            </tree>
+                        </field>
+                    </page>
                     <page string="نطاق الوردية (GPS)" name="geofence">
                         <div class="alert alert-info" role="alert">
                             حدّد موقع المرفق على الأرض لتمكين الحرّاس من فتح الوردية عند الحضور.
