@@ -1284,7 +1284,7 @@ class ManagementApi(Controller):
             cols.append(('التاريخ', 'Date', lambda r: self._val(r, spec['date']) or ''))
         return cols
 
-    @route(API + '/management/<string:key>/export', type='http', auth='public',
+    @route([API + '/management/<string:key>/export', '/management/<string:key>/export'], type='http', auth='public',
            methods=['GET'], csrf=False, cors='*')
     def management_export(self, key, **kw):
         env = _auth()
@@ -3348,7 +3348,7 @@ class ManagementApi(Controller):
                             'url': _abs('/api/v1/management/%s/%s/report?report=%s' % (key, rid, r['report']))})
         return out
 
-    @route(API + '/management/<string:key>/<int:rid>/report', type='http', auth='public',
+    @route([API + '/management/<string:key>/<int:rid>/report', '/management/<string:key>/<int:rid>/report'], type='http', auth='public',
            methods=['GET'], csrf=False, cors='*')
     def management_report(self, key, rid, report=None, token=None, **kw):
         env = _auth()
@@ -4694,7 +4694,7 @@ class ManagementApi(Controller):
         period = period if period in ('month', 'year', 'all') else 'all'
         return _ok(self._analytics_data(env, period))
 
-    @route(API + '/management/analytics/export', type='http', auth='public',
+    @route([API + '/management/analytics/export', '/management/analytics/export'], type='http', auth='public',
            methods=['GET'], csrf=False, cors='*')
     def management_analytics_export(self, period=None, lang=None, **kw):
         env = _auth()

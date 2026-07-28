@@ -1894,7 +1894,7 @@ class PmsSectionsApi(Controller):
             ('Content-Type', 'image/jpeg'),
             ('Content-Disposition', 'inline; filename="receipt-%s.jpg"' % fid)])
 
-    @route(API + '/pms/fuel/<int:fid>/report', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
+    @route([API + '/pms/fuel/<int:fid>/report', '/pms/fuel/<int:fid>/report'], type='http', auth='public', methods=['GET'], csrf=False, cors='*')
     def pms_fuel_report(self, fid, token=None, **kw):
         env = _auth()
         if not env:
@@ -2076,7 +2076,7 @@ class PmsSectionsApi(Controller):
             ('Content-Type', 'image/jpeg'),
             ('Content-Disposition', 'inline; filename="ts-doc-%s.jpg"' % lid)])
 
-    @route(API + '/pms/timesheet/<int:tid>/report', type='http', auth='public',
+    @route([API + '/pms/timesheet/<int:tid>/report', '/pms/timesheet/<int:tid>/report'], type='http', auth='public',
            methods=['GET'], csrf=False, cors='*')
     def pms_timesheet_report(self, tid, token=None, **kw):
         env = _auth()
@@ -2793,7 +2793,7 @@ class PmsSectionsApi(Controller):
                           for e in data['emps']],
         })
 
-    @route(API + '/pms/project/<int:pid>/attendance/report', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
+    @route([API + '/pms/project/<int:pid>/attendance/report', '/pms/project/<int:pid>/attendance/report'], type='http', auth='public', methods=['GET'], csrf=False, cors='*')
     def pms_attendance_report(self, pid, token=None, **kw):
         env = _auth()
         if not env:
@@ -2957,7 +2957,7 @@ class PmsSectionsApi(Controller):
         })
 
     # ================= PAYSLIP PDF =================
-    @route(API + '/pms/payslip/<int:sid>/report', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
+    @route([API + '/pms/payslip/<int:sid>/report', '/pms/payslip/<int:sid>/report'], type='http', auth='public', methods=['GET'], csrf=False, cors='*')
     def pms_payslip_report(self, sid, token=None, **kw):
         env = _auth()
         if not env:
@@ -2992,7 +2992,7 @@ class PmsSectionsApi(Controller):
             [('employee_id', '=', emp.id), ('check_in', '>=', d0), ('check_in', '<', d1)], order='check_in desc')
         return atts, label
 
-    @route(API + '/pms/employee/<int:eid>/attendance/report', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
+    @route([API + '/pms/employee/<int:eid>/attendance/report', '/pms/employee/<int:eid>/attendance/report'], type='http', auth='public', methods=['GET'], csrf=False, cors='*')
     def pms_emp_att_report(self, eid, token=None, **kw):
         env = _auth()
         if not env:
@@ -3157,7 +3157,7 @@ class PmsSectionsApi(Controller):
                     'state': leave.state if 'state' in leave._fields else None,
                     'days': round(leave.number_of_days or 0, 1)})
 
-    @route(API + '/pms/leave/<int:lid>/report', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
+    @route([API + '/pms/leave/<int:lid>/report', '/pms/leave/<int:lid>/report'], type='http', auth='public', methods=['GET'], csrf=False, cors='*')
     def pms_leave_report(self, lid, token=None, **kw):
         env = _auth()
         if not env:
@@ -3333,7 +3333,7 @@ class PmsSectionsApi(Controller):
             return _err(str(e) or 'تعذّر تنفيذ الإجراء', 422)
         return _ok(self._susp_json(env, r))
 
-    @route(API + '/pms/suspension/<int:sid>/report', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
+    @route([API + '/pms/suspension/<int:sid>/report', '/pms/suspension/<int:sid>/report'], type='http', auth='public', methods=['GET'], csrf=False, cors='*')
     def pms_suspension_report(self, sid, token=None, **kw):
         env = _auth()
         if not env:
@@ -3513,7 +3513,7 @@ class PmsSectionsApi(Controller):
             'currency': (cc and 'د.ك') or 'د.ك',
         })
 
-    @route(API + '/pms/item-request/<int:rid>/report', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
+    @route([API + '/pms/item-request/<int:rid>/report', '/pms/item-request/<int:rid>/report'], type='http', auth='public', methods=['GET'], csrf=False, cors='*')
     def pms_item_request_report(self, rid, token=None, **kw):
         env = _auth()
         if not env:
@@ -3677,7 +3677,7 @@ class PmsSectionsApi(Controller):
             return _err(str(e) or 'تعذّر التنفيذ', 422)
         return _ok(self._mp_json(env, r))
 
-    @route(API + '/pms/manpower/<int:rid>/report', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
+    @route([API + '/pms/manpower/<int:rid>/report', '/pms/manpower/<int:rid>/report'], type='http', auth='public', methods=['GET'], csrf=False, cors='*')
     def pms_manpower_report(self, rid, token=None, **kw):
         env = _auth()
         if not env:
@@ -3812,7 +3812,7 @@ class PmsSectionsApi(Controller):
             ('Content-Type', 'image/jpeg'),
             ('Content-Disposition', 'inline; filename="permit-%s.jpg"' % rid)])
 
-    @route(API + '/pms/permit/<int:rid>/report', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
+    @route([API + '/pms/permit/<int:rid>/report', '/pms/permit/<int:rid>/report'], type='http', auth='public', methods=['GET'], csrf=False, cors='*')
     def pms_permit_report(self, rid, token=None, **kw):
         env = _auth()
         if not env:
@@ -3934,7 +3934,7 @@ class PmsSectionsApi(Controller):
             'report': ('/api/v1/pms/record/report?model=%s&id=%s&report=%s' % (model, rec.id, rep.report_name)) if rep else None,
         })
 
-    @route(API + '/pms/record/report', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
+    @route([API + '/pms/record/report', '/pms/record/report'], type='http', auth='public', methods=['GET'], csrf=False, cors='*')
     def pms_generic_record_report(self, model=None, id=None, report=None, token=None, **kw):
         env = _auth()
         if not env:

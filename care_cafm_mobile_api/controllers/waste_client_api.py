@@ -495,7 +495,7 @@ class WasteClientApi(Controller):
             return _err(str(e) or 'تعذّر الاعتماد', 422)
         return _ok({'id': o.id, 'state': o.states})
 
-    @route(API + '/waste/ops/order/<int:oid>/report', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
+    @route([API + '/waste/ops/order/<int:oid>/report', '/waste/ops/order/<int:oid>/report'], type='http', auth='public', methods=['GET'], csrf=False, cors='*')
     def waste_ops_order_report(self, oid, token=None, **kw):
         """التقرير الكامل للطلب/الرحلة — لمدير عمليات المشروع فقط."""
         env = _auth()
@@ -513,7 +513,7 @@ class WasteClientApi(Controller):
             ('Content-Type', 'application/pdf'),
             ('Content-Disposition', 'inline; filename="waste-order-%s.pdf"' % oid)])
 
-    @route(API + '/waste/ops/monthly-report', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
+    @route([API + '/waste/ops/monthly-report', '/waste/ops/monthly-report'], type='http', auth='public', methods=['GET'], csrf=False, cors='*')
     def waste_ops_monthly_report(self, token=None, **kw):
         """التقرير الشهري لمشاريع المدير — إجماليات وتوزيع حسب الحالة/الصنف."""
         env = _auth()
@@ -931,7 +931,7 @@ class WasteClientApi(Controller):
             'report_url': _abs('/api/v1/client/waste/order/%s/report' % o.id),
         }
 
-    @route(API + '/client/waste/order/<int:oid>/report', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
+    @route([API + '/client/waste/order/<int:oid>/report', '/client/waste/order/<int:oid>/report'], type='http', auth='public', methods=['GET'], csrf=False, cors='*')
     def waste_order_report(self, oid, token=None, **kw):
         env = _auth()
         if not env:
