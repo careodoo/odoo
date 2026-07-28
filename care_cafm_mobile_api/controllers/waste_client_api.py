@@ -541,6 +541,91 @@ class WasteClientApi(Controller):
             ('Content-Type', 'application/pdf'),
             ('Content-Disposition', 'inline; filename="waste-monthly-%s.pdf"' % (month or 'all'))])
 
+    @route(API + '/waste/ops/trips', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
+    def waste_ops_trips(self, **kw):
+        """سجل رحلات مشاريع المدير (أرشيف + حالي) — بالأصناف والصور والفيديو والتفاصيل."""
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        if 'cafm.waste.trip' not in env:
+            return _ok([])
+        T = env['cafm.waste.trip'].sudo()
+        projs = self._ops_projects(env)
+        dom = [('project_id', 'in', projs.ids)]
+        f = (kw.get('filter') or 'all').strip()
+        q = (kw.get('q') or '').strip()
+        month = (kw.get('month') or '').strip()
+        if q:
+            dom.append(('sequence', 'ilike', q))
+        if f == 'current':
+            dom.append(('states', 'in', ('scheduled', 'pickuped', 'arrived', 'processing')))
+        elif f == 'archive':
+            dom.append(('states', 'in', ('delivered', 'completed')))
+        if month and len(month) == 7:
+            dom += [('trip_date', '>=', month + '-01'), ('trip_date', '<=', month + '-31')]
+        recs = T.search(dom, order='sequence desc', limit=300)
+        st = _sel(T, 'states')
+        out = []
+        for t in recs:
+            o = t.order_id if 'order_id' in t._fields else None
+            out.append({
+                'id': t.id, 'sequence': t.sequence, 'reference': t.reference or None,
+                'project': t.project_id.name or None,
+                'client': (o.contact_id.name if o and o.contact_id else None),
+                'order_serial': o.serial if o else None,
+                'pickup': t.pickup_location_id.name if t.pickup_location_id else None,
+                'center': t.center_id.name if t.center_id else None,
+                'driver': t.driver_id.name if t.driver_id else None,
+                'date': _d(t.trip_date),
+                'pickup_at': _d((o.order_datetime or o.request_datetime) if o else False),
+                'total_quantity': t.total_quantity, 'total_weight': t.total_qty_weight,
+                'items': [{'item': l.item_id.name if l.item_id else None, 'qty': l.quantity,
+                           'weight': l.weight,
+                           'image': _abs('/api/v1/waste/item/%s/image' % l.item_id.id)
+                           if (l.item_id and getattr(l.item_id, 'image', False)) else None}
+                          for l in t.trip_line_ids],
+                'media': self._media_list(t.media_ids if 'media_ids' in t._fields else None),
+                'report_path': ('/waste/trip/%s/report' % t.id),
+                'state': t.states, 'state_label': st.get(t.states, t.states or ''),
+            })
+        return _ok(out)
+
+    @route(API + '/waste/ops/receipts', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
+    def waste_ops_receipts(self, **kw):
+        """سجلات الاستلام لمشاريع المدير (المستلَمة/المكتملة) — بالوزن والصور والفيديو."""
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        if 'cafm.waste.order' not in env:
+            return _ok([])
+        O = env['cafm.waste.order'].sudo()
+        projs = self._ops_projects(env)
+        dom = [('project_id', 'in', projs.ids),
+               ('states', 'in', ('delivered', 'completed'))]
+        q = (kw.get('q') or '').strip()
+        month = (kw.get('month') or '').strip()
+        if q:
+            dom.append(('serial', 'ilike', q))
+        if month and len(month) == 7:
+            dom += [('request_datetime', '>=', month + '-01 00:00:00'),
+                    ('request_datetime', '<=', month + '-31 23:59:59')]
+        recs = O.search(dom, order='serial desc', limit=300)
+        st = _sel(O, 'states')
+        return _ok([{
+            'id': o.id, 'serial': o.serial, 'project': o.project_id.name or None,
+            'client': o.contact_id.name or None,
+            'center': o.trip_id.center_id.name if (o.trip_id and o.trip_id.center_id) else None,
+            'receiver': o.receiver_id.name if o.receiver_id else None,
+            'driver': o.driver_id.name if o.driver_id else None,
+            'date': _d(o.request_datetime),
+            'final_weight': o.final_weight, 'final_note': o.final_note or None,
+            'items': [self._item_dict(l) for l in o.effective_lines()],
+            'proof': _abs('/api/v1/waste/proof/%s' % o.id) if o.proof_image else None,
+            'media': self._media_list(o.media_ids),
+            'report_path': ('/waste/ops/order/%s/report' % o.id),
+            'state': o.states, 'state_label': st.get(o.states, o.states or ''),
+        } for o in recs])
+
     @route(API + '/waste/driver/trips', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
     def waste_driver_trips(self, **kw):
         env = _auth()
