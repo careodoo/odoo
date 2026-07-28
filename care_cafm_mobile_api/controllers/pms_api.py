@@ -621,6 +621,10 @@ class PmsApi(Controller):
             proj.check_access_rule('read')
         except Exception:
             return _err('لا صلاحية على هذا المشروع', 403)
+        # مستخدمو البورتال (مديرو/أعضاء المشاريع في التطبيق) لا يستطيعون كتابة
+        # project_id على مهمة جديدة (قيد ACL البورتال) — فبعد التأكّد من وصولهم
+        # للمشروع (أعلاه)، ننشئ بصلاحيات مرفوعة وننسب المهمة للمُنشئ.
+        _elevate = not env.user.has_group('project.group_project_user')
         vals = {'name': name, 'project_id': proj.id}
         if b.get('description'):
             vals['description'] = b['description']
@@ -638,8 +642,17 @@ class PmsApi(Controller):
         if 'x_time_committed' in env['project.task']._fields:
             vals['x_time_committed'] = bool(b.get('time_committed'))
         try:
-            # The task is created as the caller, so create-rights are enforced.
-            t = env['project.task'].create(vals)
+            if _elevate:
+                # ننشئ برفع الصلاحية (المستخدم مؤكّد وصوله للمشروع) ثم ننسبها له.
+                t = env['project.task'].sudo().create(vals)
+                try:
+                    t.message_subscribe(partner_ids=[env.user.partner_id.id])
+                    t.sudo().write({'create_uid': env.user.id})
+                except Exception:
+                    pass
+            else:
+                # مستخدم داخلي بصلاحية مشاريع: يُنشأ كالمستخدم (تُطبَّق صلاحياته).
+                t = env['project.task'].create(vals)
         except Exception as e:
             return _err(str(e) or 'تعذّر الإنشاء', 403)
         # Optional photo (camera or gallery) → an attachment on the task.
