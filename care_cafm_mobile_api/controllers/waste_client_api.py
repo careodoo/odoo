@@ -291,7 +291,9 @@ class WasteClientApi(Controller):
         if 'cafm.waste.order' not in env:
             return _ok([])
         O = env['cafm.waste.order'].sudo()
-        dom = [('receiver_id', '=', env.user.id)]
+        uid = env.user.id
+        # المستلِم يرى طلبات مشروعه (على مستوى الطلب أو مستلِم المشروع الافتراضي).
+        dom = ['|', ('receiver_id', '=', uid), ('project_id.default_receiver_id', '=', uid)]
         if not kw.get('all'):
             dom.append(('states', 'in', ('pickuped', 'arrived', 'processing')))
         recs = O.search(dom, order='serial desc', limit=100)
@@ -377,7 +379,10 @@ class WasteClientApi(Controller):
         if 'cafm.waste.order' not in env:
             return _ok([])
         O = env['cafm.waste.order'].sudo()
-        dom = [('ops_manager_id', '=', env.user.id)]
+        uid = env.user.id
+        # مدير العمليات يرى طلبات مشروعه — سواء أُسنِد على مستوى الطلب أو كان مدير
+        # عمليات المشروع الافتراضي (وإلا لا يرى إلا القليل المُسنَد له مباشرةً).
+        dom = ['|', ('ops_manager_id', '=', uid), ('project_id.default_ops_manager_id', '=', uid)]
         f = kw.get('filter') or 'open'
         if f == 'unassigned':
             dom += [('driver_id', '=', False), ('states', 'not in', ('completed', 'cancelled'))]
@@ -414,7 +419,8 @@ class WasteClientApi(Controller):
         if not (oid and str(oid).isdigit()):
             return _err('order_id مطلوب', 422)
         o = env['cafm.waste.order'].sudo().browse(int(oid)).exists()
-        if not o or o.ops_manager_id.id != env.user.id:
+        if not o or (o.ops_manager_id.id != env.user.id
+                     and o.project_id.default_ops_manager_id.id != env.user.id):
             return _err('غير مصرّح', 403)
         return _ok([{'id': d.id, 'name': d.name,
                      'busy': env['cafm.waste.trip'].sudo().search_count(
@@ -430,7 +436,8 @@ class WasteClientApi(Controller):
         if not env:
             return _err('غير مصرّح', 401)
         o = env['cafm.waste.order'].sudo().browse(oid).exists()
-        if not o or o.ops_manager_id.id != env.user.id:
+        if not o or (o.ops_manager_id.id != env.user.id
+                     and o.project_id.default_ops_manager_id.id != env.user.id):
             return _err('غير مصرّح', 403)
         from .api import _body
         b = _body()
@@ -453,7 +460,10 @@ class WasteClientApi(Controller):
         T = env['cafm.waste.trip'].sudo()
         # match on the trip OR its order: the two driver fields can drift if one
         # is edited in the back-office, and the driver must never lose his work.
-        dom = ['|', ('driver_id', '=', env.user.id), ('order_id.driver_id', '=', env.user.id)]
+        # + سائقو المشروع المسجّلون يرون رحلات مشروعهم حتى قبل الإسناد المباشر.
+        uid = env.user.id
+        dom = ['|', '|', '|', ('driver_id', '=', uid), ('order_id.driver_id', '=', uid),
+               ('project_id.driver_user_ids', 'in', uid), ('order_id.project_id.driver_user_ids', 'in', uid)]
         if not kw.get('all'):
             dom.append(('states', 'in', ('scheduled', 'pickuped', 'arrived', 'processing')))
         page = max(1, int(kw.get('page') or 1))
