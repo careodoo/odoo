@@ -239,9 +239,12 @@ class CafmWorkorder(models.Model):
                 hops += 1
             return any(s in (menu.name or '') for s in _stop_leaf)
 
-        shortcuts = []
+        shortcuts = []          # مسطّحة (توافق)
+        shortcut_groups = []    # مجمّعة حسب الخدمة/القسم — مربّعات احترافية
         try:
             root = env.ref('care_cafm.menu_cafm_root')
+            spec = env.ref('care_cafm.menu_cafm_services', raise_if_not_found=False)
+            spec_id = spec.id if spec else 0
 
             def _depth(menu):
                 d, m = 0, menu
@@ -250,26 +253,54 @@ class CafmWorkorder(models.Model):
                     d += 1
                 return d
 
+            def _group_node(menu):
+                """عقدة التجميع: الخدمة (تحت الخدمات المتخصّصة) وإلا القسم العلوي.
+                يُعيد None للعناصر العليا المفردة (تُجمَّع في «الرئيسية واللوحات»)."""
+                node = menu
+                while node.parent_id and node.parent_id.id != root.id:
+                    node = node.parent_id
+                if node.id == menu.id:          # عنصر علوي مفرد
+                    return None
+                if spec_id and node.id == spec_id:   # خدمة متخصّصة → المجموعة = الخدمة
+                    sub = menu
+                    while sub.parent_id and sub.parent_id.id != node.id:
+                        sub = sub.parent_id
+                    return sub
+                return node
+
             Menu = env['ir.ui.menu']  # بحث كالمستخدم الحالي => يحترم الصلاحيات
             menus = Menu.search([('id', 'child_of', root.id)], order='sequence, id')
             seen = set()
+            gmap = {}   # gid -> group dict
             for m in menus:
                 act = m.action
                 if not act or act._name not in ('ir.actions.act_window', 'ir.actions.client'):
                     continue
                 key = (act._name, act.id)
-                # عمق ≤3 (قسم → مجموعة → عنصر) لإبقاء القوائم الوظيفية الرئيسية فقط
                 if key in seen or _excluded(m) or _depth(m) > 3:
                     continue
                 seen.add(key)
                 icon, label = _split_icon(m.name)
                 if not icon:
                     icon = _icon_for(label)
-                shortcuts.append({
-                    'icon': icon, 'label': label,
-                    'action_id': act.id, 'action_type': act._name,
-                })
+                item = {'icon': icon, 'label': label, 'action_id': act.id, 'action_type': act._name}
+                shortcuts.append(item)
+                gnode = _group_node(m)
+                if gnode is None:
+                    gid, gicon, gtitle, gseq = -1, '🏠', 'الرئيسية واللوحات', -1
+                else:
+                    gicon, gtitle = _split_icon(gnode.name)
+                    if not gicon:
+                        gicon = _icon_for(gtitle)
+                    gid, gseq = gnode.id, gnode.sequence
+                g = gmap.get(gid)
+                if not g:
+                    g = {'icon': gicon, 'title': gtitle, 'seq': gseq, 'items': []}
+                    gmap[gid] = g
+                g['items'].append(item)
+            shortcut_groups = [g for g in sorted(gmap.values(), key=lambda x: (x['seq'], x['title'])) if g['items']]
         except Exception:
+            shortcut_groups = []
             shortcuts = [{'icon': '🔧', 'label': 'أوامر العمل', 'model': 'care.cafm.workorder'}]
 
         # ---- مؤشّرات الأمن والتشغيل الإضافية ----
@@ -324,6 +355,7 @@ class CafmWorkorder(models.Model):
 
         return {
             'shortcuts': shortcuts,
+            'shortcut_groups': shortcut_groups,
             'security': security_kpis,
             'ops': ops_kpis,
             'financial': financial,

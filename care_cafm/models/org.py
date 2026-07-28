@@ -167,6 +167,15 @@ class CafmProject(models.Model):
     member_count = fields.Integer(compute='_compute_counts', string='الأعضاء')
     open_wo = fields.Integer(compute='_compute_counts', string='أوامر مفتوحة')
 
+    # ---- تكامل خدمة الأمن: فرق الأمن (security.team) المرتبطة بمرافق المشروع عبر
+    # المنشآت (security.premise.cafm_facility_id). يجعل الأمن يظهر ضمن المشروع
+    # كأي خدمة أخرى دون تكرار البيانات أو المساس بتطبيق الحارس. ----
+    security_team_ids = fields.Many2many('security.team', string='فرق الأمن',
+                                         compute='_compute_security',
+                                         help='تُشتق تلقائياً من فرق الأمن على منشآت مرافق هذا المشروع.')
+    security_team_count = fields.Integer(compute='_compute_security', string='فرق الأمن')
+    security_guard_count = fields.Integer(compute='_compute_security', string='أفراد الأمن')
+
     @api.depends('team_ids', 'facility_ids', 'team_ids.member_line_ids')
     def _compute_counts(self):
         WO = self.env['care.cafm.workorder']
@@ -175,6 +184,18 @@ class CafmProject(models.Model):
             p.facility_count = len(p.facility_ids)
             p.member_count = len(p.team_ids.mapped('member_line_ids'))
             p.open_wo = WO.search_count([('facility_id', 'in', p.facility_ids.ids), ('state', 'in', OPEN_STATES)]) if p.facility_ids else 0
+
+    @api.depends('facility_ids')
+    def _compute_security(self):
+        has_sec = 'security.team' in self.env and 'security.premise' in self.env
+        for p in self:
+            teams = self.env['security.team'].sudo().browse() if has_sec else self.env['security.team'].browse() if 'security.team' in self.env else False
+            if has_sec and p.facility_ids:
+                prems = self.env['security.premise'].sudo().search([('cafm_facility_id', 'in', p.facility_ids.ids)])
+                teams = self.env['security.team'].sudo().search([('premise_id', 'in', prems.ids)])
+            p.security_team_ids = [(6, 0, teams.ids)] if teams else [(5, 0, 0)]
+            p.security_team_count = len(teams) if teams else 0
+            p.security_guard_count = len(teams.mapped('member_ids')) if teams else 0
 
     @api.model_create_multi
     def create(self, vals_list):

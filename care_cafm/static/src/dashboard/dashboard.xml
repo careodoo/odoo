@@ -19,8 +19,28 @@
                     <button class="btn btn-light o_cafm_refresh" t-on-click="() => this.load()">↻ تحديث</button>
                 </div>
 
-                <!-- شريط الأيقونات العلوي: اختصار لكل الخدمات والأقسام المهمة -->
-                <div class="o_cafm_shortcuts" t-if="state.data.shortcuts">
+                <!-- مربّعات الوصول السريع مقسّمة حسب الخدمة/القسم (احترافية) -->
+                <div class="o_cafm_scgroups" t-if="state.data.shortcut_groups and state.data.shortcut_groups.length">
+                    <t t-foreach="state.data.shortcut_groups" t-as="grp" t-key="grp_index">
+                        <div class="o_cafm_scgroup">
+                            <div class="scg_head">
+                                <span class="scg_ic" t-esc="grp.icon"/>
+                                <span class="scg_t" t-esc="grp.title"/>
+                                <span class="scg_n" t-esc="grp.items.length"/>
+                            </div>
+                            <div class="scg_items">
+                                <t t-foreach="grp.items" t-as="sc" t-key="sc_index">
+                                    <div class="o_cafm_sc" t-on-click="() => this.openShortcut(sc)" t-att-title="sc.label">
+                                        <div class="sc_ic" t-esc="sc.icon"/>
+                                        <div class="sc_l" t-esc="sc.label"/>
+                                    </div>
+                                </t>
+                            </div>
+                        </div>
+                    </t>
+                </div>
+                <!-- شريط مسطّح احتياطي إن لم تتوفّر المجموعات -->
+                <div class="o_cafm_shortcuts" t-elif="state.data.shortcuts">
                     <t t-foreach="state.data.shortcuts" t-as="sc" t-key="sc_index">
                         <div class="o_cafm_sc" t-on-click="() => this.openShortcut(sc)" t-att-title="sc.label">
                             <div class="sc_ic" t-esc="sc.icon"/>
