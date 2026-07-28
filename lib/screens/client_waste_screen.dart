@@ -1,6 +1,11 @@
+import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:share_plus/share_plus.dart';
+import 'package:path_provider/path_provider.dart';
+import 'dart:io';
 import '../core/auth.dart';
 import '../core/i18n.dart';
 import '../core/app_version.dart';
@@ -696,18 +701,59 @@ class _ClientWasteScreenState extends State<ClientWasteScreen> {
   Future<void> _wasteCongrats(Map res) async {
     const green = Color(0xFF16A34A);
     final items = (res['items'] as List?) ?? const [];
+    final shotKey = GlobalKey();
     Widget kv(String k, String? v) => (v == null || v.isEmpty) ? const SizedBox.shrink()
         : Padding(padding: const EdgeInsets.symmetric(vertical: 3), child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
             SizedBox(width: 96, child: Text(k, style: const TextStyle(color: Color(0xFF64748B), fontSize: 12))),
             const SizedBox(width: 6),
             Expanded(child: Text(v, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12.5, color: Color(0xFF0F172A)))),
           ]));
+
+    // رسالة نصّية منسّقة بكل تفاصيل الطلب — للمشاركة على واتساب أو أي تطبيق
+    String shareText() {
+      final b = StringBuffer();
+      b.writeln('♻️ ${tr('طلب نقل ومعالجة نفايات', 'Waste transfer & treatment order')} — ${res['serial'] ?? ''}');
+      if (res['project'] != null) b.writeln('🏢 ${res['project']}');
+      if (res['pickup'] != null) b.writeln('📍 ${tr('موقع الاستلام', 'Pickup')}: ${res['pickup']}');
+      if (res['type'] != null) b.writeln('♻️ ${tr('النوع', 'Type')}: ${res['type']}');
+      final dt = (res['request_datetime'] as String?)?.replaceAll('T', ' ');
+      if (dt != null) b.writeln('🗓️ ${tr('الموعد', 'Date')}: $dt');
+      if (res['total_weight'] != null) b.writeln('⚖️ ${tr('الوزن التقديري', 'Est. weight')}: ${res['total_weight']} ${tr('كجم', 'kg')}');
+      for (final it in items.cast<Map>()) {
+        b.writeln('• ${it['name']}: ${it['qty']} × ${it['unit_weight']} = ${it['total_weight']} ${tr('كجم', 'kg')}');
+      }
+      b.writeln('📄 ${tr('الحالة', 'Status')}: ${tr('بانتظار اعتماد مدير العمليات', 'Pending ops approval')}');
+      return b.toString();
+    }
+
+    Future<void> shareTextMsg() async {
+      try {
+        await Share.share(shareText(), subject: 'طلب نفايات ${res['serial'] ?? ''}');
+      } catch (_) {}
+    }
+
+    // التقاط صورة احترافية لبطاقة التأكيد ومشاركتها كصورة
+    Future<void> shareShot() async {
+      try {
+        final bo = shotKey.currentContext?.findRenderObject() as RenderRepaintBoundary?;
+        if (bo == null) return;
+        final image = await bo.toImage(pixelRatio: 2.6);
+        final data = await image.toByteData(format: ui.ImageByteFormat.png);
+        if (data == null) return;
+        final dir = await getTemporaryDirectory();
+        final f = File('${dir.path}/waste-${res['serial'] ?? res['id']}.png');
+        await f.writeAsBytes(data.buffer.asUint8List());
+        await Share.shareXFiles([XFile(f.path)], text: shareText());
+      } catch (_) {}
+    }
     await showDialog(context: context, barrierDismissible: true, builder: (ctx) => Dialog(
       insetPadding: const EdgeInsets.all(18),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 420),
         child: SingleChildScrollView(child: Column(mainAxisSize: MainAxisSize.min, children: [
+          // البطاقة القابلة للالتقاط كصورة للمشاركة
+          RepaintBoundary(key: shotKey, child: Container(color: Colors.white, child: Column(mainAxisSize: MainAxisSize.min, children: [
           // celebratory header
           Container(
             width: double.infinity,
@@ -770,9 +816,29 @@ class _ClientWasteScreenState extends State<ClientWasteScreen> {
               ),
             ],
           ])),
+          ]))),
           Padding(padding: const EdgeInsets.fromLTRB(16, 8, 16, 16), child: Column(children: [
+            // ① مشاركة نصّية على واتساب أو أي تطبيق
             SizedBox(width: double.infinity, child: FilledButton.icon(
-              style: FilledButton.styleFrom(backgroundColor: green, padding: const EdgeInsets.symmetric(vertical: 13)),
+              style: FilledButton.styleFrom(backgroundColor: const Color(0xFF25D366), padding: const EdgeInsets.symmetric(vertical: 13)),
+              onPressed: shareTextMsg,
+              icon: const Icon(Icons.chat_rounded, size: 18),
+              label: Text(tr('مشاركة على واتساب / أي تطبيق', 'Share to WhatsApp / anywhere'),
+                  style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 12.5)),
+            )),
+            const SizedBox(height: 6),
+            // ② التقاط صورة لبطاقة التأكيد ومشاركتها
+            SizedBox(width: double.infinity, child: OutlinedButton.icon(
+              style: OutlinedButton.styleFrom(foregroundColor: green, side: const BorderSide(color: green),
+                  padding: const EdgeInsets.symmetric(vertical: 12)),
+              onPressed: shareShot,
+              icon: const Icon(Icons.image_rounded, size: 18),
+              label: Text(tr('التقاط صورة ومشاركتها', 'Capture image & share'),
+                  style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 12.5)),
+            )),
+            const SizedBox(height: 6),
+            // ③ التقرير الكامل PDF + QR
+            SizedBox(width: double.infinity, child: TextButton.icon(
               onPressed: () {
                 Navigator.pop(ctx);
                 Navigator.push(context, MaterialPageRoute(builder: (_) => PdfReportScreen(
@@ -780,11 +846,10 @@ class _ClientWasteScreenState extends State<ClientWasteScreen> {
                     title: tr('تفاصيل الرحلة', 'Trip details'),
                     fileName: 'waste-order-${res['serial'] ?? res['id']}.pdf')));
               },
-              icon: const Icon(Icons.ios_share_rounded, size: 18),
-              label: Text(tr('مشاركة تفاصيل الرحلة (PDF + QR)', 'Share trip (PDF + QR)'),
+              icon: const Icon(Icons.picture_as_pdf_rounded, size: 18),
+              label: Text(tr('التقرير الكامل (PDF + QR)', 'Full report (PDF + QR)'),
                   style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 12.5)),
             )),
-            const SizedBox(height: 6),
             SizedBox(width: double.infinity, child: TextButton(
               onPressed: () => Navigator.pop(ctx),
               child: Text(tr('تم', 'Done'), style: const TextStyle(fontWeight: FontWeight.w800)),
