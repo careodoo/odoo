@@ -2699,10 +2699,41 @@ class ApiClient {
               body: jsonEncode({if (note != null) 'note': note}))))['data'] as Map);
 
   // ---- waste operations (ops manager) -------------------------------------
-  /// Orders this ops manager owns. filter: unassigned | open | done
-  Future<List<dynamic>> wasteOpsOrders({String filter = 'open'}) async =>
-      List<dynamic>.from((await _handle(await _net.get(
-              _u('/waste/ops/orders?filter=$filter'), headers: await _headers())))['data'] as List);
+  /// Orders this ops manager owns. filter: pending|unassigned|open|done|archive
+  Future<List<dynamic>> wasteOpsOrders({String filter = 'open', String? state, String? q, String? month}) async {
+    final p = <String>['filter=$filter'];
+    if (state != null && state.isNotEmpty) p.add('state=$state');
+    if (q != null && q.isNotEmpty) p.add('q=${Uri.encodeComponent(q)}');
+    if (month != null && month.isNotEmpty) p.add('month=$month');
+    return List<dynamic>.from((await _handle(await _net.get(
+            _u('/waste/ops/orders?${p.join('&')}'), headers: await _headers())))['data'] as List);
+  }
+
+  /// اعتماد المدير للطلب الوارد (مسودّة → مجدوَل).
+  Future<Map<String, dynamic>> wasteOpsApprove(int orderId) async =>
+      Map<String, dynamic>.from((await _handle(await _net.post(
+              _u('/waste/ops/order/$orderId/approve'), headers: await _headers())))['data'] as Map);
+
+  /// سجل رحلات مشاريع المدير (أرشيف + حالي). filter: all|current|archive
+  Future<List<dynamic>> wasteOpsTrips({String filter = 'all', String? q, String? month}) async {
+    final p = <String>['filter=$filter'];
+    if (q != null && q.isNotEmpty) p.add('q=${Uri.encodeComponent(q)}');
+    if (month != null && month.isNotEmpty) p.add('month=$month');
+    return List<dynamic>.from((await _handle(await _net.get(
+            _u('/waste/ops/trips?${p.join('&')}'), headers: await _headers())))['data'] as List);
+  }
+
+  /// سجلات الاستلام لمشاريع المدير.
+  Future<List<dynamic>> wasteOpsReceipts({String? q, String? month}) async {
+    final p = <String>[];
+    if (q != null && q.isNotEmpty) p.add('q=${Uri.encodeComponent(q)}');
+    if (month != null && month.isNotEmpty) p.add('month=$month');
+    return List<dynamic>.from((await _handle(await _net.get(
+            _u('/waste/ops/receipts${p.isEmpty ? '' : '?${p.join('&')}'}'), headers: await _headers())))['data'] as List);
+  }
+
+  String wasteOpsMonthlyReportPath({String? month}) =>
+      '/waste/ops/monthly-report${month != null && month.isNotEmpty ? '?month=$month' : ''}';
 
   /// Drivers registered on this order's project (the assignable pool).
   Future<List<dynamic>> wasteOpsDrivers(int orderId) async =>

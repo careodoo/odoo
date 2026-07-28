@@ -5,6 +5,8 @@ import '../core/i18n.dart';
 import 'driver_waste_trips.dart';
 import 'receiver_waste.dart';
 import 'notifications_screen.dart';
+import 'waste_ops_records.dart';
+import 'pdf_report_screen.dart';
 import '../core/widgets.dart';
 
 /// Palette for the waste-operations workspace.
@@ -41,9 +43,15 @@ class _WasteOpsShellState extends State<WasteOpsShell> {
 
     final tabs = <_OpsTab>[
       if (isOps) _OpsTab(Icons.assignment_rounded, tr('الطلبات', 'Orders'), const WasteOpsInbox()),
-      if (isOps || isDriver)
+      // المدير: سجل رحلات المشروع (أرشيف + حالي)؛ السائق: رحلاته فقط.
+      if (isOps)
+        _OpsTab(Icons.local_shipping_rounded, tr('رحلاتي', 'My trips'), const WasteOpsTripsScreen())
+      else if (isDriver)
         _OpsTab(Icons.local_shipping_rounded, tr('الرحلات', 'Trips'), const DriverWasteTripsScreen()),
-      if (isOps || isReceiver)
+      // المدير: سجلات الاستلام لكل المشروع؛ المستلِم: استلامه فقط.
+      if (isOps)
+        _OpsTab(Icons.factory_rounded, tr('الاستلام', 'Intake'), const WasteOpsReceiptsScreen())
+      else if (isReceiver)
         _OpsTab(Icons.factory_rounded, tr('الاستلام', 'Intake'), const ReceiverWasteScreen()),
       _OpsTab(Icons.notifications_rounded, tr('الإشعارات', 'Alerts'), const NotificationsScreen()),
       _OpsTab(Icons.person_rounded, tr('حسابي', 'Me'), _MeTab(role: widget.role)),
@@ -89,13 +97,16 @@ class WasteOpsInbox extends StatefulWidget {
 }
 
 class _WasteOpsInboxState extends State<WasteOpsInbox> {
-  String _filter = 'unassigned';
+  String _filter = 'pending';
+  String _q = '';
   late Future<List<dynamic>> _f;
 
   static const _filters = [
+    ['pending', 'بانتظار الاعتماد', 'Pending'],
     ['unassigned', 'بانتظار إسناد', 'To assign'],
     ['open', 'جارية', 'Open'],
     ['done', 'منتهية', 'Done'],
+    ['archive', 'الأرشيف', 'Archive'],
   ];
 
   static const _stateColor = {
@@ -110,7 +121,26 @@ class _WasteOpsInboxState extends State<WasteOpsInbox> {
     _load();
   }
 
-  void _load() => setState(() => _f = context.read<AuthProvider>().api.wasteOpsOrders(filter: _filter));
+  void _load() => setState(() => _f = context.read<AuthProvider>().api.wasteOpsOrders(filter: _filter, q: _q));
+
+  Future<void> _approve(Map o) async {
+    try {
+      await context.read<AuthProvider>().api.wasteOpsApprove(o['id'] as int);
+      if (!mounted) return;
+      _load();
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(tr('✅ تم اعتماد الطلب — يمكنك الآن إسناد سائق',
+                           '✅ Order approved — you can now assign a driver')),
+          backgroundColor: WOps.green));
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('$e'), backgroundColor: const Color(0xFFB91C1C)));
+    }
+  }
+
+  void _report(Map o) => Navigator.push(context, MaterialPageRoute(builder: (_) => PdfReportScreen(
+        path: '${o['report_path']}', title: tr('تقرير الطلب الكامل', 'Full order report'),
+        fileName: 'waste-order-${o['id']}.pdf')));
 
   @override
   Widget build(BuildContext context) {
@@ -179,27 +209,43 @@ class _WasteOpsInboxState extends State<WasteOpsInbox> {
   Widget _filterBar() => Container(
         color: Colors.white,
         padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
-        child: Row(children: [
-          for (final f in _filters) ...[
-            Expanded(child: GestureDetector(
-              onTap: () { setState(() => _filter = f[0]); _load(); },
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 160),
-                padding: const EdgeInsets.symmetric(vertical: 9),
-                decoration: BoxDecoration(
-                  gradient: _filter == f[0] ? const LinearGradient(colors: [WOps.mid, WOps.deep]) : null,
-                  color: _filter == f[0] ? null : WOps.bg,
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: _filter == f[0] ? Colors.transparent : Colors.black12),
-                ),
-                alignment: Alignment.center,
-                child: Text(gLang == 'en' ? f[2] : f[1],
-                    style: TextStyle(color: _filter == f[0] ? Colors.white : WOps.slate,
-                        fontWeight: FontWeight.w800, fontSize: 12.5)),
+        child: Column(children: [
+          Row(children: [
+            Expanded(child: SizedBox(height: 40, child: TextField(
+              onChanged: (v) { _q = v; _load(); },
+              decoration: InputDecoration(
+                hintText: tr('بحث برقم الطلب…', 'Search by order number…'),
+                prefixIcon: const Icon(Icons.search_rounded, size: 20),
+                isDense: true, filled: true, fillColor: WOps.bg,
+                contentPadding: const EdgeInsets.symmetric(vertical: 2),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
               ),
-            )),
-            if (f != _filters.last) const SizedBox(width: 8),
-          ],
+            ))),
+          ]),
+          const SizedBox(height: 8),
+          SizedBox(height: 34, child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            itemCount: _filters.length,
+            separatorBuilder: (_, __) => const SizedBox(width: 8),
+            itemBuilder: (_, i) {
+              final f = _filters[i];
+              final on = _filter == f[0];
+              return GestureDetector(
+                onTap: () { setState(() => _filter = f[0]); _load(); },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    gradient: on ? const LinearGradient(colors: [WOps.mid, WOps.deep]) : null,
+                    color: on ? null : WOps.bg, borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: on ? Colors.transparent : Colors.black12),
+                  ),
+                  child: Text(gLang == 'en' ? f[2] : f[1],
+                      style: TextStyle(color: on ? Colors.white : WOps.slate, fontWeight: FontWeight.w800, fontSize: 12.5)),
+                ),
+              );
+            },
+          )),
         ]),
       );
 
@@ -243,7 +289,24 @@ class _WasteOpsInboxState extends State<WasteOpsInbox> {
             if (o['pickup_at'] != null)
               _kv(Icons.schedule_rounded, '${o['pickup_at']}'.replaceRange(16, null, '')),
             const SizedBox(height: 10),
-            if (unassigned)
+            if (o['can_approve'] == true)
+              // طلب وارد من العميل بانتظار اعتماد المدير
+              SizedBox(width: double.infinity, height: 42, child: ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(backgroundColor: WOps.amber, foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+                onPressed: () => _approve(o),
+                icon: const Icon(Icons.verified_rounded, size: 18),
+                label: Text(tr('اعتماد الطلب', 'Approve order'), style: const TextStyle(fontWeight: FontWeight.w800)),
+              ))
+            else if (o['is_done'] == true)
+              SizedBox(width: double.infinity, height: 42, child: OutlinedButton.icon(
+                style: OutlinedButton.styleFrom(foregroundColor: WOps.green, side: const BorderSide(color: WOps.green),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+                onPressed: () => _report(o),
+                icon: const Icon(Icons.picture_as_pdf_rounded, size: 18),
+                label: Text(tr('التقرير الكامل', 'Full report'), style: const TextStyle(fontWeight: FontWeight.w800)),
+              ))
+            else if (unassigned)
               SizedBox(width: double.infinity, height: 42, child: ElevatedButton.icon(
                 style: ElevatedButton.styleFrom(backgroundColor: WOps.green, foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
