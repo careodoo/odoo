@@ -22,6 +22,7 @@
         'views/security_employee_link.xml',
         'views/notification_views.xml',
         'views/account_deletion_views.xml',
+        'views/cafm_security_integration_views.xml',
         'reports/orders_report.xml',
         'reports/permit_card.xml',
     ],

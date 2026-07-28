@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- تكامل خدمة الأمن مع إدارة المرافق: تبويب «فرق الأمن» على نموذجَي المشروع
+         والمرفق. يُوضع هنا (لا في care_cafm) لأن هذا الموديول يعتمد على كلٍّ من
+         care_cafm و security_management، فيُحمّل security.team قبل التحقّق من العرض
+         (care_cafm وحده لا يعتمد على الأمن فيفشل التحقّق). -->
+
+    <record id="cafm_project_security_teams" model="ir.ui.view">
+        <field name="name">care.cafm.project.form.security</field>
+        <field name="model">care.cafm.project</field>
+        <field name="inherit_id" ref="care_cafm.view_cafm_project_org_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//page[@name='teams']" position="after">
+                <page string="🛡️ فرق الأمن" name="security_teams">
+                    <div class="alert alert-info" role="alert">
+                        فرق الأمن تُشتق تلقائياً من منشآت مرافق المشروع (الأمن مربوط بإدارة المرافق كأي خدمة) —
+                        <field name="security_team_count" class="oe_inline"/> فريق ·
+                        <field name="security_guard_count" class="oe_inline"/> فرد.
+                    </div>
+                    <field name="security_team_ids" readonly="1">
+                        <tree>
+                            <field name="name"/>
+                            <field name="premise_id"/>
+                            <field name="leader_id"/>
+                            <field name="member_ids" widget="many2many_tags"/>
+                        </tree>
+                    </field>
+                </page>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="cafm_facility_security_teams" model="ir.ui.view">
+        <field name="name">care.cafm.facility.form.security</field>
+        <field name="model">care.cafm.facility</field>
+        <field name="inherit_id" ref="care_cafm.view_facility_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//page[@name='geofence']" position="before">
+                <page string="🛡️ فرق الأمن" name="security_teams">
+                    <div class="alert alert-info" role="alert">
+                        فرق الأمن على منشآت هذا المرفق —
+                        <field name="security_team_count" class="oe_inline"/> فريق ·
+                        <field name="security_guard_count" class="oe_inline"/> فرد.
+                    </div>
+                    <field name="security_team_ids" readonly="1">
+                        <tree>
+                            <field name="name"/>
+                            <field name="premise_id"/>
+                            <field name="leader_id"/>
+                            <field name="member_ids" widget="many2many_tags"/>
+                        </tree>
+                    </field>
+                </page>
+            </xpath>
+        </field>
+    </record>
+</odoo>
