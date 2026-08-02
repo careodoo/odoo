@@ -930,11 +930,21 @@ class _EmpSectionSheetState extends State<_EmpSectionSheet> {
           )),
         ]);
       case 'transfers':
+        final isAdd = m['shift_type'] == 'additional';
         return _wrap([
           _titleRow(tr('نقل', 'Transfer'), trailing: '${m['state_label'] ?? ''}', tc: _stateColor('${m['state']}')),
+          _kv(tr('النوع', 'Type'),
+              '${m['shift_type_label'] ?? (isAdd ? tr('تكليف إضافي', 'Additional') : tr('نقل دائم', 'Permanent'))}',
+              vc: isAdd ? const Color(0xFF15803D) : const Color(0xFF2563EB)),
           _kv(tr('من قسم', 'From'), '${m['from'] ?? '—'}'),
-          _kv(tr('إلى قسم', 'To'), '${m['to'] ?? '—'}'),
+          _kv(isAdd ? tr('إدارة إضافية', 'Add. dept') : tr('إلى قسم', 'To'), '${m['to'] ?? '—'}'),
           _kv(tr('التاريخ', 'Date'), '${m['date'] ?? '—'}'),
+          if (isAdd && m['additional_project'] != null)
+            _kv(tr('المشروع الإضافي', 'Add. project'), '${m['additional_project']}'),
+          if (isAdd && m['additional_amount'] != null)
+            _kv(tr('الإضافة على الراتب', 'Added to salary'), '${m['additional_amount']}', vc: const Color(0xFF15803D)),
+          if (isAdd && m['additional_recurring'] == true)
+            _kv(tr('يتكرر شهرياً', 'Recurring'), tr('نعم', 'Yes')),
         ]);
       case 'documents':
         final imgs = (m['images'] as List?) ?? const [];

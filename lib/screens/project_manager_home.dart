@@ -27,6 +27,9 @@ import 'client_inventory_screen.dart';
 import 'client_assets_screen.dart';
 import 'occupancy_screen.dart';
 import 'permits_screen.dart';
+// أدوات الأمن لمدير مشروع الأمن (أيقونتان منفصلتان)
+import 'security_supervisor_screen.dart';
+import 'security_home.dart';
 
 const _navy = Color(0xFF0E3A5F);
 const _teal = Color(0xFF0D9488);
@@ -92,6 +95,17 @@ class _ProjectManagerHomeState extends State<ProjectManagerHome> {
       (Icons.meeting_room_rounded, tr('الإشغال', 'Occupancy'), const Color(0xFF9333EA), () => go(const OccupancyScreen())),
     ];
 
+    // أيقونات الأمن — تظهر فقط لمدير مشروع الأمن (أو مشرف/مدير أمن).
+    // كل أيقونة منفصلة: «المشرف» (أدوات المشرف الأمني) و«إدارة الأمن» (لوحة الأمن).
+    final security = <(IconData, String, Color, VoidCallback)>[
+      if (p.isSecuritySupervisor)
+        (Icons.shield_moon_rounded, tr('المشرف', 'Supervisor'), const Color(0xFF0D9488),
+            () => go(const SecuritySupervisorScreen())),
+      if (p.isSecurityManager)
+        (Icons.security_rounded, tr('إدارة الأمن', 'Security mgmt'), const Color(0xFF15213B),
+            () => go(const SecurityHome())),
+    ];
+
     return Scaffold(
       backgroundColor: const Color(0xFFF4F6FA),
       body: RefreshIndicator(
@@ -101,6 +115,10 @@ class _ProjectManagerHomeState extends State<ProjectManagerHome> {
           _header(p.name),
           const Padding(padding: EdgeInsets.fromLTRB(12, 10, 12, 0), child: LiveStreamBanner(isClient: true)),
           _kpiRow(),
+          if (security.isNotEmpty) ...[
+            _section(tr('الأمن', 'Security')),
+            _grid(security),
+          ],
           _section(tr('إدارة الخدمات والمتابعة', 'Services & follow-up')),
           _grid(manage),
           _section(tr('أدوات العميل والمكان', 'Client & place tools')),

@@ -36,6 +36,8 @@ class Profile {
     required this.isSupervisor,
     this.isQuality = false,
     this.isProjectManager = false,
+    this.isSecuritySupervisor = false,
+    this.isSecurityManager = false,
     required this.isAdmin,
     required this.canAddWorkers,
     required this.serviceTypes,
@@ -53,6 +55,10 @@ class Profile {
   final bool isQuality;
   /// named on a care.cafm.project manager_ids → gets the PM dashboard
   final bool isProjectManager;
+  /// مدير مشروع أمن (أو مشرف أمن) → أيقونة «المشرف» في لوحته
+  final bool isSecuritySupervisor;
+  /// مدير مشروع أمن (أو مدير أمن) → أيقونة «إدارة الأمن» في لوحته
+  final bool isSecurityManager;
   final bool isAdmin;
   final bool canAddWorkers;
   final List<String> serviceTypes;
@@ -74,6 +80,8 @@ class Profile {
       isSupervisor: j['is_supervisor'] as bool? ?? false,
       isQuality: j['is_quality'] as bool? ?? false,
       isProjectManager: j['is_project_manager'] as bool? ?? false,
+      isSecuritySupervisor: j['is_security_supervisor'] as bool? ?? false,
+      isSecurityManager: j['is_security_manager'] as bool? ?? false,
       isAdmin: j['is_admin'] as bool? ?? false,
       canAddWorkers: j['can_add_workers'] as bool? ?? false,
       serviceTypes: List<String>.from((j['my_service_types'] as List?) ?? const []),
