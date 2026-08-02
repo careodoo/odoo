@@ -9,10 +9,8 @@
     <!-- بثّ WebRTC: الحارس ينشر الكاميرا + الميكروفون من داخل التطبيق -->
     <uses-permission android:name="android.permission.RECORD_AUDIO"/>
     <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS"/>
-    <!-- خدمة أمامية: استمرار البثّ السري بعد قفل الشاشة/الخروج من التطبيق -->
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_CAMERA"/>
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE"/>
+    <!-- أُزيلت صلاحيتا الخدمة الأمامية للكاميرا/الميك (متطلّبات Google Play):
+         البثّ يعمل والتطبيق مفتوح فقط، ولا يستمرّ في الخلفية. -->
     <uses-permission android:name="android.permission.WAKE_LOCK"/>
     <uses-permission android:name="android.permission.NFC"/>
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
@@ -57,12 +55,7 @@
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
-        <!-- خدمة flutter_foreground_task: تُبقي بثّ الكاميرا/الميكروفون حيّاً في
-             الخلفية (البثّ السري المستمرّ). -->
-        <service
-            android:name="com.pravera.flutter_foreground_task.service.ForegroundService"
-            android:foregroundServiceType="camera|microphone"
-            android:exported="false" />
+        <!-- أُزيلت خدمة الكاميرا/الميك الأمامية (متطلّبات Google Play). -->
     </application>
     <!-- Required to query activities that can process text, see:
          https://developer.android.com/training/package-visibility and
