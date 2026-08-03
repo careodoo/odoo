@@ -216,7 +216,7 @@ class _ClientAgriScreenState extends State<ClientAgriScreen> {
         Flexible(child: Text('${r['name']}', style: const TextStyle(fontWeight: FontWeight.w700), overflow: TextOverflow.ellipsis)),
         if (r['weather_based'] == true) const Padding(padding: EdgeInsets.only(right: 4, left: 4), child: Text('🇰🇼', style: TextStyle(fontSize: 12))),
       ]),
-      subtitle: Text('${r['facility'] ?? ''} · ${r['method'] ?? ''} · 💦 ${r['water_month_m3'] ?? 0} م³ · 🌱 ${r['plant_count'] ?? 0}',
+      subtitle: Text(tr('${r['facility'] ?? ''} · ${r['method'] ?? ''} · 💦 ${r['water_month_m3'] ?? 0} م³ · 🌱 ${r['plant_count'] ?? 0}', '${r['facility'] ?? ''} · ${r['method'] ?? ''} · 💦 ${r['water_month_m3'] ?? 0} m³ · 🌱 ${r['plant_count'] ?? 0}'),
           maxLines: 2, overflow: TextOverflow.ellipsis),
       trailing: Column(mainAxisAlignment: MainAxisAlignment.center, crossAxisAlignment: CrossAxisAlignment.end, children: [
         _pill('$mo%', mo < 30 ? const Color(0xFFE11D48) : mo < 45 ? const Color(0xFFF59E0B) : const Color(0xFF16A34A)),

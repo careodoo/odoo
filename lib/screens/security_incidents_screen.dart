@@ -532,8 +532,8 @@ class _IncidentDetailSheetState extends State<_IncidentDetailSheet> {
                       ('الحارس', 'Guard', d['guard']),
                       ('الفريق', 'Team', d['team']),
                       ('الدورية', 'Patrol', d['patrol']),
-                      ('الشهود', 'Witnesses', (d['witnesses'] as List?)?.join('، ')),
-                      ('الأطراف', 'Involved', (d['involved'] as List?)?.join('، ')),
+                      ('الشهود', 'Witnesses', (d['witnesses'] as List?)?.join(tr('، ', ', '))),
+                      ('الأطراف', 'Involved', (d['involved'] as List?)?.join(tr('، ', ', '))),
                     ]),
                     _section(tr('الشرطة', 'Police'), [
                       ('تم الإبلاغ', 'Notified', d['police_notified'] == true ? tr('نعم', 'Yes') : tr('لا', 'No')),

@@ -401,7 +401,7 @@ class _WorkOrderDetailScreenState extends State<WorkOrderDetailScreen> with Widg
           child: Row(children: [
             const Icon(Icons.info_outline, color: Color(0xFFB45309), size: 20),
             const SizedBox(width: 8),
-            Expanded(child: Text('${tr('مطلوب للاعتماد', 'Required to submit')}: ${missing.join('، ')}',
+            Expanded(child: Text('${tr('مطلوب للاعتماد', 'Required to submit')}: ${missing.join(tr('، ', ', '))}',
                 style: const TextStyle(color: Color(0xFFB45309), fontSize: 12.5, fontWeight: FontWeight.w700))),
           ]),
         ));

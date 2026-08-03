@@ -137,7 +137,7 @@ class _PmsEmployeeFileScreenState extends State<PmsEmployeeFileScreen> {
               _quickBtn(Icons.call_rounded, tr('اتصال', 'Call'),
                   () => _launch('tel:${e['mobile'] ?? e['phone']}')),
               const SizedBox(width: 8),
-              _quickBtn(Icons.chat_rounded, 'واتساب',
+              _quickBtn(Icons.chat_rounded, tr('واتساب', 'WhatsApp'),
                   () => _launch('https://wa.me/${'${e['mobile'] ?? e['phone']}'.replaceAll(RegExp(r'[^0-9]'), '')}')),
             ],
             if (e['email'] != null) ...[
@@ -398,14 +398,14 @@ class _PmsEmployeeFileScreenState extends State<PmsEmployeeFileScreen> {
       // reasons list lives on the suspension model; fetch via a project options
       // call is not available here — use a static, translated fallback list.
     } catch (_) {}
-    reasons = const [
-      {'value': 'client_request', 'label': 'طلب من العميل'},
-      {'value': 'misconduct', 'label': 'مخالفة / خطأ من العامل'},
-      {'value': 'absence', 'label': 'غياب متكرّر'},
-      {'value': 'performance', 'label': 'ضعف الأداء'},
-      {'value': 'behaviour', 'label': 'سوء سلوك'},
-      {'value': 'investigation', 'label': 'تحت التحقيق'},
-      {'value': 'other', 'label': 'أخرى'},
+    reasons = [
+      {'value': 'client_request', 'label': tr('طلب من العميل', 'Client request')},
+      {'value': 'misconduct', 'label': tr('مخالفة / خطأ من العامل', 'Misconduct / worker fault')},
+      {'value': 'absence', 'label': tr('غياب متكرّر', 'Repeated absence')},
+      {'value': 'performance', 'label': tr('ضعف الأداء', 'Poor performance')},
+      {'value': 'behaviour', 'label': tr('سوء سلوك', 'Bad behaviour')},
+      {'value': 'investigation', 'label': tr('تحت التحقيق', 'Under investigation')},
+      {'value': 'other', 'label': tr('أخرى', 'Other')},
     ];
     final result = await showModalBottomSheet<Map<String, dynamic>>(
       context: context, isScrollControlled: true, showDragHandle: true,
@@ -842,7 +842,7 @@ class _EmpSectionSheetState extends State<_EmpSectionSheet> {
     try {
       types = await api.pmsEmpDocTypes(widget.employeeId);
     } catch (_) {
-      types = const [{'code': 'other', 'label': 'أخرى'}];
+      types = [{'code': 'other', 'label': tr('أخرى', 'Other')}];
     }
     if (!mounted) return;
     String? docType = types.isNotEmpty ? '${(types.first as Map)['code']}' : 'other';

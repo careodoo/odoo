@@ -313,7 +313,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
             Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
               const Icon(Icons.place_rounded, size: 14, color: Color(0xFF16A34A)),
               const SizedBox(width: 6),
-              Expanded(child: Text('${o['delivery_address']}'.replaceAll('\n', '، '),
+              Expanded(child: Text('${o['delivery_address']}'.replaceAll('\n', tr('، ', ', ')),
                   style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600))),
             ]),
           ],

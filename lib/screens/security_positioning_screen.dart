@@ -287,7 +287,7 @@ class _SecurityPositioningScreenState extends State<SecurityPositioningScreen> {
                 const SizedBox(width: 10),
                 Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                   Text('${p['name']}', style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w900)),
-                  if (p['address'] != null) Text('${p['address']}'.replaceAll('\n', '، '),
+                  if (p['address'] != null) Text('${p['address']}'.replaceAll('\n', tr('، ', ', ')),
                       maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(color: Colors.white.withValues(alpha: 0.85), fontSize: 12)),
                 ])),
                 Container(padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),

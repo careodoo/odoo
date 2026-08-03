@@ -26,11 +26,12 @@ class _SecurityTasksScreenState extends State<SecurityTasksScreen> {
   String _state = 'all';
 
   static const _monthsAr = ['', 'يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'];
+  static const _monthsEn = ['', 'January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
   String _monthLabel(String ym) {
     final parts = ym.split('-');
     if (parts.length != 2) return ym;
     final m = int.tryParse(parts[1]) ?? 0;
-    return '${(m >= 1 && m <= 12) ? _monthsAr[m] : parts[1]} ${parts[0]}';
+    return '${(m >= 1 && m <= 12) ? tr(_monthsAr[m], _monthsEn[m]) : parts[1]} ${parts[0]}';
   }
 
   @override

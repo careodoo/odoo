@@ -36,7 +36,7 @@ class _PmsShellState extends State<PmsShell> {
     final tabs = [
       const _T(Icons.space_dashboard_rounded, 'لوحة المشاريع', 'Dashboard', PmsDashboard()),
       const _T(Icons.account_tree_rounded, 'المشاريع', 'Projects', PmsProjectsScreen()),
-      const _T(Icons.checklist_rounded, 'مهامي', 'My tasks', PmsTasksScreen(filter: 'mine', title: 'مهامي')),
+      _T(Icons.checklist_rounded, 'مهامي', 'My tasks', PmsTasksScreen(filter: 'mine', title: tr('مهامي', 'My tasks'))),
       const _T(Icons.account_circle_rounded, 'My', 'My', MyScreen(accent: Pms.violet)),
       const _T(Icons.more_horiz_rounded, 'المزيد', 'More', PmsMoreScreen()),
     ];
@@ -170,18 +170,18 @@ class _PmsDashboardState extends State<PmsDashboard> {
                   const SizedBox(height: 12),
                   Row(children: [
                     _statTile(Icons.person_rounded, d['my_tasks'], tr('مهامي المفتوحة', 'My open'),
-                        const Color(0xFF2563EB), () => _open(const PmsTasksScreen(filter: 'mine', title: 'مهامي'))),
+                        const Color(0xFF2563EB), () => _open(PmsTasksScreen(filter: 'mine', title: tr('مهامي', 'My tasks')))),
                     const SizedBox(width: 10),
                     _statTile(Icons.today_rounded, d['due_today'], tr('تستحق اليوم', 'Due today'),
-                        Pms.amber, () => _open(const PmsTasksScreen(filter: 'today', title: 'تستحق اليوم'))),
+                        Pms.amber, () => _open(PmsTasksScreen(filter: 'today', title: tr('تستحق اليوم', 'Due today')))),
                   ]),
                   const SizedBox(height: 10),
                   Row(children: [
                     _statTile(Icons.local_fire_department_rounded, d['overdue'], tr('متأخرة', 'Overdue'),
-                        Pms.red, () => _open(const PmsTasksScreen(filter: 'overdue', title: 'متأخرة'))),
+                        Pms.red, () => _open(PmsTasksScreen(filter: 'overdue', title: tr('متأخرة', 'Overdue')))),
                     const SizedBox(width: 10),
                     _statTile(Icons.check_circle_rounded, d['done'], tr('منجزة', 'Done'),
-                        Pms.green, () => _open(const PmsTasksScreen(filter: 'done', title: 'منجزة'))),
+                        Pms.green, () => _open(PmsTasksScreen(filter: 'done', title: tr('منجزة', 'Done')))),
                   ]),
                   const SizedBox(height: 18),
                   _sectionLabel(tr('إجراءات سريعة', 'Quick actions'), Icons.bolt_rounded),
@@ -191,7 +191,7 @@ class _PmsDashboardState extends State<PmsDashboard> {
                         () => _open(const PmsProjectsScreen())),
                     const SizedBox(width: 10),
                     _action(Icons.checklist_rounded, tr('كل المهام', 'All tasks'), const Color(0xFF0891B2),
-                        () => _open(const PmsTasksScreen(filter: '', title: 'كل المهام'))),
+                        () => _open(PmsTasksScreen(filter: '', title: tr('كل المهام', 'All tasks')))),
                   ]),
                 ]),
               );
@@ -244,10 +244,10 @@ class _PmsDashboardState extends State<PmsDashboard> {
                 () => _open(const PmsProjectsScreen())),
             const Divider(height: 18),
             _miniStat(Icons.checklist_rounded, '$total', tr('إجمالي المهام', 'total tasks'), const Color(0xFF0891B2),
-                () => _open(const PmsTasksScreen(filter: '', title: 'كل المهام'))),
+                () => _open(PmsTasksScreen(filter: '', title: tr('كل المهام', 'All tasks')))),
             const Divider(height: 18),
             _miniStat(Icons.check_circle_rounded, '$done', tr('مهمة منجزة', 'completed'), Pms.green,
-                () => _open(const PmsTasksScreen(filter: 'done', title: 'منجزة'))),
+                () => _open(PmsTasksScreen(filter: 'done', title: tr('منجزة', 'Done')))),
           ])),
         ]),
       );

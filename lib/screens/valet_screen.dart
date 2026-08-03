@@ -118,7 +118,7 @@ class _ValetScreenState extends State<ValetScreen>
       ),
       child: Row(children: [
         CircleAvatar(radius: 22, backgroundColor: on ? const Color(0xFF16A34A) : Colors.black26,
-            child: Text('${d['name'] ?? '؟'}'.characters.take(1).toString().toUpperCase(),
+            child: Text('${d['name'] ?? tr('؟', '?')}'.characters.take(1).toString().toUpperCase(),
                 style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900))),
         const SizedBox(width: 12),
         Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -127,7 +127,7 @@ class _ValetScreenState extends State<ValetScreen>
           Text([
             on ? tr('على الوردية', 'On shift') : tr('خارج الوردية', 'Off shift'),
             if (d['facility'] != null) '${d['facility']}',
-            if ((d['zones'] as List?)?.isNotEmpty ?? false) (d['zones'] as List).join('، '),
+            if ((d['zones'] as List?)?.isNotEmpty ?? false) (d['zones'] as List).join(tr('، ', ', ')),
           ].join(' · '), style: const TextStyle(fontSize: 11.5, color: Colors.black54)),
         ])),
         Column(crossAxisAlignment: CrossAxisAlignment.end, children: [

@@ -194,8 +194,8 @@ class _PerformanceScreenState extends State<PerformanceScreen> {
 
   Widget _bySource(List src) {
     final maxAbs = src.isEmpty ? 1.0 : src.map((e) => _n((e as Map)['points']).abs()).fold<double>(1, (a, b) => b > a ? b.toDouble() : a);
-    const labelsAr = {'Task / Deadline': 'المهام', 'Attendance': 'الحضور', 'Penalty': 'الجزاءات',
-        'Bonus': 'المكافآت', 'Manual': 'يدوي', 'Other': 'أخرى'};
+    final labelsAr = {'Task / Deadline': tr('المهام', 'Tasks'), 'Attendance': tr('الحضور', 'Attendance'), 'Penalty': tr('الجزاءات', 'Penalties'),
+        'Bonus': tr('المكافآت', 'Bonuses'), 'Manual': tr('يدوي', 'Manual'), 'Other': tr('أخرى', 'Other')};
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14),

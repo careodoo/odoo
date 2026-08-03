@@ -13,13 +13,13 @@ class AppMode {
   final List<Color> colors;
 }
 
-const _allModes = [
-  AppMode('c2c', Icons.storefront_rounded, 'CARE 2 CARE', 'CARE 2 CARE', 'الخدمات المنزلية والمتجر', [Color(0xFF17547F), C2C.navy]),
-  AppMode('c2c_staff', Icons.badge_rounded, 'فريق العمل', 'Crew workspace', 'مهامك الميدانية وفريقك', [Color(0xFF0D9488), Color(0xFF115E59)]),
-  AppMode('waste_ops', Icons.recycling_rounded, 'عمليات النفايات', 'Waste operations', 'طلبات النقل وإسناد السائقين والاستلام', [Color(0xFF16A34A), Color(0xFF14532D)]),
-  AppMode('cafm', Icons.apartment_rounded, 'إدارة المرافق', 'Facilities (CAFM)', 'المرافق والمباني وأوامر العمل', [Color(0xFF0891B2), Color(0xFF0E7490)]),
-  AppMode('pms', Icons.account_tree_rounded, 'إدارة المشاريع', 'Projects (PMS)', 'المشاريع والمهام', [Color(0xFF7C3AED), Color(0xFF5B21B6)]),
-  AppMode('management', Icons.dashboard_customize_rounded, 'الإدارة', 'Management', 'كل أنظمة الشركة (أودو)', [Color(0xFFC0392B), Color(0xFF8E2A20)]),
+final _allModes = [
+  AppMode('c2c', Icons.storefront_rounded, 'CARE 2 CARE', 'CARE 2 CARE', tr('الخدمات المنزلية والمتجر', 'Home services & shop'), const [Color(0xFF17547F), C2C.navy]),
+  AppMode('c2c_staff', Icons.badge_rounded, 'فريق العمل', 'Crew workspace', tr('مهامك الميدانية وفريقك', 'Your field jobs & crew'), const [Color(0xFF0D9488), Color(0xFF115E59)]),
+  AppMode('waste_ops', Icons.recycling_rounded, 'عمليات النفايات', 'Waste operations', tr('طلبات النقل وإسناد السائقين والاستلام', 'Transfer requests, driver assignment & receiving'), const [Color(0xFF16A34A), Color(0xFF14532D)]),
+  AppMode('cafm', Icons.apartment_rounded, 'إدارة المرافق', 'Facilities (CAFM)', tr('المرافق والمباني وأوامر العمل', 'Facilities, buildings & work orders'), const [Color(0xFF0891B2), Color(0xFF0E7490)]),
+  AppMode('pms', Icons.account_tree_rounded, 'إدارة المشاريع', 'Projects (PMS)', tr('المشاريع والمهام', 'Projects & tasks'), const [Color(0xFF7C3AED), Color(0xFF5B21B6)]),
+  AppMode('management', Icons.dashboard_customize_rounded, 'الإدارة', 'Management', tr('كل أنظمة الشركة (أودو)', 'All company systems (Odoo)'), const [Color(0xFFC0392B), Color(0xFF8E2A20)]),
 ];
 
 List<AppMode> availableModes(Map<String, dynamic>? itf) {

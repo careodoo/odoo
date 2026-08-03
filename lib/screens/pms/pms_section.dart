@@ -1020,10 +1020,10 @@ class _CreateSheetState extends State<_CreateSheet> {
       case 'petty':
         // A professional cash-custody REQUEST (طلب عهدة نقدية); expenses and
         // settlement are handled from the custody's own detail sheet.
-        const benTypes = [
-          {'value': 'project', 'label': 'مشروع'},
-          {'value': 'department', 'label': 'إدارة'},
-          {'value': 'person', 'label': 'شخص'},
+        final benTypes = [
+          {'value': 'project', 'label': tr('مشروع', 'Project')},
+          {'value': 'department', 'label': tr('إدارة', 'Department')},
+          {'value': 'person', 'label': tr('شخص', 'Person')},
         ];
         return [
           _title(tr('طلب عهدة نقدية', 'Request cash custody')),
@@ -1215,7 +1215,7 @@ class _PettyDetailSheetState extends State<_PettyDetailSheet> {
     String cat = 'misc';
     String? photo;
     final remaining = numOf((_d ?? const {})['remaining'], 0);
-    const cats = {'maintenance': 'صيانة', 'fuel': 'وقود', 'transport': 'نقل', 'supplies': 'مستلزمات', 'misc': 'أخرى'};
+    final cats = {'maintenance': tr('صيانة', 'Maintenance'), 'fuel': tr('وقود', 'Fuel'), 'transport': tr('نقل', 'Transport'), 'supplies': tr('مستلزمات', 'Supplies'), 'misc': tr('أخرى', 'Other')};
     final ok = await showModalBottomSheet<bool>(
       context: context, isScrollControlled: true, backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
@@ -4060,7 +4060,7 @@ class _ManpowerDetailSheetState extends State<_ManpowerDetailSheet> {
                 Row(children: [
                   const Icon(Icons.groups_3_rounded, color: Colors.white, size: 24),
                   const SizedBox(width: 10),
-                  Expanded(child: Text(titles.isEmpty ? '${d['name'] ?? ''}' : titles.join('، '),
+                  Expanded(child: Text(titles.isEmpty ? '${d['name'] ?? ''}' : titles.join(tr('، ', ', ')),
                       style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 15))),
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
