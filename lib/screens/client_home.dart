@@ -91,7 +91,7 @@ class _ClientHomeState extends State<ClientHome> {
               return const Center(child: CircularProgressIndicator());
             }
             if (snap.hasError) {
-              return ListView(children: [const SizedBox(height: 120), Center(child: Text('خطأ: ${snap.error}', style: TextStyle(color: cs.outline)))]);
+              return ListView(children: [const SizedBox(height: 120), Center(child: Text(tr('خطأ: ${snap.error}', 'Error: ${snap.error}'), style: TextStyle(color: cs.outline)))]);
             }
             final d = snap.data!;
             final k = (d['kpis'] as Map);
@@ -737,7 +737,7 @@ class _ClientHomeState extends State<ClientHome> {
         child: ListTile(
           leading: CircleAvatar(backgroundColor: cs.primaryContainer, child: const Icon(Icons.apartment)),
           title: Text('${f['name']}', style: const TextStyle(fontWeight: FontWeight.w800)),
-          subtitle: Text('${f['address'] ?? ''}\nمباني: ${f['buildings']} · مواقع: ${f['locations']} · أعمال مفتوحة: ${f['open_workorders']}',
+          subtitle: Text(tr('${f['address'] ?? ''}\nمباني: ${f['buildings']} · مواقع: ${f['locations']} · أعمال مفتوحة: ${f['open_workorders']}', '${f['address'] ?? ''}\nBuildings: ${f['buildings']} · Locations: ${f['locations']} · Open work: ${f['open_workorders']}'),
               style: TextStyle(color: cs.outline, fontSize: 12)),
           isThreeLine: true,
           trailing: const Icon(Icons.chevron_left),
@@ -819,7 +819,7 @@ class _ClientHomeState extends State<ClientHome> {
           dense: true,
           leading: const Icon(Icons.groups, color: Color(0xFF14B8A6)),
           title: Text('${t['name']}', style: const TextStyle(fontWeight: FontWeight.w700)),
-          subtitle: Text('${t['service'] ?? ''} · مشرف: ${t['supervisor'] ?? '—'} · أعضاء: ${t['members']}',
+          subtitle: Text(tr('${t['service'] ?? ''} · مشرف: ${t['supervisor'] ?? '—'} · أعضاء: ${t['members']}', '${t['service'] ?? ''} · Supervisor: ${t['supervisor'] ?? '—'} · Members: ${t['members']}'),
               style: TextStyle(color: cs.outline, fontSize: 12)),
           trailing: const Icon(Icons.chevron_left_rounded, color: Colors.grey),
           // Open the team page focused on this team's service block.

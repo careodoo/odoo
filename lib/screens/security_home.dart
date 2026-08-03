@@ -102,7 +102,7 @@ class SecurityHome extends StatelessWidget {
                 ),
               if (p.isSupervisor)
                 _Tile(
-                  icon: '🧭', label: 'لوحة المشرف',
+                  icon: '🧭', label: tr('لوحة المشرف', 'Supervisor board'),
                   sub: tr('إحصائيات · إسناد', 'Stats · assignment'),
                   onTap: () => Navigator.push(context,
                       MaterialPageRoute(builder: (_) => const SupervisorScreen())),
@@ -219,17 +219,17 @@ class SecurityHome extends StatelessWidget {
   /// ورقة اختبار الإشعارات: يرسل الخادم إشعاراً تجريبياً لكل نوع ليتأكد الحارس من
   /// وصولها (يشمل تنبيهاً إن كان الجهاز غير مسجّل — أي إذن الإشعارات مرفوض).
   void _testNotifSheet(BuildContext c) {
-    const types = [
-      ('info', '🔔', 'إشعار عام'),
-      ('task', '📋', 'مهمة'),
-      ('patrol', '🚶', 'دورية'),
-      ('point', '📍', 'نقطة تفتيش'),
-      ('incident', '⚠️', 'بلاغ أمني'),
-      ('gatepass', '🚪', 'تصريح'),
-      ('key', '🔑', 'عهدة مفاتيح'),
-      ('stream', '🎥', 'بث مباشر'),
-      ('alert', '🆘', 'استغاثة'),
-      ('message', '💬', 'رسالة'),
+    final types = [
+      ('info', '🔔', tr('إشعار عام', 'General alert')),
+      ('task', '📋', tr('مهمة', 'Task')),
+      ('patrol', '🚶', tr('دورية', 'Patrol')),
+      ('point', '📍', tr('نقطة تفتيش', 'Checkpoint')),
+      ('incident', '⚠️', tr('بلاغ أمني', 'Incident')),
+      ('gatepass', '🚪', tr('تصريح', 'Gate pass')),
+      ('key', '🔑', tr('عهدة مفاتيح', 'Key custody')),
+      ('stream', '🎥', tr('بث مباشر', 'Live stream')),
+      ('alert', '🆘', tr('استغاثة', 'SOS alert')),
+      ('message', '💬', tr('رسالة', 'Message')),
     ];
     showModalBottomSheet(
       context: c, backgroundColor: const Color(0xFF152238), isScrollControlled: true,

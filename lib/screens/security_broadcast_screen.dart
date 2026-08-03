@@ -201,7 +201,7 @@ class _SecurityBroadcastScreenState extends State<SecurityBroadcastScreen> {
         else Flexible(child: ListView(shrinkWrap: true, children: [
           for (final v in _viewerList) ListTile(
             leading: const CircleAvatar(backgroundColor: _blue, child: Icon(Icons.person, color: Colors.white, size: 18)),
-            title: Text('${v['name'] ?? 'مشاهد'}', style: const TextStyle(color: Colors.white, fontSize: 14)),
+            title: Text('${v['name'] ?? tr('مشاهد', 'Viewer')}', style: const TextStyle(color: Colors.white, fontSize: 14)),
             trailing: Text('${v['since'] ?? ''}', style: const TextStyle(color: _muteGrey, fontSize: 12)),
           ),
         ])),

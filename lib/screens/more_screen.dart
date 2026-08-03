@@ -151,7 +151,7 @@ class MoreScreen extends StatelessWidget {
     // role-specific service consoles
     if (p.role == 'cleaning') { header(tr('النظافة', 'Cleaning')); tile(Icons.cleaning_services_rounded, tr('تدقيق الجودة', 'Quality audits'), const CleaningAuditScreen(), c: const Color(0xFF0EA5E9)); }
     if (p.role == 'agriculture') { header(tr('الزراعة', 'Agriculture')); tile(Icons.grass_rounded, tr('مناطق الريّ', 'Irrigation zones'), ServiceScreen(kind: 'agri', title: tr('مناطق الريّ', 'Irrigation zones')), c: const Color(0xFF16A34A)); }
-    if (p.role == 'facade') { header(tr('الواجهات', 'Facades')); tile(Icons.cleaning_services_rounded, tr('تصاريح الارتفاع', 'Height permits'), const ServiceScreen(kind: 'facade', title: 'تصاريح الواجهات'), c: const Color(0xFF7C3AED)); }
+    if (p.role == 'facade') { header(tr('الواجهات', 'Facades')); tile(Icons.cleaning_services_rounded, tr('تصاريح الارتفاع', 'Height permits'), ServiceScreen(kind: 'facade', title: tr('تصاريح الواجهات', 'Facade permits')), c: const Color(0xFF7C3AED)); }
     if (p.role == 'security') {
       header(tr('الأمن', 'Security'));
       tile(Icons.report_rounded, tr('البلاغات الأمنية', 'Incidents'), const SecurityIncidentsScreen(), c: const Color(0xFFE5484D));

@@ -183,7 +183,7 @@ class _SecurityPatrolPointsScreenState extends State<SecurityPatrolPointsScreen>
           final diff = due.difference(DateTime.now());
           if (diff.isNegative) return (tr('مستحق الآن', 'Due now'), _red, Icons.timer_rounded);
           final h = diff.inHours, m = diff.inMinutes % 60;
-          final s = h > 0 ? '${h}س ${m}د' : '${m}د';
+          final s = h > 0 ? tr('${h}س ${m}د', '${h}h ${m}m') : tr('${m}د', '${m}m');
           return ('${tr('التالي بعد', 'Next in')} $s', _amber, Icons.timer_outlined);
         } catch (_) {}
       }
@@ -226,7 +226,7 @@ class _SecurityPatrolPointsScreenState extends State<SecurityPatrolPointsScreen>
             if (p['has_qr'] == true) const Icon(Icons.qr_code_2_rounded, size: 16, color: _muted),
           ]),
           const SizedBox(height: 3),
-          Text([p['code'], p['type_label'], p['floor'], p['unit'], if (recurring && p['interval_h'] != null) '⟳ ${p['interval_h']}س']
+          Text([p['code'], p['type_label'], p['floor'], p['unit'], if (recurring && p['interval_h'] != null) tr('⟳ ${p['interval_h']}س', '⟳ ${p['interval_h']}h')]
                   .where((x) => x != null && '$x'.isNotEmpty).join(' · '),
               maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: _muted, fontSize: 10.5)),
           const SizedBox(height: 6),

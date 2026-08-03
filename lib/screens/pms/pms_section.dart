@@ -2509,7 +2509,7 @@ Widget empPickTile(Map e, VoidCallback onTap, {bool selected = false}) {
             Text('${e['badge']}', style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.w900, color: Pms.violet)),
           ]),
         ),
-        if (onLeave) const _MiniTag(icon: Icons.flight_rounded, label: 'إجازة', color: Color(0xFF2563EB)),
+        if (onLeave) _MiniTag(icon: Icons.flight_rounded, label: tr('إجازة', 'On leave'), color: const Color(0xFF2563EB)),
         if (e['status'] != null) _MiniTag(icon: Icons.circle, label: '${e['status']}', color: Pms.slate),
       ]),
     ),
@@ -3452,7 +3452,7 @@ class _ItemRequestCreateSheet extends StatefulWidget {
 class _ItemLine {
   final name = TextEditingController();
   final qty = TextEditingController(text: '1');
-  final uom = TextEditingController(text: 'وحدة');
+  final uom = TextEditingController(text: tr('وحدة', 'Unit'));
   final price = TextEditingController();
 }
 

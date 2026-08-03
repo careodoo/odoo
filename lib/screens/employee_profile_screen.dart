@@ -284,7 +284,7 @@ class _EmployeeProfileScreenState extends State<EmployeeProfileScreen> {
             if (phone != null && phone.isNotEmpty) ...[
               _quick(Icons.call_rounded, tr('اتصال', 'Call'), () => _launch('tel:$phone')),
               const SizedBox(width: 10),
-              _quick(Icons.chat_rounded, 'واتساب', () => _launch('https://wa.me/${phone.replaceAll(RegExp(r'[^0-9]'), '')}')),
+              _quick(Icons.chat_rounded, tr('واتساب', 'WhatsApp'), () => _launch('https://wa.me/${phone.replaceAll(RegExp(r'[^0-9]'), '')}')),
             ],
             if (email != null && email.isNotEmpty) ...[
               const SizedBox(width: 10),
@@ -353,8 +353,8 @@ class _EmployeeProfileScreenState extends State<EmployeeProfileScreen> {
       (tr('متأخرة', 'Overdue'), k['overdue'], const Color(0xFFE5484D), Icons.warning_amber),
       (tr('نسبة الإنجاز', 'Completion'), '${k['completion_pct'] ?? 0}%', const Color(0xFF16794A), Icons.percent),
       (tr('التزام SLA', 'SLA'), '${k['sla'] ?? 0}%', const Color(0xFF0EA5E9), Icons.verified),
-      (tr('متوسط الإنجاز', 'Avg mins'), '${k['avg_duration_min'] ?? 0}د', const Color(0xFF7C3AED), Icons.timer),
-      (tr('ساعات العمل', 'Work hours'), '${k['work_hours'] ?? 0}س', const Color(0xFF0891B2), Icons.schedule),
+      (tr('متوسط الإنجاز', 'Avg mins'), tr('${k['avg_duration_min'] ?? 0}د', '${k['avg_duration_min'] ?? 0}m'), const Color(0xFF7C3AED), Icons.timer),
+      (tr('ساعات العمل', 'Work hours'), tr('${k['work_hours'] ?? 0}س', '${k['work_hours'] ?? 0}h'), const Color(0xFF0891B2), Icons.schedule),
     ];
     return GridView.count(
       crossAxisCount: 2, shrinkWrap: true, physics: const NeverScrollableScrollPhysics(),

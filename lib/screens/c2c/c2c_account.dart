@@ -90,7 +90,7 @@ class _C2CAccountScreenState extends State<C2CAccountScreen> {
                     onTap: () => _openBookings('done')),
               ]),
             ),
-            const Padding(padding: EdgeInsets.fromLTRB(18, 8, 18, 4), child: Align(alignment: Alignment.centerRight, child: Text('الحساب', style: TextStyle(fontWeight: FontWeight.w900, color: C2C.navy, fontSize: 15)))),
+            Padding(padding: const EdgeInsets.fromLTRB(18, 8, 18, 4), child: Align(alignment: Alignment.centerRight, child: Text(tr('الحساب', 'Account'), style: const TextStyle(fontWeight: FontWeight.w900, color: C2C.navy, fontSize: 15)))),
             _tile(Icons.manage_accounts_rounded, tr('إدارة الحساب', 'Manage account'), () async {
               await Navigator.push(context, MaterialPageRoute(builder: (_) => const C2CProfileEditScreen()));
               if (mounted) setState(() => _acc = context.read<AuthProvider>().api.c2cAccount());

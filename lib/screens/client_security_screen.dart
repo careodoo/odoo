@@ -358,13 +358,13 @@ class _ClientSecurityScreenState extends State<ClientSecurityScreen> {
   /// record, with human labels.
   void _openRecord(Map r, String title) {
     final labels = {
-      'name': 'المرجع', 'type': 'النوع', 'premise': 'الموقع', 'route': 'المسار',
-      'guard': 'الحارس', 'company': 'الجهة', 'phone': 'الهاتف', 'purpose': 'الغرض',
-      'visitor': 'الزائر', 'inspector': 'المفتّش', 'holder': 'حائز المفتاح',
-      'vehicle': 'المركبة', 'persons': 'عدد الأشخاص', 'severity': 'الخطورة',
-      'location': 'الموقع', 'date': 'التاريخ', 'check_in': 'الدخول', 'check_out': 'الخروج',
-      'start': 'البداية', 'end': 'النهاية', 'valid_from': 'صالح من', 'valid_until': 'صالح حتى',
-      'state_label': 'الحالة', 'description': tr('الوصف', 'Description'),
+      'name': tr('المرجع', 'Reference'), 'type': tr('النوع', 'Type'), 'premise': tr('الموقع', 'Premise'), 'route': tr('المسار', 'Route'),
+      'guard': tr('الحارس', 'Guard'), 'company': tr('الجهة', 'Company'), 'phone': tr('الهاتف', 'Phone'), 'purpose': tr('الغرض', 'Purpose'),
+      'visitor': tr('الزائر', 'Visitor'), 'inspector': tr('المفتّش', 'Inspector'), 'holder': tr('حائز المفتاح', 'Key holder'),
+      'vehicle': tr('المركبة', 'Vehicle'), 'persons': tr('عدد الأشخاص', 'Persons'), 'severity': tr('الخطورة', 'Severity'),
+      'location': tr('الموقع', 'Location'), 'date': tr('التاريخ', 'Date'), 'check_in': tr('الدخول', 'Check-in'), 'check_out': tr('الخروج', 'Check-out'),
+      'start': tr('البداية', 'Start'), 'end': tr('النهاية', 'End'), 'valid_from': tr('صالح من', 'Valid from'), 'valid_until': tr('صالح حتى', 'Valid until'),
+      'state_label': tr('الحالة', 'Status'), 'description': tr('الوصف', 'Description'),
     };
     final entries = <MapEntry<String, String>>[];
     labels.forEach((k, lbl) {

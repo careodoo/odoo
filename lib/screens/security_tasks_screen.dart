@@ -292,12 +292,12 @@ class _TaskSheetState extends State<_TaskSheet> {
                 _row(tr('الإنجاز', 'Completed'), d['date_completed']),
                 _row(tr('نسبة الإنجاز', 'Progress'), d['progress'] != null ? '${d['progress']}%' : null),
                 if ('${d['description'] ?? ''}'.replaceAll(RegExp(r'<[^>]*>'), '').trim().isNotEmpty) ...[
-                  const Padding(padding: EdgeInsets.fromLTRB(18, 12, 18, 4), child: Text('الوصف', style: TextStyle(color: _muted, fontWeight: FontWeight.w700, fontSize: 12))),
+                  Padding(padding: const EdgeInsets.fromLTRB(18, 12, 18, 4), child: Text(tr('الوصف', 'Description'), style: const TextStyle(color: _muted, fontWeight: FontWeight.w700, fontSize: 12))),
                   Padding(padding: const EdgeInsets.symmetric(horizontal: 18),
                       child: Text('${d['description']}'.replaceAll(RegExp(r'<[^>]*>'), '').trim(), style: const TextStyle(color: Colors.white, fontSize: 13))),
                 ],
                 if (((d['checklist'] as List?) ?? const []).isNotEmpty) ...[
-                  const Padding(padding: EdgeInsets.fromLTRB(18, 14, 18, 6), child: Text('قائمة المهام', style: TextStyle(color: _muted, fontWeight: FontWeight.w700, fontSize: 12))),
+                  Padding(padding: const EdgeInsets.fromLTRB(18, 14, 18, 6), child: Text(tr('قائمة المهام', 'Checklist'), style: const TextStyle(color: _muted, fontWeight: FontWeight.w700, fontSize: 12))),
                   for (final c in (d['checklist'] as List).cast<Map>())
                     Padding(padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 3), child: Row(children: [
                       Icon(c['done'] == true ? Icons.check_box_rounded : Icons.check_box_outline_blank_rounded,

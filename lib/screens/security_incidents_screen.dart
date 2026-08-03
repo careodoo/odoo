@@ -18,12 +18,12 @@ class SecurityIncidentsScreen extends StatefulWidget {
 }
 
 class _SecurityIncidentsScreenState extends State<SecurityIncidentsScreen> {
-  static const types = {
-    'theft': 'سرقة/سطو', 'vandalism': 'تخريب', 'trespassing': 'تسلّل',
-    'assault': 'اعتداء', 'fire': 'حريق', 'medical': 'طارئ طبي',
-    'suspicious': 'نشاط مشبوه', 'other': 'أخرى',
+  static final types = {
+    'theft': tr('سرقة/سطو', 'Theft/Burglary'), 'vandalism': tr('تخريب', 'Vandalism'), 'trespassing': tr('تسلّل', 'Trespassing'),
+    'assault': tr('اعتداء', 'Assault'), 'fire': tr('حريق', 'Fire'), 'medical': tr('طارئ طبي', 'Medical emergency'),
+    'suspicious': tr('نشاط مشبوه', 'Suspicious activity'), 'other': tr('أخرى', 'Other'),
   };
-  static const severities = {'low': 'منخفض', 'medium': 'متوسط', 'high': 'عالٍ', 'critical': 'حرج'};
+  static final severities = {'low': tr('منخفض', 'Low'), 'medium': tr('متوسط', 'Medium'), 'high': tr('عالٍ', 'High'), 'critical': tr('حرج', 'Critical')};
 
   static const _navy = Color(0xFF0B1220);
   static const _card = Color(0xFF152238);

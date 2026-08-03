@@ -272,7 +272,7 @@ class _RequestsScreenState extends State<RequestsScreen> {
           ],
           const SizedBox(height: 10),
           DropdownButtonFormField<int>(value: prio, isExpanded: true, decoration: InputDecoration(labelText: tr('الأولوية', 'Priority'), border: const OutlineInputBorder(), isDense: true),
-              items: const [DropdownMenuItem(value: 0, child: Text('عادية')), DropdownMenuItem(value: 1, child: Text('متوسطة')), DropdownMenuItem(value: 2, child: Text('عالية')), DropdownMenuItem(value: 3, child: Text('عاجلة'))], onChanged: (v) => set(() => prio = v ?? 1)),
+              items: [DropdownMenuItem(value: 0, child: Text(tr('عادية', 'Normal'))), DropdownMenuItem(value: 1, child: Text(tr('متوسطة', 'Medium'))), DropdownMenuItem(value: 2, child: Text(tr('عالية', 'High'))), DropdownMenuItem(value: 3, child: Text(tr('عاجلة', 'Urgent')))], onChanged: (v) => set(() => prio = v ?? 1)),
           const SizedBox(height: 10),
           TextField(controller: desc, maxLines: 3, decoration: InputDecoration(labelText: tr('الوصف', 'Description'), border: const OutlineInputBorder(), isDense: true)),
           const SizedBox(height: 14),

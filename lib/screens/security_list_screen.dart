@@ -40,7 +40,7 @@ class _SecurityListScreenState extends State<SecurityListScreen> {
             if (snap.connectionState == ConnectionState.waiting) {
               return const Center(child: CircularProgressIndicator());
             }
-            if (snap.hasError) return _msg('خطأ: ${snap.error}');
+            if (snap.hasError) return _msg(tr('خطأ: ${snap.error}', 'Error: ${snap.error}'));
             final items = snap.data ?? const [];
             if (items.isEmpty) return _msg(tr('لا عناصر.', 'No items.'));
             return ListView.builder(
@@ -92,13 +92,13 @@ class _SecurityListScreenState extends State<SecurityListScreen> {
       case 'patrols':
         return (
           title: '${m['name']} — ${m['route'] ?? '—'}',
-          sub: 'الحارس: ${m['guard'] ?? '—'} · ${m['premise'] ?? '—'} · نقاط: ${m['points']}',
+          sub: tr('الحارس: ${m['guard'] ?? '—'} · ${m['premise'] ?? '—'} · نقاط: ${m['points']}', 'Guard: ${m['guard'] ?? '—'} · ${m['premise'] ?? '—'} · Points: ${m['points']}'),
           icon: Icons.route,
         );
       case 'keys':
         return (
           title: '${m['name']}',
-          sub: '${m['premise'] ?? '—'}${m['holder'] != null ? ' · بحوزة: ${m['holder']}' : ''}',
+          sub: '${m['premise'] ?? '—'}${m['holder'] != null ? tr(' · بحوزة: ${m['holder']}', ' · Held by: ${m['holder']}') : ''}',
           icon: Icons.vpn_key,
         );
       case 'gatepasses':

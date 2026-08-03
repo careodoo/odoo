@@ -93,7 +93,7 @@ class _ManagementEmployeeScreenState extends State<ManagementEmployeeScreen> {
             if (d['work_phone'] != null) ...[
               _quick(Icons.call_rounded, tr('اتصال', 'Call'), () => _launch('tel:${d['work_phone']}')),
               const SizedBox(width: 8),
-              _quick(Icons.chat_rounded, 'واتساب', () => _launch('https://wa.me/${'${d['work_phone']}'.replaceAll(RegExp(r'[^0-9]'), '')}')),
+              _quick(Icons.chat_rounded, tr('واتساب', 'WhatsApp'), () => _launch('https://wa.me/${'${d['work_phone']}'.replaceAll(RegExp(r'[^0-9]'), '')}')),
             ],
             if (d['work_email'] != null) ...[
               const SizedBox(width: 8),

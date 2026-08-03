@@ -50,7 +50,7 @@ class Stream {
       provider = await showModalBottomSheet<Map>(context: context, backgroundColor: const Color(0xFF152238),
         shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
         builder: (_) => ListView(shrinkWrap: true, children: [
-          const Padding(padding: EdgeInsets.all(14), child: Text('اختر خدمة البث', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900))),
+          Padding(padding: const EdgeInsets.all(14), child: Text(tr('اختر خدمة البث', 'Choose a streaming service'), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900))),
           for (final p in provs.cast<Map>()) ListTile(
             leading: const Icon(Icons.cast_rounded, color: Color(0xFFE5484D)),
             title: Text('${p['name']}', style: const TextStyle(color: Colors.white)),
@@ -83,18 +83,18 @@ class Stream {
     return showModalBottomSheet<String>(context: context, backgroundColor: const Color(0xFF152238),
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
       builder: (_) => SafeArea(child: Column(mainAxisSize: MainAxisSize.min, children: [
-        const Padding(padding: EdgeInsets.all(14), child: Text('لمن يظهر البثّ؟', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 16))),
+        Padding(padding: const EdgeInsets.all(14), child: Text(tr('لمن يظهر البثّ؟', 'Who sees the broadcast?'), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 16))),
         ListTile(leading: const Icon(Icons.public_rounded, color: Color(0xFF37C98A)),
-            title: const Text('الكل (الفريق + العميل)', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
-            subtitle: const Text('يراه فريق الأمن وعميل الموقع', style: TextStyle(color: Color(0xFF9CB2CD), fontSize: 12)),
+            title: Text(tr('الكل (الفريق + العميل)', 'Everyone (team + client)'), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
+            subtitle: Text(tr('يراه فريق الأمن وعميل الموقع', 'Seen by the security team and the site client'), style: const TextStyle(color: Color(0xFF9CB2CD), fontSize: 12)),
             onTap: () => Navigator.pop(_, 'all')),
         ListTile(leading: const Icon(Icons.business_rounded, color: Color(0xFF4AA8FF)),
-            title: const Text('العميل فقط', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
-            subtitle: const Text('يراه عميل الموقع فقط', style: TextStyle(color: Color(0xFF9CB2CD), fontSize: 12)),
+            title: Text(tr('العميل فقط', 'Client only'), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
+            subtitle: Text(tr('يراه عميل الموقع فقط', 'Seen by the site client only'), style: const TextStyle(color: Color(0xFF9CB2CD), fontSize: 12)),
             onTap: () => Navigator.pop(_, 'client')),
         ListTile(leading: const Icon(Icons.groups_rounded, color: Color(0xFFF7A23B)),
-            title: const Text('الفريق فقط', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
-            subtitle: const Text('يراه فريق الأمن فقط (اختيار الأعضاء)', style: TextStyle(color: Color(0xFF9CB2CD), fontSize: 12)),
+            title: Text(tr('الفريق فقط', 'Team only'), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
+            subtitle: Text(tr('يراه فريق الأمن فقط (اختيار الأعضاء)', 'Seen by the security team only (pick members)'), style: const TextStyle(color: Color(0xFF9CB2CD), fontSize: 12)),
             onTap: () => Navigator.pop(_, 'team')),
         const SizedBox(height: 8),
       ])));
@@ -107,12 +107,12 @@ class Stream {
     final choice = await showModalBottomSheet<String>(context: context, backgroundColor: const Color(0xFF152238),
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
       builder: (_) => SafeArea(child: Column(mainAxisSize: MainAxisSize.min, children: [
-        const Padding(padding: EdgeInsets.all(14), child: Text('من يشاهد البث؟', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900))),
+        Padding(padding: const EdgeInsets.all(14), child: Text(tr('من يشاهد البث؟', 'Who watches the broadcast?'), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900))),
         ListTile(leading: const Icon(Icons.groups_rounded, color: Color(0xFF37C98A)),
-            title: const Text('الفريق كامل', style: TextStyle(color: Colors.white)),
+            title: Text(tr('الفريق كامل', 'Whole team'), style: const TextStyle(color: Colors.white)),
             onTap: () => Navigator.pop(_, 'all')),
         ListTile(leading: const Icon(Icons.person_search_rounded, color: Color(0xFF4AA8FF)),
-            title: const Text('اختيار أعضاء محدّدين', style: TextStyle(color: Colors.white)),
+            title: Text(tr('اختيار أعضاء محدّدين', 'Pick specific members'), style: const TextStyle(color: Colors.white)),
             onTap: () => Navigator.pop(_, 'pick')),
         const SizedBox(height: 8),
       ])));
@@ -132,7 +132,7 @@ class Stream {
     final ok = await showModalBottomSheet<bool>(context: context, backgroundColor: const Color(0xFF152238), isScrollControlled: true,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
       builder: (_) => StatefulBuilder(builder: (_, setD) => SafeArea(child: Column(mainAxisSize: MainAxisSize.min, children: [
-        const Padding(padding: EdgeInsets.all(14), child: Text('اختر المشاهدين', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900))),
+        Padding(padding: const EdgeInsets.all(14), child: Text(tr('اختر المشاهدين', 'Choose viewers'), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900))),
         Flexible(child: ListView(shrinkWrap: true, children: [
           for (final m in members) CheckboxListTile(
             value: selected.contains(m['user_id']),
@@ -144,7 +144,7 @@ class Stream {
         ])),
         Padding(padding: const EdgeInsets.all(12), child: SizedBox(width: double.infinity,
             child: FilledButton(style: FilledButton.styleFrom(backgroundColor: const Color(0xFFE5484D)),
-                onPressed: () => Navigator.pop(_, true), child: Text('بث للمحدّدين (${selected.length})')))),
+                onPressed: () => Navigator.pop(_, true), child: Text(tr('بث للمحدّدين (${selected.length})', 'Broadcast to selected (${selected.length})'))))),
       ]))));
     if (ok != true) return null;
     return selected.toList();
@@ -162,19 +162,19 @@ class Stream {
     return showModalBottomSheet<String>(context: context, backgroundColor: const Color(0xFF152238),
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
       builder: (_) => SafeArea(child: Column(mainAxisSize: MainAxisSize.min, children: [
-        const Padding(padding: EdgeInsets.fromLTRB(14, 16, 14, 4),
-            child: Text('لديك بثّ مباشر نشط', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 16))),
-        const Padding(padding: EdgeInsets.symmetric(horizontal: 14),
-            child: Text('لا يمكن تشغيل بثّين معاً. اختر:', style: TextStyle(color: Color(0xFF9CB2CD), fontSize: 12.5))),
+        Padding(padding: const EdgeInsets.fromLTRB(14, 16, 14, 4),
+            child: Text(tr('لديك بثّ مباشر نشط', 'You have an active live broadcast'), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 16))),
+        Padding(padding: const EdgeInsets.symmetric(horizontal: 14),
+            child: Text(tr('لا يمكن تشغيل بثّين معاً. اختر:', 'You cannot run two broadcasts at once. Choose:'), style: const TextStyle(color: Color(0xFF9CB2CD), fontSize: 12.5))),
         const SizedBox(height: 8),
         ListTile(leading: const Icon(Icons.videocam_rounded, color: Color(0xFFE5484D)),
-            title: const Text('العودة للبثّ الحالي', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
+            title: Text(tr('العودة للبثّ الحالي', 'Return to the current broadcast'), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
             onTap: () => Navigator.pop(_, 'resume')),
         ListTile(leading: const Icon(Icons.stop_circle_rounded, color: Color(0xFFF7A23B)),
-            title: const Text('إيقاف الحالي وبدء بثّ جديد', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
+            title: Text(tr('إيقاف الحالي وبدء بثّ جديد', 'Stop the current one and start a new broadcast'), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
             onTap: () => Navigator.pop(_, 'stop')),
         ListTile(leading: const Icon(Icons.close_rounded, color: Color(0xFF9CB2CD)),
-            title: const Text('إلغاء', style: TextStyle(color: Color(0xFF9CB2CD))),
+            title: Text(tr('إلغاء', 'Cancel'), style: const TextStyle(color: Color(0xFF9CB2CD))),
             onTap: () => Navigator.pop(_, null)),
         const SizedBox(height: 8),
       ])));

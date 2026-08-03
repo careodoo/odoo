@@ -55,7 +55,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
               return const Center(child: CircularProgressIndicator());
             }
             if (snap.hasError) {
-              return _msg('خطأ: ${snap.error}');
+              return _msg(tr('خطأ: ${snap.error}', 'Error: ${snap.error}'));
             }
             final items = snap.data?.$1 ?? const [];
             if (items.isEmpty) return _msg(tr('لا إشعارات.', 'No notifications.'));

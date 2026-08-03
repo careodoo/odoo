@@ -140,7 +140,7 @@ class _MainShellState extends State<MainShell> {
             child: Row(children: [
               const Icon(Icons.visibility, color: Colors.white, size: 18),
               const SizedBox(width: 8),
-              Expanded(child: Text('عرض تجريبي كـ: $name',
+              Expanded(child: Text(tr('عرض تجريبي كـ: $name', 'Demo view as: $name'),
                   style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 13))),
               TextButton(
                 onPressed: () => context.read<AuthProvider>().exitImpersonation().then((_) => setState(() => _idx = 0)),

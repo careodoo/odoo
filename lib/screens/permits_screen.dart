@@ -362,7 +362,7 @@ class _PermitDetailSheetState extends State<_PermitDetailSheet> {
             style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFEA580C), foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(vertical: 13), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))))),
         ])),
         if (logs.isNotEmpty) ...[
-          const Padding(padding: EdgeInsets.fromLTRB(18, 14, 18, 6), child: Text('سجلّ الدخول/الخروج', style: TextStyle(color: Color(0xFF64748B), fontWeight: FontWeight.w700, fontSize: 12))),
+          Padding(padding: const EdgeInsets.fromLTRB(18, 14, 18, 6), child: Text(tr('سجلّ الدخول/الخروج', 'Entry / exit log'), style: const TextStyle(color: Color(0xFF64748B), fontWeight: FontWeight.w700, fontSize: 12))),
           for (final l in logs) Padding(padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 4), child: Row(children: [
             Icon(l['type'] == 'check_in' ? Icons.login_rounded : Icons.logout_rounded, size: 16,
               color: l['type'] == 'check_in' ? const Color(0xFF16A34A) : const Color(0xFFEA580C)),

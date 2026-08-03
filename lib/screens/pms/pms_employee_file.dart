@@ -223,27 +223,27 @@ class _PmsEmployeeFileScreenState extends State<PmsEmployeeFileScreen> {
       ]);
 
   // (key, label, icon, color, type)
-  static const List<(String, String, IconData, Color, String)> _secDefs = [
-    ('attendance', 'الحضور والانصراف', Icons.schedule_rounded, Color(0xFF2563EB), 'attendance'),
-    ('leaves', 'الإجازات', Icons.beach_access_rounded, Color(0xFF0891B2), 'leaves'),
-    ('allowances', 'البدلات', Icons.payments_rounded, Color(0xFF0D9488), 'allowances'),
-    ('eos', 'إنهاء الخدمة', Icons.logout_rounded, Color(0xFFB91C1C), 'eos'),
-    ('permissions', 'الاستئذانات', Icons.access_time_rounded, Color(0xFF6D28D9), 'permissions'),
-    ('custody', 'العهد', Icons.inventory_2_rounded, Color(0xFF9A3412), 'custody'),
-    ('transfers', 'الانتقالات', Icons.swap_horiz_rounded, Color(0xFF7C3AED), 'transfers'),
-    ('documents', 'المستندات والصور', Icons.folder_shared_rounded, Color(0xFFB45309), 'documents'),
-    ('docs', 'طلبات المستندات', Icons.description_rounded, Color(0xFF8B5CF6), 'docs'),
-    ('payslips', 'كشوف الرواتب', Icons.receipt_long_rounded, Color(0xFF16A34A), 'payslips'),
-    ('loans', 'السُّلف', Icons.savings_rounded, Color(0xFF0D9488), 'loans'),
-    ('penalties', 'الجزاءات', Icons.gavel_rounded, Color(0xFFE5484D), 'money'),
-    ('bonuses', 'المكافآت', Icons.emoji_events_rounded, Color(0xFFF59E0B), 'money'),
-    ('appraisals', 'التقييمات', Icons.star_rounded, Color(0xFFEA580C), 'appraisals'),
-    ('skills', 'المهارات', Icons.psychology_rounded, Color(0xFF6366F1), 'skills'),
-    ('uniform', 'اليونيفورم', Icons.checkroom_rounded, Color(0xFF0EA5E9), 'uniform'),
-    ('vehicles', 'السيارات', Icons.directions_car_rounded, Color(0xFF334155), 'vehicles'),
-    ('violations', 'المخالفات المرورية', Icons.report_rounded, Color(0xFFDC2626), 'violations'),
-    ('legal', 'الحالة القانونية', Icons.balance_rounded, Color(0xFF7C2D12), 'legal'),
-    ('devices', 'أجهزة البصمة', Icons.fingerprint_rounded, Color(0xFF475569), 'devices'),
+  List<(String, String, IconData, Color, String)> get _secDefs => [
+    ('attendance', tr('الحضور والانصراف', 'Attendance'), Icons.schedule_rounded, const Color(0xFF2563EB), 'attendance'),
+    ('leaves', tr('الإجازات', 'Leaves'), Icons.beach_access_rounded, const Color(0xFF0891B2), 'leaves'),
+    ('allowances', tr('البدلات', 'Allowances'), Icons.payments_rounded, const Color(0xFF0D9488), 'allowances'),
+    ('eos', tr('إنهاء الخدمة', 'End of service'), Icons.logout_rounded, const Color(0xFFB91C1C), 'eos'),
+    ('permissions', tr('الاستئذانات', 'Permissions'), Icons.access_time_rounded, const Color(0xFF6D28D9), 'permissions'),
+    ('custody', tr('العهد', 'Custody'), Icons.inventory_2_rounded, const Color(0xFF9A3412), 'custody'),
+    ('transfers', tr('الانتقالات', 'Transfers'), Icons.swap_horiz_rounded, const Color(0xFF7C3AED), 'transfers'),
+    ('documents', tr('المستندات والصور', 'Documents & photos'), Icons.folder_shared_rounded, const Color(0xFFB45309), 'documents'),
+    ('docs', tr('طلبات المستندات', 'Document requests'), Icons.description_rounded, const Color(0xFF8B5CF6), 'docs'),
+    ('payslips', tr('كشوف الرواتب', 'Payslips'), Icons.receipt_long_rounded, const Color(0xFF16A34A), 'payslips'),
+    ('loans', tr('السُّلف', 'Loans'), Icons.savings_rounded, const Color(0xFF0D9488), 'loans'),
+    ('penalties', tr('الجزاءات', 'Penalties'), Icons.gavel_rounded, const Color(0xFFE5484D), 'money'),
+    ('bonuses', tr('المكافآت', 'Bonuses'), Icons.emoji_events_rounded, const Color(0xFFF59E0B), 'money'),
+    ('appraisals', tr('التقييمات', 'Appraisals'), Icons.star_rounded, const Color(0xFFEA580C), 'appraisals'),
+    ('skills', tr('المهارات', 'Skills'), Icons.psychology_rounded, const Color(0xFF6366F1), 'skills'),
+    ('uniform', tr('اليونيفورم', 'Uniform'), Icons.checkroom_rounded, const Color(0xFF0EA5E9), 'uniform'),
+    ('vehicles', tr('السيارات', 'Vehicles'), Icons.directions_car_rounded, const Color(0xFF334155), 'vehicles'),
+    ('violations', tr('المخالفات المرورية', 'Traffic violations'), Icons.report_rounded, const Color(0xFFDC2626), 'violations'),
+    ('legal', tr('الحالة القانونية', 'Legal status'), Icons.balance_rounded, const Color(0xFF7C2D12), 'legal'),
+    ('devices', tr('أجهزة البصمة', 'Biometric devices'), Icons.fingerprint_rounded, const Color(0xFF475569), 'devices'),
   ];
 
   Widget _sectionsHub(Map d) {

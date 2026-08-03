@@ -902,7 +902,7 @@ class _C2CBookingSheetState extends State<C2CBookingSheet> {
                       Text('${a['name'] ?? tr('عنوان', 'Address')}',
                           style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13)),
                       if ((a['address'] ?? a['area']) != null)
-                        Text([a['area'], a['address']].where((x) => x != null && '$x'.isNotEmpty).join('، '),
+                        Text([a['area'], a['address']].where((x) => x != null && '$x'.isNotEmpty).join(tr('، ', ', ')),
                             maxLines: 2, overflow: TextOverflow.ellipsis,
                             style: TextStyle(fontSize: 11, color: Colors.grey.shade600)),
                     ])),

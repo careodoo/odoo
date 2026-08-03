@@ -38,7 +38,7 @@ class _ServiceScreenState extends State<ServiceScreen> {
             if (snap.connectionState == ConnectionState.waiting) {
               return const Center(child: CircularProgressIndicator());
             }
-            if (snap.hasError) return _msg('خطأ: ${snap.error}');
+            if (snap.hasError) return _msg(tr('خطأ: ${snap.error}', 'Error: ${snap.error}'));
             final items = snap.data ?? const [];
             if (items.isEmpty) return _msg(tr('لا سجلات بعد.', 'No records yet.'));
             return ListView.builder(
@@ -72,7 +72,7 @@ class _ServiceScreenState extends State<ServiceScreen> {
         return Card(child: ListTile(
           leading: CircleAvatar(backgroundColor: col.withValues(alpha: 0.15), child: Text('${score.round()}', style: TextStyle(color: col, fontWeight: FontWeight.w900))),
           title: Text('${m['name']} — ${m['location'] ?? ''}', style: const TextStyle(fontWeight: FontWeight.w700)),
-          subtitle: Text('${m['facility'] ?? ''} · إخفاقات: ${m['fail_count']} · ${m['date'] ?? ''}', style: TextStyle(color: cs.outline, fontSize: 12)),
+          subtitle: Text(tr('${m['facility'] ?? ''} · إخفاقات: ${m['fail_count']} · ${m['date'] ?? ''}', '${m['facility'] ?? ''} · Fails: ${m['fail_count']} · ${m['date'] ?? ''}'), style: TextStyle(color: cs.outline, fontSize: 12)),
           trailing: _pill('${m['rating'] ?? m['state']}', col),
         ));
       case 'agri':
@@ -80,7 +80,7 @@ class _ServiceScreenState extends State<ServiceScreen> {
         return Card(child: ListTile(
           leading: Icon(Icons.grass, color: due ? const Color(0xFFF59E0B) : const Color(0xFF37C98A)),
           title: Text('${m['name']}', style: const TextStyle(fontWeight: FontWeight.w700)),
-          subtitle: Text('${m['facility'] ?? ''} · ريّ: ${m['method'] ?? ''} · ${m['frequency'] ?? ''}${m['weather_based'] == true ? tr(' · حسب الطقس', '· weather-based') : ''}\nالتالي: ${m['next_run'] ?? '—'}', style: TextStyle(color: cs.outline, fontSize: 12)),
+          subtitle: Text(tr('${m['facility'] ?? ''} · ريّ: ${m['method'] ?? ''} · ${m['frequency'] ?? ''}${m['weather_based'] == true ? ' · حسب الطقس' : ''}\nالتالي: ${m['next_run'] ?? '—'}', '${m['facility'] ?? ''} · Irrigation: ${m['method'] ?? ''} · ${m['frequency'] ?? ''}${m['weather_based'] == true ? ' · weather-based' : ''}\nNext: ${m['next_run'] ?? '—'}'), style: TextStyle(color: cs.outline, fontSize: 12)),
           isThreeLine: true,
           trailing: due ? _pill(tr('مستحق', 'Due'), const Color(0xFFF59E0B)) : _pill(tr('منتظم', 'Regular'), const Color(0xFF37C98A)),
         ));
@@ -89,9 +89,9 @@ class _ServiceScreenState extends State<ServiceScreen> {
         return Card(child: ListTile(
           leading: Icon(safe ? Icons.check_circle : Icons.dangerous, color: safe ? const Color(0xFF16A34A) : const Color(0xFFE5484D)),
           title: Text('${m['name']} — ${m['zone'] ?? ''}', style: const TextStyle(fontWeight: FontWeight.w700)),
-          subtitle: Text('${m['facility'] ?? ''} · طريقة: ${m['method'] ?? ''} · رياح ${m['wind_speed']}/${m['wind_limit']} كم/س · ${m['date'] ?? ''}', style: TextStyle(color: cs.outline, fontSize: 12)),
+          subtitle: Text(tr('${m['facility'] ?? ''} · طريقة: ${m['method'] ?? ''} · رياح ${m['wind_speed']}/${m['wind_limit']} كم/س · ${m['date'] ?? ''}', '${m['facility'] ?? ''} · Method: ${m['method'] ?? ''} · Wind ${m['wind_speed']}/${m['wind_limit']} km/h · ${m['date'] ?? ''}'), style: TextStyle(color: cs.outline, fontSize: 12)),
           isThreeLine: true,
-          trailing: _pill(safe ? tr('آمن', 'Safe') : '⛔ رياح', safe ? const Color(0xFF16A34A) : const Color(0xFFE5484D)),
+          trailing: _pill(safe ? tr('آمن', 'Safe') : tr('⛔ رياح', '⛔ Wind'), safe ? const Color(0xFF16A34A) : const Color(0xFFE5484D)),
         ));
       default:
         return Card(child: ListTile(title: Text('${m['name']}')));

@@ -238,7 +238,7 @@ class _KeySheetState extends State<_KeySheet> {
             Text(tr('مدة الإرجاع', 'Return in'), style: const TextStyle(color: _muted)),
             const Spacer(),
             for (final h in [4, 8, 12, 24]) Padding(padding: const EdgeInsets.only(left: 6),
-                child: ChoiceChip(label: Text('${h}س'), selected: hours == h,
+                child: ChoiceChip(label: Text(tr('${h}س', '${h}h')), selected: hours == h,
                     onSelected: (_) => setD(() => hours = h))),
           ]),
           const SizedBox(height: 16),

@@ -569,7 +569,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                 child: Row(children: [
                   const Icon(Icons.person_off_rounded, size: 13, color: Color(0xFFE5484D)),
                   const SizedBox(width: 6),
-                  Expanded(child: Text(absent.map((m) => (m as Map)['name']).join('، '),
+                  Expanded(child: Text(absent.map((m) => (m as Map)['name']).join(tr('، ', ', ')),
                       style: const TextStyle(
                           fontSize: 10.5, fontWeight: FontWeight.w700, color: Color(0xFFE5484D)))),
                 ]),

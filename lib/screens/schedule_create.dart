@@ -291,8 +291,8 @@ class _ScheduleCreateSheetState extends State<ScheduleCreateSheet> {
   Widget _unitDrop(List<Map> units, String value, ValueChanged<String> onCh) {
     final items = units.isNotEmpty
         ? units
-        : const [{'code': 'minute', 'label': 'دقيقة'}, {'code': 'hour', 'label': 'ساعة'},
-                 {'code': 'day', 'label': 'يوم'}, {'code': 'month', 'label': 'شهر'}];
+        : [{'code': 'minute', 'label': tr('دقيقة', 'Minute')}, {'code': 'hour', 'label': tr('ساعة', 'Hour')},
+                 {'code': 'day', 'label': tr('يوم', 'Day')}, {'code': 'month', 'label': tr('شهر', 'Month')}];
     final codes = items.map((u) => '${u['code']}').toList();
     return DropdownButtonFormField<String>(
       initialValue: codes.contains(value) ? value : codes.first,

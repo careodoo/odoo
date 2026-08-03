@@ -201,7 +201,7 @@ class _ScanScreenState extends State<ScanScreen> {
                 child: Column(mainAxisSize: MainAxisSize.min, children: [
                   const Icon(Icons.no_photography, color: Colors.white, size: 60),
                   const SizedBox(height: 12),
-                  Text('تعذّر تشغيل الكاميرا: ${error.errorCode.name}',
+                  Text(tr('تعذّر تشغيل الكاميرا: ${error.errorCode.name}', 'Could not start the camera: ${error.errorCode.name}'),
                       textAlign: TextAlign.center, style: const TextStyle(color: Colors.white)),
                   const SizedBox(height: 12),
                   FilledButton(onPressed: openAppSettings, child: Text(tr('فتح الإعدادات', 'Open settings'))),
@@ -243,7 +243,7 @@ class _ScanScreenState extends State<ScanScreen> {
           ]),
         )),
         const SizedBox(height: 8),
-        Text('أوامر العمل عند هذا الموقع (${wos.length})', style: const TextStyle(fontWeight: FontWeight.w800)),
+        Text(tr('أوامر العمل عند هذا الموقع (${wos.length})', 'Work orders at this location (${wos.length})'), style: const TextStyle(fontWeight: FontWeight.w800)),
         for (final w in wos) Card(child: ListTile(title: Text(w.title), subtitle: Text('${w.name} · ${w.serviceType}'))),
         const SizedBox(height: 8),
         FilledButton.icon(onPressed: _reset, icon: const Icon(Icons.replay), label: Text(tr('مسح آخر', 'Last scan'))),

@@ -120,7 +120,7 @@ class _SecurityGatePassesScreenState extends State<SecurityGatePassesScreen> {
           Container(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
               decoration: BoxDecoration(color: _stColor(st).withValues(alpha: 0.16), borderRadius: BorderRadius.circular(20)),
               child: Text('${g['state_label'] ?? st}', style: TextStyle(color: _stColor(st), fontWeight: FontWeight.w800, fontSize: 9.5))),
-          if (onsite) const Padding(padding: EdgeInsets.only(top: 3), child: Text('🟢 بالداخل', style: TextStyle(color: Color(0xFF4AA8FF), fontSize: 9.5, fontWeight: FontWeight.w700))),
+          if (onsite) Padding(padding: const EdgeInsets.only(top: 3), child: Text(tr('🟢 بالداخل', '🟢 On-site'), style: const TextStyle(color: Color(0xFF4AA8FF), fontSize: 9.5, fontWeight: FontWeight.w700))),
         ]),
       ]))));
   }

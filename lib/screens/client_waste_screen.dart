@@ -288,7 +288,7 @@ class _ClientWasteScreenState extends State<ClientWasteScreen> {
       return ListTile(
         leading: const Text('🚛', style: TextStyle(fontSize: 22)),
         title: Text('${r['sequence']}', style: const TextStyle(fontWeight: FontWeight.w700)),
-        subtitle: Text('${r['pickup'] ?? ''} → ${r['center'] ?? ''} · ${_n(r['total_weight'] ?? 0)} كجم', maxLines: 2, overflow: TextOverflow.ellipsis),
+        subtitle: Text(tr('${r['pickup'] ?? ''} → ${r['center'] ?? ''} · ${_n(r['total_weight'] ?? 0)} كجم', '${r['pickup'] ?? ''} → ${r['center'] ?? ''} · ${_n(r['total_weight'] ?? 0)} kg'), maxLines: 2, overflow: TextOverflow.ellipsis),
         trailing: _pill(tr(_stL[st] ?? st, st), c),
         onTap: () => _openTrip(r),
       );
@@ -301,7 +301,7 @@ class _ClientWasteScreenState extends State<ClientWasteScreen> {
     final meta = <String>[
       if (r['pickup'] != null) '📍 ${r['pickup']}',
       if (cnt != 0) '📦 $cnt ${tr('صنف', 'items')}',
-      if ((wt as num) != 0) '⚖️ $wt كجم' else if (qty != 0) '×$qty',
+      if ((wt as num) != 0) tr('⚖️ $wt كجم', '⚖️ $wt kg') else if (qty != 0) '×$qty',
       if (r['trip'] != null) '🚛 ${r['trip']}',
     ].join('  ·  ');
     return Container(
@@ -393,7 +393,7 @@ class _ClientWasteScreenState extends State<ClientWasteScreen> {
                 _kv(Icons.manage_accounts, tr('مدير العمليات', 'Ops manager'), r['ops_manager']),
                 _kv(Icons.local_shipping_outlined, tr('السائق', 'Driver'), r['driver']),
                 _kv(Icons.how_to_reg_outlined, tr('مستلم الكميات', 'Receiver'), r['receiver']),
-                if ((r['final_weight'] ?? 0) != 0) _kv(Icons.scale_outlined, tr('الوزن النهائي', 'Final weight'), '${_n(r['final_weight'])} كجم'),
+                if ((r['final_weight'] ?? 0) != 0) _kv(Icons.scale_outlined, tr('الوزن النهائي', 'Final weight'), tr('${_n(r['final_weight'])} كجم', '${_n(r['final_weight'])} kg')),
                 if (r['final_note'] != null) _kv(Icons.sticky_note_2_outlined, tr('ملاحظة الاستلام', 'Receipt note'), r['final_note']),
               ]),
               _card(tr('التفاصيل', 'Details'), [
@@ -728,7 +728,7 @@ class _ClientWasteScreenState extends State<ClientWasteScreen> {
 
     Future<void> shareTextMsg() async {
       try {
-        await Share.share(shareText(), subject: 'طلب نفايات ${res['serial'] ?? ''}');
+        await Share.share(shareText(), subject: tr('طلب نفايات ${res['serial'] ?? ''}', 'Waste order ${res['serial'] ?? ''}'));
       } catch (_) {}
     }
 
@@ -797,7 +797,7 @@ class _ClientWasteScreenState extends State<ClientWasteScreen> {
               kv(tr('موقع الالتقاط', 'Pickup'), res['pickup'] as String?),
               kv(tr('النوع', 'Type'), res['type'] as String?),
               kv(tr('الموعد', 'Date/time'), (res['request_datetime'] as String?)?.replaceAll('T', ' ')),
-              if (res['total_weight'] != null) kv(tr('الوزن التقديري', 'Est. weight'), '${res['total_weight']} كجم'),
+              if (res['total_weight'] != null) kv(tr('الوزن التقديري', 'Est. weight'), tr('${res['total_weight']} كجم', '${res['total_weight']} kg')),
               if (res['notes'] != null) kv(tr('ملاحظات', 'Notes'), res['notes'] as String?),
             ])),
             if (items.isNotEmpty) ...[
@@ -809,7 +809,7 @@ class _ClientWasteScreenState extends State<ClientWasteScreen> {
                   for (final it in items.cast<Map>())
                     Padding(padding: const EdgeInsets.symmetric(vertical: 2), child: Row(children: [
                       Expanded(child: Text('${it['name']}', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600))),
-                      Text('${it['qty']} × ${it['unit_weight']} = ${it['total_weight']} كجم',
+                      Text(tr('${it['qty']} × ${it['unit_weight']} = ${it['total_weight']} كجم', '${it['qty']} × ${it['unit_weight']} = ${it['total_weight']} kg'),
                           style: const TextStyle(fontSize: 11, color: Color(0xFF64748B))),
                     ])),
                 ]),

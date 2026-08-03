@@ -186,7 +186,7 @@ class _HospitalityScreenState extends State<HospitalityScreen> with SingleTicker
     // card; if this shows "0", the app genuinely received no items.
     final proof = items.isEmpty
         ? '—'
-        : items.take(4).map((i) => '${i['name']}').join('، ');
+        : items.take(4).map((i) => '${i['name']}').join(tr('، ', ', '));
 
     return RefreshIndicator(
       color: _brown,
@@ -201,7 +201,8 @@ class _HospitalityScreenState extends State<HospitalityScreen> with SingleTicker
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Text(
-              'نسخة ${AppVersion.value} · ${items.length} صنف · ${cats.length} فئة',
+              tr('نسخة ${AppVersion.value} · ${items.length} صنف · ${cats.length} فئة',
+                  'Version ${AppVersion.value} · ${items.length} items · ${cats.length} categories'),
               style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w800, color: Color(0xFF7A5B00)),
             ),
             Text(proof,

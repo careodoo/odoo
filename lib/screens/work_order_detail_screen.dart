@@ -315,7 +315,7 @@ class _WorkOrderDetailScreenState extends State<WorkOrderDetailScreen> with Widg
           Text(t, style: TextStyle(color: c, fontSize: 30, fontWeight: FontWeight.w900, fontFeatures: const [])),
         ]),
         const Spacer(),
-        Text('المحدّد: ${_d!['expected_minutes']} د', style: TextStyle(color: Theme.of(context).colorScheme.outline)),
+        Text(tr('المحدّد: ${_d!['expected_minutes']} د', 'Target: ${_d!['expected_minutes']}m'), style: TextStyle(color: Theme.of(context).colorScheme.outline)),
       ]),
     );
   }
@@ -323,7 +323,7 @@ class _WorkOrderDetailScreenState extends State<WorkOrderDetailScreen> with Widg
   Widget _infoCard(ColorScheme cs) => Card(
         child: Padding(padding: const EdgeInsets.all(16), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           _locationBlock(cs),
-          _row(Icons.person, 'المُسنَد إليه', '${_d!['assignee'] ?? '—'}'),
+          _row(Icons.person, tr('المُسنَد إليه', 'Assignee'), '${_d!['assignee'] ?? '—'}'),
           _row(Icons.flag, tr('الأولوية', 'Priority'), '${_d!['priority']}'),
           _row(Icons.schedule, tr('الموعد', 'Due'), '${_d!['deadline'] ?? '—'}'),
           if (_d!['description'] != null) ...[

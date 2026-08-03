@@ -47,7 +47,7 @@ class _AdminHomeState extends State<AdminHome> {
               return const Center(child: CircularProgressIndicator());
             }
             if (snap.hasError) {
-              return ListView(children: [const SizedBox(height: 120), Center(child: Text('خطأ: ${snap.error}'))]);
+              return ListView(children: [const SizedBox(height: 120), Center(child: Text(tr('خطأ: ${snap.error}', 'Error: ${snap.error}')))]);
             }
             final d = snap.data!;
             final k = d['kpis'] as Map;
@@ -80,7 +80,7 @@ class _AdminHomeState extends State<AdminHome> {
                 ]),
                 _panel(tr('الأعمال حسب الخدمة', 'Work by service'), [
                   for (final e in byService.entries)
-                    _bar('${e.key} (مفتوحة ${(e.value as Map)['open']})', (e.value as Map)['total'] as int,
+                    _bar(tr('${e.key} (مفتوحة ${(e.value as Map)['open']})', '${e.key} (Open ${(e.value as Map)['open']})'), (e.value as Map)['total'] as int,
                         byService.values.fold<int>(1, (m, v) => (v as Map)['total'] > m ? (v)['total'] as int : m),
                         const Color(0xFF14B8A6)),
                 ]),
@@ -90,7 +90,7 @@ class _AdminHomeState extends State<AdminHome> {
                       dense: true,
                       leading: const Icon(Icons.apartment),
                       title: Text('${(f as Map)['name']}'),
-                      trailing: Text('مفتوحة ${f['open']}${(f['overdue'] ?? 0) > 0 ? ' · متأخرة ${f['overdue']}' : ''}',
+                      trailing: Text(tr('مفتوحة ${f['open']}${(f['overdue'] ?? 0) > 0 ? ' · متأخرة ${f['overdue']}' : ''}', 'Open ${f['open']}${(f['overdue'] ?? 0) > 0 ? ' · Overdue ${f['overdue']}' : ''}'),
                           style: const TextStyle(color: Color(0xFFE5484D), fontWeight: FontWeight.w700)),
                     ),
                 ]),

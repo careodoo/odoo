@@ -90,7 +90,7 @@ class _SupervisorScreenState extends State<SupervisorScreen> {
               return const Center(child: CircularProgressIndicator());
             }
             if (snap.hasError) {
-              return ListView(children: [const SizedBox(height: 120), Center(child: Text('خطأ: ${snap.error}', style: const TextStyle(color: Color(0xFF9CB2CD))))]);
+              return ListView(children: [const SizedBox(height: 120), Center(child: Text(tr('خطأ: ${snap.error}', 'Error: ${snap.error}'), style: const TextStyle(color: Color(0xFF9CB2CD))))]);
             }
             final d = snap.data!;
             final s = d.stats;
@@ -143,8 +143,8 @@ class _SupervisorScreenState extends State<SupervisorScreen> {
           title: Text('${m['name']}', style: const TextStyle(color: Colors.white)),
           subtitle: Text('${m['job_title'] ?? '—'}', style: const TextStyle(color: Color(0xFF9CB2CD))),
           trailing: Wrap(spacing: 6, children: [
-            _pill('مفتوحة ${m['open']}', const Color(0xFF2F6DF6)),
-            if ((m['overdue'] ?? 0) > 0) _pill('متأخرة ${m['overdue']}', const Color(0xFFE5484D)),
+            _pill(tr('مفتوحة ${m['open']}', 'Open ${m['open']}'), const Color(0xFF2F6DF6)),
+            if ((m['overdue'] ?? 0) > 0) _pill(tr('متأخرة ${m['overdue']}', 'Overdue ${m['overdue']}'), const Color(0xFFE5484D)),
           ]),
         ),
       );

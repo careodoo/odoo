@@ -123,8 +123,8 @@ class _HandlingScreenState extends State<HandlingScreen> {
           Expanded(child: Text('${j['cargo'] ?? ''}',
               style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14))),
           if (j['fragile'] == true)
-            const Padding(padding: EdgeInsets.only(left: 6),
-                child: Text('⚠ قابل للكسر', style: TextStyle(fontSize: 10, color: Color(0xFFE11D48)))),
+            Padding(padding: const EdgeInsets.only(left: 6),
+                child: Text(tr('⚠ قابل للكسر', '⚠ Fragile'), style: const TextStyle(fontSize: 10, color: Color(0xFFE11D48)))),
           Container(padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               decoration: BoxDecoration(color: sc.withOpacity(0.14), borderRadius: BorderRadius.circular(20)),
               child: Text('${j['state_label'] ?? ''}',
@@ -142,7 +142,7 @@ class _HandlingScreenState extends State<HandlingScreen> {
         const SizedBox(height: 4),
         Text([
           if (j['move_type'] != null) '🚚 ${j['move_type']}',
-          '⚖ ${j['weight'] ?? 0} كجم',
+          tr('⚖ ${j['weight'] ?? 0} كجم', '⚖ ${j['weight'] ?? 0} kg'),
           '📦 ${j['quantity'] ?? 0}',
           if (j['crew'] != null) '👷 ${j['crew']}',
           if (j['scheduled_at'] != null) '🕒 ${j['scheduled_at']}',

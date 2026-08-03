@@ -3,6 +3,7 @@ import 'dart:io';
 import 'dart:typed_data';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
 import 'package:http/http.dart' as http;
+import 'i18n.dart';
 import 'package:path_provider/path_provider.dart';
 
 /// عميل WHIP/WHEP للبثّ المباشر داخل التطبيق عبر WebRTC (يتوافق مع Cloudflare
@@ -80,7 +81,7 @@ class WhipBroadcaster {
       body: local!.sdp,
     );
     if (res.statusCode != 201 && res.statusCode != 200) {
-      throw Exception('WHIP فشل (${res.statusCode})');
+      throw Exception(tr('WHIP فشل (${res.statusCode})', 'WHIP failed (${res.statusCode})'));
     }
     _resourceUrl = res.headers['location'];
     await _pc!.setRemoteDescription(RTCSessionDescription(res.body, 'answer'));
@@ -205,7 +206,7 @@ class WhepViewer {
       body: local!.sdp,
     );
     if (res.statusCode != 201 && res.statusCode != 200) {
-      throw Exception('WHEP فشل (${res.statusCode})');
+      throw Exception(tr('WHEP فشل (${res.statusCode})', 'WHEP failed (${res.statusCode})'));
     }
     _resourceUrl = res.headers['location'];
     await _pc!.setRemoteDescription(RTCSessionDescription(res.body, 'answer'));

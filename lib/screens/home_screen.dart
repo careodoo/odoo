@@ -67,9 +67,9 @@ class WorkerHome extends StatelessWidget {
       if (p.role == 'cleaning')
         (Icons.fact_check_rounded, tr('تدقيق النظافة', 'Cleaning audit'), 'Cleaning audit', const Color(0xFF0EA5E9), () => go(const CleaningAuditScreen())),
       if (p.role == 'agriculture')
-        (Icons.grass_rounded, tr('مناطق الريّ', 'Irrigation zones'), 'Irrigation', const Color(0xFF16A34A), () => go(const ServiceScreen(kind: 'agri', title: 'مناطق الريّ'))),
+        (Icons.grass_rounded, tr('مناطق الريّ', 'Irrigation zones'), 'Irrigation', const Color(0xFF16A34A), () => go(ServiceScreen(kind: 'agri', title: tr('مناطق الريّ', 'Irrigation zones')))),
       if (p.role == 'facade')
-        (Icons.roofing_rounded, tr('تصاريح الارتفاع', 'Height permits'), 'Height permits', const Color(0xFF7C3AED), () => go(const ServiceScreen(kind: 'facade', title: 'تصاريح الواجهات'))),
+        (Icons.roofing_rounded, tr('تصاريح الارتفاع', 'Height permits'), 'Height permits', const Color(0xFF7C3AED), () => go(ServiceScreen(kind: 'facade', title: tr('تصاريح الواجهات', 'Facade permits')))),
       (Icons.inventory_2_rounded, tr('صرف مواد', 'Issue materials'), 'Issue materials', const Color(0xFF0E7490), () => go(const ClientInventoryScreen())),
       (Icons.forum_rounded, tr('التواصل', 'Messages'), 'Messages', const Color(0xFF0E7490), () => go(const ChatHubScreen())),
       (Icons.workspace_premium_rounded, tr('إنجازاتي', 'My achievements'), 'My achievements', const Color(0xFFF59E0B), () => go(const MyProfileScreen())),

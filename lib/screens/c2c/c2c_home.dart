@@ -166,7 +166,7 @@ class _C2CHomeScreenState extends State<C2CHomeScreen> {
                 Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                   Text(
                       first.isNotEmpty
-                          ? '${_greeting()}، $first 👋'
+                          ? tr('${_greeting()}، $first 👋', '${_greeting()}, $first 👋')
                           : tr('كير تو كير 👋', 'CARE 2 CARE 👋'),
                       maxLines: 1, overflow: TextOverflow.ellipsis,
                       style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 18)),
@@ -312,7 +312,7 @@ class _C2CHomeScreenState extends State<C2CHomeScreen> {
   // ============ PROMO CAROUSEL (image-capable) ============
   Widget _promoCarousel(List offers) {
     final items = offers.isNotEmpty
-        ? offers.map<Map<String, dynamic>>((o) => {'ic': o['icon'] ?? '🎉', 't': o['title'] ?? '', 's': o['subtitle'] ?? (o['code'] != null ? 'كود: ${o['code']}' : ''), 'img': o['image'], 'code': o['code'], 'c1': _hex(o['color'] as String?, C2C.navy), 'c2': _hex(o['color2'] as String?, C2C.navy2)}).toList()
+        ? offers.map<Map<String, dynamic>>((o) => {'ic': o['icon'] ?? '🎉', 't': o['title'] ?? '', 's': o['subtitle'] ?? (o['code'] != null ? tr('كود: ${o['code']}', 'Code: ${o['code']}') : ''), 'img': o['image'], 'code': o['code'], 'c1': _hex(o['color'] as String?, C2C.navy), 'c2': _hex(o['color2'] as String?, C2C.navy2)}).toList()
         : [
             {'ic': '🎉', 't': tr('خصم 20% على أول حجز', '20% off your first booking'), 's': tr('كود: WELCOME20', 'Code: WELCOME20'), 'code': 'WELCOME20', 'c1': const Color(0xFF17547F), 'c2': const Color(0xFF0A2A44)},
           ];

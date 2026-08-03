@@ -95,12 +95,12 @@ class ApiClient {
     try {
       body = jsonDecode(utf8.decode(r.bodyBytes));
     } catch (_) {
-      throw ApiException(r.statusCode, 'استجابة غير صالحة من الخادم (${r.statusCode})');
+      throw ApiException(r.statusCode, tr('استجابة غير صالحة من الخادم (${r.statusCode})', 'Invalid response from server (${r.statusCode})'));
     }
     if (r.statusCode >= 200 && r.statusCode < 300 && body is Map && body['ok'] == true) {
       return body;
     }
-    final msg = (body is Map ? body['error'] : null) ?? 'خطأ (${r.statusCode})';
+    final msg = (body is Map ? body['error'] : null) ?? tr('خطأ (${r.statusCode})', 'Error (${r.statusCode})');
     throw ApiException(r.statusCode, msg.toString());
   }
 
@@ -128,7 +128,7 @@ class ApiClient {
     final r = await _net.post(_u('/auth/forgot'),
         headers: await _headers(), body: jsonEncode({'login': login}));
     final body = await _handle(r) as Map;
-    return '${(body['data'] as Map?)?['message'] ?? 'تم الإرسال'}';
+    return '${(body['data'] as Map?)?['message'] ?? tr('تم الإرسال', 'Sent')}';
   }
 
   /// Public self-registration → CARE 2 CARE customer; auto-logs in.
@@ -628,7 +628,7 @@ class ApiClient {
     req.files.add(await http.MultipartFile.fromPath('file', filePath));
     final streamed = await req.send().timeout(const Duration(minutes: 3));
     if (streamed.statusCode != 200) {
-      throw Exception('فشل رفع التسجيل (${streamed.statusCode})');
+      throw Exception(tr('فشل رفع التسجيل (${streamed.statusCode})', 'Failed to upload recording (${streamed.statusCode})'));
     }
   }
 

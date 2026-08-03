@@ -102,9 +102,9 @@ const Map<String, Color> kWoStateColor = {
   'verified': Color(0xFF0E7490),
   'cancelled': Color(0xFFE5484D),
 };
-String woStateLabel(String s) => const {
-      'new': 'جديد', 'assigned': 'مُسنَد', 'in_progress': 'قيد التنفيذ',
-      'hold': 'معلّق', 'done': 'منجز', 'verified': 'مُعتمد', 'cancelled': 'ملغى',
+String woStateLabel(String s) => {
+      'new': tr('جديد', 'New'), 'assigned': tr('مُسنَد', 'Assigned'), 'in_progress': tr('قيد التنفيذ', 'In progress'),
+      'hold': tr('معلّق', 'On hold'), 'done': tr('منجز', 'Done'), 'verified': tr('مُعتمد', 'Verified'), 'cancelled': tr('ملغى', 'Cancelled'),
     }[s] ?? s;
 
 /// A coloured state pill.
