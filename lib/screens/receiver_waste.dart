@@ -19,14 +19,23 @@ class _ReceiverWasteScreenState extends State<ReceiverWasteScreen> {
   static const _navy = Color(0xFF0E3A5F);
   static const _green = Color(0xFF16A34A);
   Future<List<dynamic>>? _orders;
+  List<Map> _catalog = const []; // كتالوج الأصناف (id/name/unit_weight)
 
   @override
   void initState() {
     super.initState();
     _load();
+    _loadCatalog();
   }
 
   void _load() => setState(() => _orders = context.read<AuthProvider>().api.wasteReceiverOrders());
+
+  Future<void> _loadCatalog() async {
+    try {
+      final c = await context.read<AuthProvider>().api.wasteReceiverItems();
+      if (mounted) setState(() => _catalog = c.cast<Map>());
+    } catch (_) {/* الكتالوج اختياري — الاستلام يعمل بدونه */}
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -81,17 +90,36 @@ class _ReceiverWasteScreenState extends State<ReceiverWasteScreen> {
   void _openIntake(Map o) async {
     final weight = TextEditingController(text: '${o['final_weight'] ?? ''}');
     final note = TextEditingController(text: '${o['final_note'] ?? ''}');
-    final items = <Map<String, dynamic>>[for (final i in (o['items'] as List? ?? [])) {'item_id': i['item_id'], 'item': i['item'], 'qty': (i['qty'] ?? 0).toString()}];
-    // one controller per line, created ONCE — building them inside build()
-    // re-created them on every setState (adding a photo), resetting the cursor
-    // to the start mid-typing, and leaked them.
-    final qtyCtrls = [for (final it in items) TextEditingController(text: '${it['qty']}')];
+    bool weightTouched = (o['final_weight'] ?? 0) != 0; // هل حرّر المستخدم الوزن يدوياً؟
+    // كل سطر يحمل معرّف الصنف + اسمه + وزن القطعة + متحكّم كمية خاص به (يُنشأ مرة
+    // واحدة لتفادي إعادة ضبط المؤشّر عند إعادة البناء).
+    final lines = <Map<String, dynamic>>[
+      for (final i in (o['items'] as List? ?? []))
+        {
+          'item_id': i['item_id'],
+          'item': i['item'],
+          'unit_weight': (i['unit_weight'] ?? 0).toDouble(),
+          'ctrl': TextEditingController(text: '${(i['qty'] ?? 0)}'),
+        }
+    ];
     final media = <Map<String, String>>[]; // {name, mimetype, data}
     bool busy = false;
+
+    double lineWeight(Map l) => (double.tryParse((l['ctrl'] as TextEditingController).text) ?? 0) * ((l['unit_weight'] ?? 0) as num).toDouble();
+    double totalQty() => lines.fold(0.0, (s, l) => s + (double.tryParse((l['ctrl'] as TextEditingController).text) ?? 0));
+    double totalWeight() => lines.fold(0.0, (s, l) => s + lineWeight(l));
 
     await showModalBottomSheet(
       context: context, isScrollControlled: true, backgroundColor: Colors.transparent,
       builder: (ctx) => StatefulBuilder(builder: (ctx, setSt) {
+        // كلما تغيّرت الأصناف نزامن حقل الوزن النهائي بالمحتسب (ما لم يُحرّره المستخدم يدوياً)
+        void syncWeight() {
+          if (!weightTouched) {
+            final t = totalWeight();
+            weight.text = t == 0 ? '' : (t % 1 == 0 ? t.toInt().toString() : t.toStringAsFixed(1));
+          }
+        }
+
         Future<void> pick(ImageSource src, {bool video = false}) async {
           final x = video
               ? await ImagePicker().pickVideo(source: src)
@@ -101,13 +129,32 @@ class _ReceiverWasteScreenState extends State<ReceiverWasteScreen> {
           setSt(() => media.add({'name': x.name, 'mimetype': video ? 'video/mp4' : 'image/jpeg', 'data': base64Encode(bytes)}));
         }
 
+        void addItem() async {
+          final chosen = await _pickFromCatalog(ctx);
+          if (chosen == null) return;
+          final existing = lines.indexWhere((l) => l['item_id'] == chosen['id']);
+          if (existing >= 0) {
+            // موجود مسبقاً → نزيد الكمية 1
+            final c = lines[existing]['ctrl'] as TextEditingController;
+            c.text = '${(double.tryParse(c.text) ?? 0) + 1}';
+          } else {
+            setSt(() => lines.add({
+                  'item_id': chosen['id'],
+                  'item': chosen['name'],
+                  'unit_weight': ((chosen['unit_weight'] ?? 0) as num).toDouble(),
+                  'ctrl': TextEditingController(text: '1'),
+                }));
+          }
+          setSt(syncWeight);
+        }
+
         Future<void> submit(String confirm) async {
           setSt(() => busy = true);
           try {
             await context.read<AuthProvider>().api.wasteOrderReceive(o['id'] as int, {
-              'final_weight': double.tryParse(weight.text) ?? 0,
+              'final_weight': double.tryParse(weight.text) ?? totalWeight(),
               'final_note': note.text,
-              'items': [for (final it in items) {'item_id': it['item_id'], 'quantity': double.tryParse('${it['qty']}') ?? 0}].where((e) => e['item_id'] != null).toList(),
+              'items': [for (final l in lines) {'item_id': l['item_id'], 'quantity': double.tryParse((l['ctrl'] as TextEditingController).text) ?? 0}].where((e) => e['item_id'] != null).toList(),
               'media': media,
               'confirm': confirm,
             });
@@ -129,19 +176,65 @@ class _ReceiverWasteScreenState extends State<ReceiverWasteScreen> {
               const SizedBox(height: 12),
               Text('${tr('استلام الطلب', 'Receive order')} ${o['serial']}', style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 18, color: _navy)),
               const SizedBox(height: 14),
-              _sec(tr('الوزن النهائي المستلم (كجم)', 'Final received weight (kg)')),
-              TextField(controller: weight, keyboardType: TextInputType.number, decoration: _dec(Icons.scale_outlined)),
-              const SizedBox(height: 14),
-              _sec(tr('الأصناف والكميات', 'Types & quantities')),
-              for (int i = 0; i < items.length; i++) Padding(padding: const EdgeInsets.only(bottom: 8), child: Row(children: [
-                Expanded(flex: 2, child: Text('${items[i]['item'] ?? '—'}', style: const TextStyle(fontWeight: FontWeight.w600))),
-                SizedBox(width: 90, child: TextField(
-                  controller: qtyCtrls[i],
-                  keyboardType: TextInputType.number, textAlign: TextAlign.center,
-                  onChanged: (v) => items[i]['qty'] = v,
-                  decoration: InputDecoration(isDense: true, border: const OutlineInputBorder(), hintText: tr('الكمية', 'Qty')))),
-              ])),
+              // ---- الأصناف والكميات المستلمة ----
+              Row(children: [
+                Expanded(child: _sec(tr('الأصناف والكميات المستلمة', 'Received types & quantities'))),
+                TextButton.icon(
+                  onPressed: addItem,
+                  icon: const Icon(Icons.add_circle, size: 20, color: _green),
+                  label: Text(tr('إضافة صنف', 'Add item'), style: const TextStyle(fontWeight: FontWeight.w800, color: _green)),
+                ),
+              ]),
+              if (lines.isEmpty)
+                Container(
+                  padding: const EdgeInsets.symmetric(vertical: 18), width: double.infinity,
+                  decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFFE2E8F0))),
+                  child: Column(children: [
+                    const Icon(Icons.inventory_2_outlined, color: Colors.grey, size: 28),
+                    const SizedBox(height: 6),
+                    Text(tr('لم تُضَف أصناف بعد — اضغط «إضافة صنف»', 'No items yet — tap “Add item”'), style: const TextStyle(color: Colors.grey, fontSize: 12.5)),
+                  ]),
+                ),
+              for (int i = 0; i < lines.length; i++) Container(
+                margin: const EdgeInsets.only(bottom: 8), padding: const EdgeInsets.fromLTRB(12, 8, 6, 8),
+                decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFFE2E8F0))),
+                child: Row(children: [
+                  Expanded(flex: 3, child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    Text('${lines[i]['item'] ?? '—'}', style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13.5)),
+                    Text('${tr('وزن القطعة', 'Unit')}: ${lines[i]['unit_weight']} ${tr('كجم', 'kg')} · ${tr('الإجمالي', 'Total')}: ${lineWeight(lines[i]).toStringAsFixed(1)} ${tr('كجم', 'kg')}',
+                        style: const TextStyle(color: Colors.grey, fontSize: 11)),
+                  ])),
+                  SizedBox(width: 74, child: TextField(
+                    controller: lines[i]['ctrl'] as TextEditingController,
+                    keyboardType: const TextInputType.numberWithOptions(decimal: true), textAlign: TextAlign.center,
+                    onChanged: (_) => setSt(syncWeight),
+                    decoration: InputDecoration(isDense: true, border: const OutlineInputBorder(), hintText: tr('الكمية', 'Qty')))),
+                  IconButton(
+                    icon: const Icon(Icons.delete_outline, color: Color(0xFFB91C1C), size: 20),
+                    onPressed: () { (lines[i]['ctrl'] as TextEditingController).dispose(); setSt(() => lines.removeAt(i)); setSt(syncWeight); }),
+                ]),
+              ),
+              // ---- ملخّص الإجمالي (احترافي) ----
               const SizedBox(height: 6),
+              Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(colors: [Color(0xFF0E3A5F), Color(0xFF16A34A)], begin: Alignment.centerLeft, end: Alignment.centerRight),
+                  borderRadius: BorderRadius.circular(14)),
+                child: Row(children: [
+                  Expanded(child: _total(tr('إجمالي الأصناف', 'Item lines'), '${lines.length}', Icons.category_rounded)),
+                  Container(width: 1, height: 34, color: Colors.white24),
+                  Expanded(child: _total(tr('إجمالي الكمية', 'Total qty'), totalQty() % 1 == 0 ? totalQty().toInt().toString() : totalQty().toStringAsFixed(1), Icons.numbers_rounded)),
+                  Container(width: 1, height: 34, color: Colors.white24),
+                  Expanded(child: _total(tr('إجمالي الوزن', 'Total weight'), '${totalWeight().toStringAsFixed(1)} ${tr('كجم', 'kg')}', Icons.scale_rounded)),
+                ]),
+              ),
+              const SizedBox(height: 14),
+              _sec(tr('الوزن النهائي المستلم (كجم)', 'Final received weight (kg)')),
+              TextField(controller: weight, keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                onChanged: (_) => weightTouched = true,
+                decoration: _dec(Icons.scale_outlined).copyWith(helperText: tr('يُحتسب تلقائياً من الأصناف — يمكنك تعديله', 'Auto from items — editable'))),
+              const SizedBox(height: 14),
               _sec(tr('صور وفيديوهات الإثبات', 'Proof photos & videos')),
               Wrap(spacing: 8, runSpacing: 8, children: [
                 for (int i = 0; i < media.length; i++) Chip(label: Text(media[i]['mimetype']!.startsWith('video') ? '🎬 ${i + 1}' : '📷 ${i + 1}'), onDeleted: () => setSt(() => media.removeAt(i))),
@@ -170,13 +263,59 @@ class _ReceiverWasteScreenState extends State<ReceiverWasteScreen> {
       }),
     );
     // the sheet is closed → release the controllers
-    for (final c in qtyCtrls) {
-      c.dispose();
+    for (final l in lines) {
+      (l['ctrl'] as TextEditingController).dispose();
     }
     weight.dispose();
     note.dispose();
   }
 
+  /// منتقي الأصناف من الكتالوج (بحث + وزن القطعة).
+  Future<Map?> _pickFromCatalog(BuildContext ctx) async {
+    if (_catalog.isEmpty) {
+      ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(content: Text(tr('لا يوجد كتالوج أصناف', 'No item catalog available'))));
+      return null;
+    }
+    String q = '';
+    return showModalBottomSheet<Map>(
+      context: ctx, isScrollControlled: true, backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (bc) => StatefulBuilder(builder: (bc, setS) {
+        final filtered = _catalog.where((i) => '${i['name']}'.toLowerCase().contains(q.toLowerCase())).toList();
+        return Padding(
+          padding: EdgeInsets.only(bottom: MediaQuery.of(bc).viewInsets.bottom),
+          child: SizedBox(height: MediaQuery.of(bc).size.height * 0.7, child: Column(children: [
+            const SizedBox(height: 10),
+            Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.black26, borderRadius: BorderRadius.circular(3))),
+            Padding(padding: const EdgeInsets.all(12), child: TextField(
+              autofocus: true, onChanged: (v) => setS(() => q = v),
+              decoration: InputDecoration(hintText: tr('ابحث عن صنف…', 'Search item…'), prefixIcon: const Icon(Icons.search), filled: true, fillColor: const Color(0xFFF1F5F9), isDense: true,
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none)))),
+            Expanded(child: ListView.separated(
+              itemCount: filtered.length,
+              separatorBuilder: (_, __) => const Divider(height: 1),
+              itemBuilder: (_, i) {
+                final it = filtered[i];
+                return ListTile(
+                  leading: CircleAvatar(backgroundColor: _green.withValues(alpha: 0.12), child: const Icon(Icons.category_rounded, color: _green, size: 20)),
+                  title: Text('${it['name']}', style: const TextStyle(fontWeight: FontWeight.w700)),
+                  subtitle: Text('${tr('وزن القطعة', 'Unit weight')}: ${it['unit_weight']} ${tr('كجم', 'kg')}'),
+                  onTap: () => Navigator.pop(bc, it),
+                );
+              },
+            )),
+          ])),
+        );
+      }),
+    );
+  }
+
   Widget _sec(String t) => Padding(padding: const EdgeInsets.only(bottom: 6), child: Text(t, style: const TextStyle(fontWeight: FontWeight.w800, color: _navy, fontSize: 14)));
+  Widget _total(String l, String v, IconData ic) => Column(children: [
+        Icon(ic, color: Colors.white70, size: 18),
+        const SizedBox(height: 4),
+        Text(v, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 15)),
+        Text(l, style: const TextStyle(color: Colors.white70, fontSize: 10.5)),
+      ]);
   InputDecoration _dec(IconData ic) => InputDecoration(prefixIcon: Icon(ic, size: 20, color: _green), filled: true, fillColor: Colors.white, isDense: true, border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none));
 }

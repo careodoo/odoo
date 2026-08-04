@@ -418,6 +418,27 @@ class _RecordDetailSheet extends StatelessWidget {
                   color: const Color(0xFFFFF7ED), borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFFFED7AA))),
                 child: Text('📝 ${record['final_note']}', style: const TextStyle(color: Color(0xFF9A3412), fontSize: 13))),
             ],
+            // ---- كامل التفاصيل ----
+            const SizedBox(height: 14),
+            Text(tr('التفاصيل', 'Details'), style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14, color: WOps.deep)),
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+              decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14)),
+              child: Column(children: [
+                _detail(Icons.tag_rounded, tr('الحالة', 'State'), '${record['state_label'] ?? '-'}'),
+                _detail(Icons.business_rounded, tr('المشروع', 'Project'), record['project']),
+                _detail(Icons.receipt_long_rounded, tr('الطلب', 'Order'), record['order_serial'] ?? record['serial']),
+                _detail(Icons.person_rounded, tr('العميل', 'Client'), record['client']),
+                _detail(Icons.location_on_outlined, tr('موقع الالتقاط', 'Pickup'), record['pickup']),
+                _detail(Icons.factory_rounded, tr('مركز المعالجة', 'Center'), record['center']),
+                _detail(Icons.local_shipping_rounded, tr('السائق', 'Driver'), record['driver']),
+                _detail(Icons.how_to_reg_rounded, tr('المستلم', 'Receiver'), record['receiver']),
+                _detail(Icons.confirmation_number_outlined, tr('المرجع', 'Reference'), record['reference']),
+                _detail(Icons.event_rounded, tr('تاريخ الرحلة', 'Trip date'), record['date']),
+                _detail(Icons.schedule_rounded, tr('موعد الرفع', 'Pickup time'), record['pickup_at']),
+              ]),
+            ),
             // الأصناف
             if (items.isNotEmpty) ...[
               const SizedBox(height: 14),
@@ -462,6 +483,21 @@ class _RecordDetailSheet extends StatelessWidget {
         Text(v, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: WOps.ink)),
         Text(l, style: const TextStyle(color: WOps.slate, fontSize: 11)),
       ]);
+
+  /// صف تفصيلي — يُعرض فقط إن كانت القيمة موجودة.
+  Widget _detail(IconData ic, String k, dynamic v) {
+    final val = (v ?? '').toString().trim();
+    if (val.isEmpty) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 7),
+      child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Icon(ic, size: 17, color: WOps.slate),
+        const SizedBox(width: 10),
+        SizedBox(width: 92, child: Text(k, style: const TextStyle(color: WOps.slate, fontSize: 12.5))),
+        Expanded(child: Text(val, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12.5, color: WOps.ink))),
+      ]),
+    );
+  }
 }
 
 // ---- shared bits -----------------------------------------------------------

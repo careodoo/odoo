@@ -1791,6 +1791,11 @@ class ApiClient {
       List<dynamic>.from((await _handle(await _net.get(
               _u('/waste/receiver/orders${all ? '?all=1' : ''}'), headers: await _headers())))['data'] as List);
 
+  /// كتالوج أصناف النفايات (id/name/unit_weight) ليضيفها المستلم ويُحتسب الإجمالي.
+  Future<List<dynamic>> wasteReceiverItems() async =>
+      List<dynamic>.from((await _handle(await _net.get(
+              _u('/waste/receiver/items'), headers: await _headers())))['data'] as List);
+
   /// Receiver submits final data + media + confirmation for an order.
   /// media: [{name, mimetype, data(base64)}], items: [{item_id, quantity}], confirm: delivered|completed|processing
   Future<Map<String, dynamic>> wasteOrderReceive(int orderId, Map<String, dynamic> body) async =>

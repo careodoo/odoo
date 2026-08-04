@@ -173,10 +173,12 @@ class _WasteOpsInboxState extends State<WasteOpsInbox> {
           FutureBuilder<List<dynamic>>(
             future: _f,
             builder: (_, snap) {
-              if (!snap.hasData) {
-                return const SliverFillRemaining(child: Center(child: CircularProgressIndicator()));
+              // نعرض التحميل طوال فترة الانتظار — وإلا احتفظ FutureBuilder ببيانات
+              // التبويب السابق (قائمة فارغة) فظهرت رسالة «لا طلبات» أثناء التحميل.
+              if (snap.connectionState == ConnectionState.waiting) {
+                return const SliverFillRemaining(child: Center(child: CircularProgressIndicator(color: WOps.green)));
               }
-              final rows = snap.data!;
+              final rows = snap.data ?? const [];
               if (rows.isEmpty) return SliverFillRemaining(hasScrollBody: false, child: _empty());
               return SliverPadding(
                 padding: const EdgeInsets.fromLTRB(12, 4, 12, 20),

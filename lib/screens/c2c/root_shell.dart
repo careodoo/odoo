@@ -50,7 +50,12 @@ class _RootShellState extends State<RootShell> {
 
   @override
   Widget build(BuildContext context) {
-    final auth = context.watch<AuthProvider>();
+    // نراقب فقط ما يؤثّر في التوجيه (الوضع/الواجهات) — لا نُعيد بناء شجرة الواجهة
+    // كاملةً كل 45ث عند تحديث الملف الشخصي الدوري (كان يسبب وميض ظهور/اختفاء
+    // السجلات وإعادة تحميلها). التوجيه لا يتغيّر عند تحديث الإشعارات فقط.
+    context.select<AuthProvider, String>((a) =>
+        '${a.appMode}|${a.defaultMode}|${a.interfaces == null ? '' : (a.interfaces!.keys.toList()..sort()).join(',')}');
+    final auth = context.read<AuthProvider>();
     return FutureBuilder(
       future: _init,
       builder: (_, snap) {
