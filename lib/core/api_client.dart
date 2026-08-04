@@ -911,6 +911,11 @@ class ApiClient {
       Map<String, dynamic>.from((await _handle(await _net.get(
               _u('/security/sup/presence'), headers: await _headers())))['data'] as Map);
 
+  /// بروفايل حارس (عند الضغط عليه في بلوك حالة الفريق).
+  Future<Map<String, dynamic>> securitySupGuard(int gid) async =>
+      Map<String, dynamic>.from((await _handle(await _net.get(
+              _u('/security/sup/guard/$gid'), headers: await _headers())))['data'] as Map);
+
   /// نبضة حالة الحارس (حركة/نبض قلب/سكون) — تُرسَل دورياً.
   Future<void> securityGuardHeartbeat({bool? moving, int? heartRate, bool? still, int? battery,
       double? lat, double? lng}) async =>

@@ -55,6 +55,83 @@ class _SecuritySupervisorScreenState extends State<SecuritySupervisorScreen> {
     }
   }
 
+  /// فتح بروفايل الحارس عند الضغط عليه في بلوك حالة الفريق.
+  void _openGuard(int? gid, String name) {
+    if (gid == null) return;
+    showModalBottomSheet(
+      context: context, backgroundColor: const Color(0xFF15213B), isScrollControlled: true,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (_) => FutureBuilder<Map<String, dynamic>>(
+        future: context.read<AuthProvider>().api.securitySupGuard(gid),
+        builder: (ctx, snap) {
+          if (snap.connectionState == ConnectionState.waiting) {
+            return const SizedBox(height: 220, child: Center(child: CircularProgressIndicator(color: _green)));
+          }
+          final g = snap.data ?? {};
+          Widget kv(IconData i, String k, String? v) => (v == null || v.isEmpty)
+              ? const SizedBox.shrink()
+              : Padding(padding: const EdgeInsets.symmetric(vertical: 5), child: Row(children: [
+                  Icon(i, color: _grey, size: 16), const SizedBox(width: 10),
+                  Text('$k: ', style: const TextStyle(color: _grey, fontSize: 12.5)),
+                  Expanded(child: Text(v, style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600))),
+                ]));
+          final st = '${g['state'] ?? 'offline'}';
+          return Padding(
+            padding: EdgeInsets.fromLTRB(20, 16, 20, 20 + MediaQuery.of(ctx).viewInsets.bottom),
+            child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Container(width: 44, height: 4, margin: const EdgeInsets.only(bottom: 14),
+                  decoration: BoxDecoration(color: const Color(0xFF33465F), borderRadius: BorderRadius.circular(4))),
+              Row(children: [
+                CircleAvatar(radius: 26, backgroundColor: const Color(0xFF1F3050),
+                    backgroundImage: (g['photo'] != null && '${g['photo']}'.isNotEmpty) ? NetworkImage('${g['photo']}') : null,
+                    child: (g['photo'] == null || '${g['photo']}'.isEmpty)
+                        ? Text(name.isNotEmpty ? name.characters.first : '؟', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 20)) : null),
+                const SizedBox(width: 12),
+                Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Text('${g['name'] ?? name}', style: const TextStyle(color: Colors.white, fontSize: 17, fontWeight: FontWeight.w900)),
+                  const SizedBox(height: 3),
+                  Row(children: [
+                    Container(width: 8, height: 8, decoration: BoxDecoration(color: _stateColor[st] ?? _grey, shape: BoxShape.circle)),
+                    const SizedBox(width: 6),
+                    Text(_stLabel(st), style: TextStyle(color: _stateColor[st] ?? _grey, fontSize: 12, fontWeight: FontWeight.w800)),
+                    if (g['on_shift'] == true) ...[const SizedBox(width: 8),
+                      Container(padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                          decoration: BoxDecoration(color: const Color(0xFF16A34A).withValues(alpha: .2), borderRadius: BorderRadius.circular(20)),
+                          child: Text(tr('على الشيفت', 'On shift'), style: const TextStyle(color: Color(0xFF34D399), fontSize: 10, fontWeight: FontWeight.w800)))],
+                  ]),
+                ])),
+              ]),
+              const SizedBox(height: 14),
+              Row(children: [
+                Expanded(child: _miniStat(tr('مهام مفتوحة', 'Open tasks'), '${g['tasks_open'] ?? 0}', const Color(0xFFF59E0B))),
+                const SizedBox(width: 10),
+                Expanded(child: _miniStat(tr('مهام منجزة', 'Done'), '${g['tasks_done'] ?? 0}', _green)),
+              ]),
+              const SizedBox(height: 12),
+              kv(Icons.groups_rounded, tr('الفريق', 'Team'), g['team'] as String?),
+              kv(Icons.location_on_rounded, tr('الموقع', 'Premise'), g['premise'] as String?),
+              kv(Icons.badge_rounded, tr('البادج', 'Badge'), g['badge'] as String?),
+              kv(Icons.phone_rounded, tr('الهاتف', 'Phone'), g['phone'] as String?),
+              kv(Icons.login_rounded, tr('بداية الشيفت', 'Shift since'), g['shift_since'] as String?),
+              kv(Icons.access_time_rounded, tr('آخر ظهور', 'Last seen'), g['last_seen'] as String?),
+              if (g['heart_rate'] != null) kv(Icons.favorite_rounded, tr('نبض القلب', 'Heart rate'), '${g['heart_rate']}'),
+              if (g['battery'] != null) kv(Icons.battery_full_rounded, tr('البطارية', 'Battery'), '${g['battery']}%'),
+            ]),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _miniStat(String label, String value, Color c) => Container(
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        decoration: BoxDecoration(color: const Color(0xFF1B2A44), borderRadius: BorderRadius.circular(12)),
+        child: Column(children: [
+          Text(value, style: TextStyle(color: c, fontSize: 20, fontWeight: FontWeight.w900)),
+          Text(label, style: const TextStyle(color: _grey, fontSize: 11)),
+        ]),
+      );
+
   List<Map> get _guards => ((_opts?['guards'] as List?) ?? const []).cast<Map>();
   List<Map> get _routes => ((_opts?['routes'] as List?) ?? const []).cast<Map>();
   List<Map> get _teams => ((_opts?['teams'] as List?) ?? const []).cast<Map>();
@@ -118,15 +195,25 @@ class _SecuritySupervisorScreenState extends State<SecuritySupervisorScreen> {
         ]),
         if (members.isNotEmpty) ...[
           const Divider(color: Color(0xFF24344C), height: 20),
-          for (final m in members) Padding(padding: const EdgeInsets.only(bottom: 8), child: Row(children: [
-            Container(width: 9, height: 9, decoration: BoxDecoration(color: _stateColor[m['state']] ?? _grey, shape: BoxShape.circle)),
-            const SizedBox(width: 9),
-            Expanded(child: Text('${m['name']}', style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600))),
-            if (m['heart_rate'] != null) ...[const Icon(Icons.favorite_rounded, color: _red, size: 12), const SizedBox(width: 3),
-              Text('${m['heart_rate']}', style: const TextStyle(color: _grey, fontSize: 11))],
-            const SizedBox(width: 10),
-            Text(_stLabel('${m['state']}'), style: TextStyle(color: _stateColor[m['state']] ?? _grey, fontSize: 11, fontWeight: FontWeight.w800)),
-          ])),
+          for (final m in members) InkWell(
+            onTap: () => _openGuard(m['guard_id'] as int?, '${m['name']}'),
+            borderRadius: BorderRadius.circular(8),
+            child: Padding(padding: const EdgeInsets.symmetric(vertical: 6), child: Row(children: [
+              Container(width: 9, height: 9, decoration: BoxDecoration(color: _stateColor[m['state']] ?? _grey, shape: BoxShape.circle)),
+              const SizedBox(width: 9),
+              Expanded(child: Text('${m['name']}', style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600))),
+              if (m['on_shift'] == true) ...[
+                Container(padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                    decoration: BoxDecoration(color: const Color(0xFF16A34A).withValues(alpha: .18), borderRadius: BorderRadius.circular(20)),
+                    child: Text(tr('على الشيفت', 'On shift'), style: const TextStyle(color: Color(0xFF34D399), fontSize: 9.5, fontWeight: FontWeight.w800))),
+                const SizedBox(width: 6)],
+              if (m['heart_rate'] != null) ...[const Icon(Icons.favorite_rounded, color: _red, size: 12), const SizedBox(width: 3),
+                Text('${m['heart_rate']}', style: const TextStyle(color: _grey, fontSize: 11))],
+              const SizedBox(width: 8),
+              Text(_stLabel('${m['state']}'), style: TextStyle(color: _stateColor[m['state']] ?? _grey, fontSize: 11, fontWeight: FontWeight.w800)),
+              const Icon(Icons.chevron_left_rounded, color: _grey, size: 18),
+            ])),
+          ),
         ] else Padding(padding: const EdgeInsets.only(top: 10), child: Text(tr('لا بيانات حالة بعد — تُحدَّث عند نشاط أجهزة الفريق', 'No status yet — updates as team devices report'), style: const TextStyle(color: _grey, fontSize: 11.5))),
       ]),
     );
