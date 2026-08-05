@@ -2161,7 +2161,7 @@ class _DetailSheetState extends State<_DetailSheet> {
           builder: (_) => MediaViewerScreen(media: media, index: idx < 0 ? 0 : idx, token: _token)));
     } else if (a['is_pdf'] == true) {
       Navigator.push(context, MaterialPageRoute(builder: (_) => PdfReportScreen(
-          path: '/management/attachment/${a['id']}', title: '${a['name']}', fileName: '${a['name']}')));
+          path: '/api/v1/management/attachment/${a['id']}', title: '${a['name']}', fileName: '${a['name']}')));
     } else {
       // other file types: open the download/share viewer
       Navigator.push(context, MaterialPageRoute(builder: (_) => MediaViewerScreen(
@@ -3622,7 +3622,7 @@ class _DetailSheetState extends State<_DetailSheet> {
           media: [{'url': url, 'name': f['name'], 'type': 'image'}], token: _token)));
     } else if (id != null) {
       Navigator.push(context, MaterialPageRoute(builder: (_) => PdfReportScreen(
-          path: '/management/attachment/$id', title: '${f['name']}', fileName: '${f['name']}')));
+          path: '/api/v1/management/attachment/$id', title: '${f['name']}', fileName: '${f['name']}')));
     } else if (f['url'] != null) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('${f['url']}')));
     }
