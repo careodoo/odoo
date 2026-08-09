@@ -2756,6 +2756,38 @@ class ApiClient {
               _u('/waste/ops/order/$orderId/assign'),
               headers: await _headers(), body: jsonEncode({'driver_id': driverId}))))['data'] as Map);
 
+  // ===== طلبات الفواتير (رفع + اعتماد مدير + مالية) =====
+  /// قائمة طلبات الفواتير — تُعيد الاستجابة كاملة (data + counts).
+  Future<Map<String, dynamic>> invoiceRequests({String filter = 'all', String? q}) async {
+    final qp = <String>['filter=$filter'];
+    if (q != null && q.isNotEmpty) qp.add('q=${Uri.encodeQueryComponent(q)}');
+    return Map<String, dynamic>.from(await _handle(await _net.get(
+        _u('/invoice-requests?${qp.join('&')}'), headers: await _headers())));
+  }
+
+  Future<Map<String, dynamic>> invoiceRequestDetail(int id) async =>
+      Map<String, dynamic>.from((await _handle(await _net.get(
+              _u('/invoice-requests/$id'), headers: await _headers())))['data'] as Map);
+
+  Future<List<dynamic>> invoiceRequestContracts() async =>
+      List<dynamic>.from((await _handle(await _net.get(
+              _u('/invoice-requests/contracts'), headers: await _headers())))['data'] as List);
+
+  Future<Map<String, dynamic>> invoiceRequestRaise(int contractId, String? invoiceDate) async =>
+      Map<String, dynamic>.from((await _handle(await _net.post(
+              _u('/invoice-requests/raise'), headers: await _headers(),
+              body: jsonEncode({'contract_id': contractId, if (invoiceDate != null) 'invoice_date': invoiceDate}))))['data'] as Map);
+
+  /// action ∈ submit | send-direct | manager-approve | finance-generate
+  Future<Map<String, dynamic>> invoiceRequestAction(int id, String action) async =>
+      Map<String, dynamic>.from((await _handle(await _net.post(
+              _u('/invoice-requests/$id/$action'), headers: await _headers())))['data'] as Map);
+
+  Future<Map<String, dynamic>> invoiceRequestReject(int id, String reason) async =>
+      Map<String, dynamic>.from((await _handle(await _net.post(
+              _u('/invoice-requests/$id/reject'), headers: await _headers(),
+              body: jsonEncode({'reason': reason}))))['data'] as Map);
+
   /// Account profile info + stats.
   Future<Map<String, dynamic>> accountInfo() async =>
       Map<String, dynamic>.from((await _handle(

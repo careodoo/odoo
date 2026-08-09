@@ -40,6 +40,9 @@ class Profile {
     this.isSecurityManager = false,
     required this.isAdmin,
     required this.canAddWorkers,
+    this.riCreator = false,
+    this.riManager = false,
+    this.riFinance = false,
     required this.serviceTypes,
     required this.services,
     required this.counts,
@@ -61,6 +64,10 @@ class Profile {
   final bool isSecurityManager;
   final bool isAdmin;
   final bool canAddWorkers;
+  /// أدوار طلبات الفواتير
+  final bool riCreator;
+  final bool riManager;
+  final bool riFinance;
   final List<String> serviceTypes;
   final List<Service> services;
   final Counts counts;
@@ -82,6 +89,9 @@ class Profile {
       isProjectManager: j['is_project_manager'] as bool? ?? false,
       isSecuritySupervisor: j['is_security_supervisor'] as bool? ?? false,
       isSecurityManager: j['is_security_manager'] as bool? ?? false,
+      riCreator: j['ri_creator'] as bool? ?? false,
+      riManager: j['ri_manager'] as bool? ?? false,
+      riFinance: j['ri_finance'] as bool? ?? false,
       isAdmin: j['is_admin'] as bool? ?? false,
       canAddWorkers: j['can_add_workers'] as bool? ?? false,
       serviceTypes: List<String>.from((j['my_service_types'] as List?) ?? const []),

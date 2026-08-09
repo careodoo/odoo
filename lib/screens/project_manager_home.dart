@@ -10,6 +10,7 @@ import 'client_team_screen.dart';
 import 'quality_screen.dart';
 import 'schedules_screen.dart';
 import 'requests_screen.dart';
+import 'invoice_requests_screen.dart';
 import 'maintenance_screen.dart';
 import 'attendance_screen.dart';
 import 'client_analytics_screen.dart';
@@ -74,6 +75,8 @@ class _ProjectManagerHomeState extends State<ProjectManagerHome> {
       (Icons.fact_check_rounded, tr('الجودة', 'Quality'), const Color(0xFF0EA5A4), () => go(const QualityScreen())),
       (Icons.event_repeat_rounded, tr('الجدولة', 'Schedules'), const Color(0xFF0D9488), () => go(const SchedulesScreen())),
       (Icons.inbox_rounded, tr('طلبات الخدمة', 'Requests'), const Color(0xFFE6295C), () => go(const RequestsScreen())),
+      if (p.riCreator || p.riManager || p.riFinance)
+        (Icons.request_quote_rounded, tr('طلبات الفواتير', 'Invoice requests'), const Color(0xFF123A6B), () => go(const InvoiceRequestsScreen())),
       (Icons.handyman_rounded, tr('الصيانة', 'Maintenance'), const Color(0xFFF7A23B), () => go(const MaintenanceScreen())),
       (Icons.fingerprint_rounded, tr('الحضور', 'Attendance'), const Color(0xFF7C3AED), () => go(const AttendanceScreen())),
       (Icons.insights_rounded, tr('التحليلات', 'Analytics'), const Color(0xFF2563EB), () => go(const ClientAnalyticsScreen())),
