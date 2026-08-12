@@ -59,8 +59,17 @@ class _ShiftToggleState extends State<ShiftToggle> {
       final p = await _pos();
       if (p == null) { setState(() => _busy = false); return; }
       if (open) {
-        await api.shiftOpen(p.latitude, p.longitude);
-        _snack(tr('بدأت الوردية — أنت متاح الآن', 'Shift started — you are now available'));
+        final res = await api.shiftOpen(p.latitude, p.longitude);
+        final late = (res['late_minutes'] as num?)?.toInt() ?? 0;
+        final sch = res['schedule'] as Map?;
+        final win = sch != null ? ' (${sch['start']}–${sch['end']})' : '';
+        if (late > 10) {
+          _snack(tr('بدأت الوردية — متأخر $late دقيقة عن الموعد$win',
+                    'Shift started — $late min late$win'));
+        } else {
+          _snack(tr('بدأت الوردية في الموعد — أنت متاح الآن$win',
+                    'Shift started on time — you are now available$win'));
+        }
       } else {
         await api.shiftClose(p.latitude, p.longitude);
         _snack(tr('انتهت الوردية', 'Shift ended'));
@@ -76,11 +85,13 @@ class _ShiftToggleState extends State<ShiftToggle> {
   @override
   Widget build(BuildContext context) {
     final open = _shift?['open'] != null;
+    final sched = _shift?['scheduled'] as Map?;
+    final schedTxt = sched != null ? ' • ${sched['period'] ?? ''} ${sched['start']}–${sched['end']}' : '';
     final onC = widget.onSurface ? Colors.white : Theme.of(context).colorScheme.onSurface;
     final live = open ? const Color(0xFF22C55E) : (widget.onSurface ? Colors.white70 : const Color(0xFF94A3B8));
     return Tooltip(
-      message: open ? tr('وردية مفتوحة — اضغط للإنهاء', 'On shift — tap to end')
-                    : tr('خارج الوردية — اضغط للبدء', 'Off shift — tap to start'),
+      message: (open ? tr('وردية مفتوحة — اضغط للإنهاء', 'On shift — tap to end')
+                     : tr('خارج الوردية — اضغط للبدء', 'Off shift — tap to start')) + schedTxt,
       child: InkWell(
         borderRadius: BorderRadius.circular(30),
         onTap: (_busy || _loading) ? null : () => _toggle(!open),
