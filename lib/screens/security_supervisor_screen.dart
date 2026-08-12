@@ -207,6 +207,16 @@ class _SecuritySupervisorScreenState extends State<SecuritySupervisorScreen> {
                     decoration: BoxDecoration(color: const Color(0xFF16A34A).withValues(alpha: .18), borderRadius: BorderRadius.circular(20)),
                     child: Text(tr('على الشيفت', 'On shift'), style: const TextStyle(color: Color(0xFF34D399), fontSize: 9.5, fontWeight: FontWeight.w800))),
                 const SizedBox(width: 6)],
+              if (m['shift_type'] != null) ...[
+                Builder(builder: (_) {
+                  final morning = m['shift_type'] == 'الصباح';
+                  final c = morning ? const Color(0xFFFBBF24) : const Color(0xFF818CF8);
+                  return Container(padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                      decoration: BoxDecoration(color: c.withValues(alpha: .18), borderRadius: BorderRadius.circular(20)),
+                      child: Text('${morning ? '☀️' : '🌙'} ${morning ? tr('صباح', 'Morning') : tr('ليل', 'Night')}',
+                          style: TextStyle(color: c, fontSize: 9.5, fontWeight: FontWeight.w800)));
+                }),
+                const SizedBox(width: 6)],
               if (m['heart_rate'] != null) ...[const Icon(Icons.favorite_rounded, color: _red, size: 12), const SizedBox(width: 3),
                 Text('${m['heart_rate']}', style: const TextStyle(color: _grey, fontSize: 11))],
               const SizedBox(width: 8),
