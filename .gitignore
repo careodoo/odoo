@@ -50,3 +50,5 @@ android/key.properties
 android/care-release.jks
 RELEASE_KEYSTORE_B64.txt
 android/.kotlin/
+ci/care_release.keystore
+ci/*.keystore

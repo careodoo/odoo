@@ -232,6 +232,7 @@ class _PmsEmployeeFileScreenState extends State<PmsEmployeeFileScreen> {
     ('custody', tr('العهد', 'Custody'), Icons.inventory_2_rounded, const Color(0xFF9A3412), 'custody'),
     ('transfers', tr('الانتقالات', 'Transfers'), Icons.swap_horiz_rounded, const Color(0xFF7C3AED), 'transfers'),
     ('documents', tr('المستندات والصور', 'Documents & photos'), Icons.folder_shared_rounded, const Color(0xFFB45309), 'documents'),
+    ('attachments', tr('الأوراق المرفقة', 'Attached files'), Icons.attach_file_rounded, const Color(0xFF0EA5E9), 'attachments'),
     ('docs', tr('طلبات المستندات', 'Document requests'), Icons.description_rounded, const Color(0xFF8B5CF6), 'docs'),
     ('payslips', tr('كشوف الرواتب', 'Payslips'), Icons.receipt_long_rounded, const Color(0xFF16A34A), 'payslips'),
     ('loans', tr('السُّلف', 'Loans'), Icons.savings_rounded, const Color(0xFF0D9488), 'loans'),
@@ -967,6 +968,41 @@ class _EmpSectionSheetState extends State<_EmpSectionSheet> {
             ),
           ])),
         ]);
+      case 'attachments':
+        final kind = '${m['kind'] ?? 'file'}';
+        final url = '${m['url'] ?? ''}';
+        final name = '${m['name'] ?? tr('ملف', 'File')}';
+        final icon = kind == 'pdf'
+            ? Icons.picture_as_pdf_rounded
+            : (kind == 'image' ? Icons.image_rounded : Icons.insert_drive_file_rounded);
+        return InkWell(
+          onTap: () {
+            if (url.isEmpty) return;
+            if (kind == 'image') {
+              Navigator.push(context, MaterialPageRoute(builder: (_) => PmsPhotoView(url: url, title: name)));
+            } else if (kind == 'pdf') {
+              Navigator.push(context, MaterialPageRoute(builder: (_) => PdfReportScreen(
+                  url: url, title: name, fileName: name.endsWith('.pdf') ? name : '$name.pdf')));
+            } else {
+              launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+            }
+          },
+          child: _wrap([
+            Row(children: [
+              Container(width: 40, height: 40, decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(10)),
+                  child: Icon(icon, color: color, size: 21)),
+              const SizedBox(width: 11),
+              Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Text(name, maxLines: 2, overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: Pms.ink)),
+                if (m['date'] != null)
+                  Text('${m['date']}', style: const TextStyle(fontSize: 11, color: Pms.slate, fontWeight: FontWeight.w600)),
+              ])),
+              Icon(kind == 'file' ? Icons.open_in_new_rounded : Icons.visibility_rounded, size: 18, color: color),
+            ]),
+          ]),
+        );
       case 'payslips':
         return _wrap([
           _titleRow('${m['name'] ?? tr('كشف راتب', 'Payslip')}',
