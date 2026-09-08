@@ -2168,6 +2168,22 @@ class ApiClient {
 
   String pmsSuspensionReportPath(int id) => '/pms/suspension/$id/report';
 
+  // ---- Resume Work (مباشرة العمل بعد توقف) ----
+  Future<Map<String, dynamic>> pmsResume(int id) async =>
+      Map<String, dynamic>.from((await _handle(await _net.get(
+          _u('/pms/resume/$id'), headers: await _headers())))['data'] as Map);
+
+  Future<Map<String, dynamic>> pmsResumeCreate(int eid, Map<String, dynamic> body) async =>
+      Map<String, dynamic>.from((await _handle(await _net.post(
+          _u('/pms/employee/$eid/resume-create'), headers: await _headers(),
+          body: jsonEncode(body))))['data'] as Map);
+
+  Future<Map<String, dynamic>> pmsResumeAction(int id, String act) async =>
+      Map<String, dynamic>.from((await _handle(await _net.post(
+          _u('/pms/resume/$id/$act'), headers: await _headers())))['data'] as Map);
+
+  String pmsResumeReportPath(int id) => '/pms/resume/$id/report';
+
   // ---- Request Items (طلب الأصناف) ----
   Future<Map<String, dynamic>> pmsItemRequest(int id) async =>
       Map<String, dynamic>.from((await _handle(await _net.get(

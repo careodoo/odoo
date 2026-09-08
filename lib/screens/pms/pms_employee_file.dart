@@ -343,6 +343,16 @@ class _PmsEmployeeFileScreenState extends State<PmsEmployeeFileScreen> {
                 label: Text(tr('طلب إيقاف عن العمل', 'New suspension request'),
                     style: const TextStyle(fontWeight: FontWeight.w800)),
               )),
+            // زر مباشرة العمل — يظهر للعامل الموقوف حالياً (يُلغي الإيقاف عند الاعتماد)
+            if ((s['can_create'] ?? false) == true && _isSuspended(emp))
+              Padding(padding: const EdgeInsets.only(top: 8),
+                child: SizedBox(width: double.infinity, child: FilledButton.icon(
+                  style: FilledButton.styleFrom(backgroundColor: const Color(0xFF16A34A), padding: const EdgeInsets.symmetric(vertical: 12)),
+                  onPressed: () => _newResume(emp),
+                  icon: const Icon(Icons.play_circle_rounded, size: 18),
+                  label: Text(tr('طلب مباشرة عمل (بعد توقف)', 'Resume work request'),
+                      style: const TextStyle(fontWeight: FontWeight.w800)),
+                ))),
             if (rows.isEmpty) Padding(padding: const EdgeInsets.only(top: 10),
                 child: Text(tr('لا طلبات إيقاف سابقة.', 'No previous suspension requests.'),
                     style: TextStyle(color: Colors.grey.shade600, fontSize: 12.5))),
@@ -419,6 +429,79 @@ class _PmsEmployeeFileScreenState extends State<PmsEmployeeFileScreen> {
       setState(() => _f = api.pmsEmployeeFile(widget.employeeId));
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
           content: Text(tr('تم إرسال طلب الإيقاف إلى الموارد البشرية', 'Suspension request sent to HR')),
+          backgroundColor: const Color(0xFF16A34A)));
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('$e'), backgroundColor: const Color(0xFFE5484D)));
+    }
+  }
+
+  // هل العامل موقوف حالياً؟ (من علامات worker_status)
+  bool _isSuspended(Map emp) {
+    final marks = (emp['marks'] as List?) ?? const [];
+    return marks.any((m) => (m is Map) &&
+        (m['key'] == 'worker_status') &&
+        '${m['label'] ?? ''}'.toLowerCase().contains('suspend'));
+  }
+
+  Future<void> _newResume(Map emp) async {
+    final api = context.read<AuthProvider>().api;
+    final ctrl = TextEditingController();
+    DateTime retDate = DateTime.now();
+    final ok = await showModalBottomSheet<bool>(
+      context: context, isScrollControlled: true, showDragHandle: true,
+      builder: (ctx) => StatefulBuilder(builder: (ctx, setSt) => Padding(
+        padding: EdgeInsets.only(left: 18, right: 18, top: 6, bottom: MediaQuery.of(ctx).viewInsets.bottom + 20),
+        child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Row(children: [
+            const Icon(Icons.play_circle_rounded, color: Color(0xFF16A34A)),
+            const SizedBox(width: 8),
+            Expanded(child: Text(tr('طلب مباشرة عمل (بعد توقف)', 'Resume work request'),
+                style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16))),
+          ]),
+          const SizedBox(height: 4),
+          Text('${emp['name'] ?? ''}', style: TextStyle(color: Colors.grey.shade700, fontWeight: FontWeight.w700)),
+          const SizedBox(height: 14),
+          ListTile(
+            contentPadding: EdgeInsets.zero,
+            leading: const Icon(Icons.event_available_rounded, color: Color(0xFF16A34A)),
+            title: Text(tr('تاريخ العودة', 'Return date')),
+            subtitle: Text('${retDate.toIso8601String().substring(0, 10)}',
+                style: const TextStyle(fontWeight: FontWeight.w800)),
+            trailing: const Icon(Icons.edit_calendar_rounded),
+            onTap: () async {
+              final d = await showDatePicker(context: ctx, initialDate: retDate,
+                  firstDate: DateTime(2020), lastDate: DateTime(2035));
+              if (d != null) setSt(() => retDate = d);
+            },
+          ),
+          TextField(controller: ctrl, decoration: InputDecoration(
+              labelText: tr('ملاحظات (اختياري)', 'Notes (optional)'),
+              border: const OutlineInputBorder())),
+          const SizedBox(height: 8),
+          Text(tr('سيعود العامل إلى مشروعه/إدارته السابقة، ويُلغى الإيقاف عند اعتماد الموارد البشرية.',
+              'The worker returns to their previous project/department; the suspension is cancelled upon HR approval.'),
+              style: TextStyle(color: Colors.grey.shade600, fontSize: 12)),
+          const SizedBox(height: 14),
+          SizedBox(width: double.infinity, child: FilledButton.icon(
+            style: FilledButton.styleFrom(backgroundColor: const Color(0xFF16A34A), padding: const EdgeInsets.symmetric(vertical: 14)),
+            onPressed: () => Navigator.pop(ctx, true),
+            icon: const Icon(Icons.send_rounded, size: 18),
+            label: Text(tr('إرسال للموارد البشرية', 'Send to HR'), style: const TextStyle(fontWeight: FontWeight.w800)),
+          )),
+        ]),
+      )),
+    );
+    if (ok != true) return;
+    try {
+      await api.pmsResumeCreate(widget.employeeId, {
+        'return_date': retDate.toIso8601String().substring(0, 10),
+        'note': ctrl.text.trim(), 'submit': true,
+      });
+      if (!mounted) return;
+      setState(() => _f = api.pmsEmployeeFile(widget.employeeId));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(tr('تم إرسال طلب المباشرة إلى الموارد البشرية', 'Resume request sent to HR')),
           backgroundColor: const Color(0xFF16A34A)));
     } catch (e) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(
