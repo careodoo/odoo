@@ -22,6 +22,7 @@ import 'employee_attendance_screen.dart';
 import 'notifications_screen.dart';
 import 'chat_screen.dart';
 import 'worker_file_screen.dart';
+import 'licenses_screen.dart';
 
 /// Role router: the same app opens a different face depending on who logs in.
 /// A security guard lands on the security command screen; a cleaner/agri worker
@@ -72,6 +73,7 @@ class WorkerHome extends StatelessWidget {
         (Icons.roofing_rounded, tr('تصاريح الارتفاع', 'Height permits'), 'Height permits', const Color(0xFF7C3AED), () => go(ServiceScreen(kind: 'facade', title: tr('تصاريح الواجهات', 'Facade permits')))),
       (Icons.inventory_2_rounded, tr('صرف مواد', 'Issue materials'), 'Issue materials', const Color(0xFF0E7490), () => go(const ClientInventoryScreen())),
       (Icons.forum_rounded, tr('التواصل', 'Messages'), 'Messages', const Color(0xFF0E7490), () => go(const ChatHubScreen())),
+      (Icons.verified_user_rounded, tr('التراخيص والاشتراكات', 'Licenses'), 'Licenses', const Color(0xFF0F2B5B), () => go(const LicensesScreen())),
       (Icons.workspace_premium_rounded, tr('إنجازاتي', 'My achievements'), 'My achievements', const Color(0xFFF59E0B), () => go(const MyProfileScreen())),
       (Icons.badge_rounded, tr('ملفي', 'My file'), 'My file', const Color(0xFF0E7490), () => go(const WorkerFileScreen())),
       if (p.employeeId != null)

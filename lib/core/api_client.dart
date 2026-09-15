@@ -890,6 +890,39 @@ class ApiClient {
               _u('/permits/$id/${direction == 'in' ? 'entry' : 'exit'}'),
               headers: await _headers(), body: jsonEncode(body))))['data'] as Map);
 
+  // ============ التراخيص والاشتراكات (Licenses & Subscriptions) ============
+  /// لوحة تحكم التراخيص (مؤشّرات + دائرة + أعمدة + خط زمني) — مُنطاقة للمستخدم.
+  Future<Map<String, dynamic>> licensesDashboard() async =>
+      Map<String, dynamic>.from((await _handle(await _net.get(
+              _u('/licenses/dashboard'), headers: await _headers())))['data'] as Map);
+
+  /// تراخيصي (قائمة مُنطاقة). status: valid|expiring|expired|action | q: بحث.
+  Future<Map<String, dynamic>> licensesMine({String? status, String? q}) async {
+    final p = <String>[
+      if (status != null && status != 'all') 'status=$status',
+      if (q != null && q.trim().isNotEmpty) 'q=${Uri.encodeQueryComponent(q.trim())}',
+    ].join('&');
+    final body = await _handle(await _net.get(
+        _u('/licenses/mine${p.isEmpty ? '' : '?$p'}'), headers: await _headers()));
+    return {'data': List<dynamic>.from(body['data'] as List), 'count': body['count'] ?? 0};
+  }
+
+  Future<Map<String, dynamic>> licenseDetail(int id) async =>
+      Map<String, dynamic>.from((await _handle(await _net.get(
+              _u('/licenses/$id'), headers: await _headers())))['data'] as Map);
+
+  Future<Map<String, dynamic>> licenseRenew(int id, Map<String, dynamic> body) async =>
+      Map<String, dynamic>.from((await _handle(await _net.post(_u('/licenses/$id/renew'),
+              headers: await _headers(), body: jsonEncode(body))))['data'] as Map);
+
+  Future<Map<String, dynamic>> licenseOptions() async =>
+      Map<String, dynamic>.from((await _handle(await _net.get(
+              _u('/licenses/options'), headers: await _headers())))['data'] as Map);
+
+  Future<Map<String, dynamic>> licenseCreate(Map<String, dynamic> body) async =>
+      Map<String, dynamic>.from((await _handle(await _net.post(_u('/licenses/create'),
+              headers: await _headers(), body: jsonEncode(body))))['data'] as Map);
+
   // ---- أدوات مشرف الأمن (إنشاء/إسناد/إشعار/حالة الفريق) ------------------
   Future<Map<String, dynamic>> securitySupOptions() async =>
       Map<String, dynamic>.from((await _handle(await _net.get(
