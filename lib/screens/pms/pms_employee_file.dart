@@ -761,7 +761,6 @@ class _EmpSectionSheetState extends State<_EmpSectionSheet> {
     'custody': 'care.custody',
     // إجراءات العامل
     'transfers': 'employee.shift.request',
-    'docs': 'care.document.request',
     'return': 'hr.action.leave.return',
     'joining': 'hr.action.joining',
     'absence': 'hr.action.absence',
