@@ -245,6 +245,15 @@ class _PmsEmployeeFileScreenState extends State<PmsEmployeeFileScreen> {
     ('violations', tr('المخالفات المرورية', 'Traffic violations'), Icons.report_rounded, const Color(0xFFDC2626), 'violations'),
     ('legal', tr('الحالة القانونية', 'Legal status'), Icons.balance_rounded, const Color(0xFF7C2D12), 'legal'),
     ('devices', tr('أجهزة البصمة', 'Biometric devices'), Icons.fingerprint_rounded, const Color(0xFF475569), 'devices'),
+    // ===== إجراءات العامل (مطابقة لبورتال مدير المشاريع) =====
+    ('return', tr('العودة من إجازة', 'Leave return'), Icons.keyboard_return_rounded, const Color(0xFF0891B2), 'return'),
+    ('joining', tr('التحاق', 'Joining'), Icons.login_rounded, const Color(0xFF16A34A), 'joining'),
+    ('absence', tr('غياب', 'Absence'), Icons.event_busy_rounded, const Color(0xFFDC2626), 'absence'),
+    ('clearance', tr('إخلاء طرف', 'Clearance'), Icons.assignment_turned_in_rounded, const Color(0xFF7C3AED), 'clearance'),
+    ('suspension_req', tr('إيقاف عن العمل', 'Work suspension'), Icons.block_rounded, const Color(0xFFB91C1C), 'suspension_req'),
+    ('worker_doc', tr('وثيقة عامل', 'Worker document'), Icons.badge_rounded, const Color(0xFFB45309), 'worker_doc'),
+    ('resignation', tr('استقالة', 'Resignation'), Icons.waving_hand_rounded, const Color(0xFFEA580C), 'resignation'),
+    ('exit_iv', tr('مقابلة إنهاء خدمة', 'Exit interview'), Icons.exit_to_app_rounded, const Color(0xFF7C2D12), 'exit_iv'),
   ];
 
   Widget _sectionsHub(Map d) {
@@ -750,6 +759,17 @@ class _EmpSectionSheetState extends State<_EmpSectionSheet> {
     'eos': 'care.eos',
     'permissions': 'permission.request',
     'custody': 'care.custody',
+    // إجراءات العامل
+    'transfers': 'employee.shift.request',
+    'docs': 'care.document.request',
+    'return': 'hr.action.leave.return',
+    'joining': 'hr.action.joining',
+    'absence': 'hr.action.absence',
+    'clearance': 'hr.action.clearance',
+    'suspension_req': 'care.suspension.request',
+    'worker_doc': 'care.worker.document',
+    'resignation': 'hr.employee.resignation',
+    'exit_iv': 'exit.interview',
   };
 
   Future<void> _empSubCreate(String model) async {

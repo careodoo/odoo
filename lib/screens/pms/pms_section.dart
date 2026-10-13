@@ -37,6 +37,7 @@ const Map<String, IconData> kPmsSectionIcons = {
   'items': Icons.playlist_add_check_rounded,
   'manpower': Icons.groups_3_rounded,
   'permits': Icons.verified_user_rounded,
+  'workshops': Icons.handyman_rounded,
 };
 
 const Map<String, Color> kPmsSectionColors = {
@@ -60,6 +61,7 @@ const Map<String, Color> kPmsSectionColors = {
   'items': Color(0xFF0F766E),
   'manpower': Color(0xFF4338CA),
   'permits': Color(0xFF0D9488),
+  'workshops': Color(0xFFEA580C),
 };
 
 /// One project section — the same shape the portal shows, rendered natively.
@@ -107,7 +109,7 @@ class _PmsSectionScreenState extends State<PmsSectionScreen> {
       'timesheet': 'timesheet', 'requests': 'docrequest',
       'assets': 'custody', 'fuel': 'fuel', 'materials': 'material',
       'suspension': 'suspension', 'items': 'items', 'manpower': 'manpower',
-      'permits': 'permits',
+      'permits': 'permits', 'workshops': 'workshop',
     }[widget.code];
     return Scaffold(
       backgroundColor: Pms.bg,
@@ -398,6 +400,7 @@ class _PmsSectionScreenState extends State<PmsSectionScreen> {
         'items': tr('طلب أصناف جديد', 'New item request'),
         'manpower': tr('طلب قوى عاملة', 'New requisition'),
         'permits': tr('تصريح جديد', 'New permit'),
+        'workshops': tr('ورشة جديدة', 'New workshop'),
       }[widget.code] ?? tr('إضافة', 'Add');
 
   /// The create sheet, built per-section from its options endpoint.
@@ -417,11 +420,15 @@ class _PmsSectionScreenState extends State<PmsSectionScreen> {
                   ? _ManpowerCreateSheet(color: _c, options: opts)
                   : widget.code == 'permits'
                       ? _PermitCreateSheet(color: _c, options: opts)
-                      : _CreateSheet(code: widget.code, color: _c, options: opts),
+                      : widget.code == 'workshops'
+                          ? _WorkshopCreateSheet(color: _c, options: opts)
+                          : _CreateSheet(code: widget.code, color: _c, options: opts),
     );
     if (result == null) return;
     try {
-      if (widget.code == 'permits') {
+      if (widget.code == 'workshops') {
+        await context.read<AuthProvider>().api.pmsWorkshopCreate(widget.projectId, result);
+      } else if (widget.code == 'permits') {
         await context.read<AuthProvider>().api.pmsPermitCreate(widget.projectId, result);
       } else if (widget.code == 'manpower') {
         await context.read<AuthProvider>().api.pmsManpowerCreate(widget.projectId, result);
@@ -662,10 +669,21 @@ class _PmsSectionScreenState extends State<PmsSectionScreen> {
           _openManpower(r['id'] as int);
         } else if (opens == 'permit') {
           _openPermit(r['id'] as int);
+        } else if (opens == 'workshop') {
+          _openWorkshop(r['id'] as int);
         }
       },
       child: inner,
     );
+  }
+
+  Future<void> _openWorkshop(int id) async {
+    await showModalBottomSheet(
+      context: context, isScrollControlled: true, backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(22))),
+      builder: (_) => _WorkshopDetailSheet(workshopId: id, color: _c),
+    );
+    if (mounted) setState(_load);
   }
 
   Future<void> _openPermit(int id) async {
@@ -4429,4 +4447,457 @@ class _PermitDetailSheetState extends State<_PermitDetailSheet> {
                 style: FilledButton.styleFrom(backgroundColor: c, padding: const EdgeInsets.symmetric(vertical: 12)),
                 onPressed: _busy ? null : onTap, icon: Icon(ic, size: 18), label: Text(t, style: const TextStyle(fontWeight: FontWeight.w800)))),
       );
+}
+
+// ==================== أوامر الورش (Workshops) ====================
+/// منتقي قابل للبحث (عميل/عامل/منتج) — يعالج القوائم الطويلة (2000 عامل).
+Future<Map<String, dynamic>?> _wsPick(BuildContext context, Color color, String title,
+    List<Map<String, dynamic>> items) {
+  final ctrl = TextEditingController();
+  return showModalBottomSheet<Map<String, dynamic>>(
+    context: context, isScrollControlled: true, backgroundColor: Colors.white,
+    shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+    builder: (ctx) => StatefulBuilder(builder: (ctx, ss) {
+      final q = ctrl.text.trim().toLowerCase();
+      final filtered = q.isEmpty
+          ? items
+          : items.where((e) => ('${e['name'] ?? ''} ${e['search'] ?? ''} ${e['badge'] ?? ''}')
+              .toLowerCase().contains(q)).toList();
+      return Padding(
+        padding: EdgeInsets.fromLTRB(14, 12, 14, MediaQuery.of(ctx).viewInsets.bottom + 12),
+        child: Column(mainAxisSize: MainAxisSize.min, children: [
+          Text(title, style: TextStyle(fontWeight: FontWeight.w900, fontSize: 15, color: color)),
+          const SizedBox(height: 10),
+          TextField(controller: ctrl, autofocus: true, onChanged: (_) => ss(() {}),
+              decoration: InputDecoration(prefixIcon: const Icon(Icons.search_rounded),
+                  hintText: tr('بحث بالاسم أو الرقم…', 'Search by name or no…'),
+                  isDense: true, border: const OutlineInputBorder())),
+          const SizedBox(height: 8),
+          SizedBox(height: 340, child: filtered.isEmpty
+              ? Center(child: Text(tr('لا نتائج', 'No results'), style: const TextStyle(color: Pms.slate)))
+              : ListView.builder(
+                  itemCount: filtered.length > 300 ? 300 : filtered.length,
+                  itemBuilder: (_, i) {
+                    final e = filtered[i];
+                    return ListTile(dense: true,
+                        title: Text('${e['name'] ?? ''}',
+                            style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
+                        subtitle: e['badge'] != null
+                            ? Text('${e['badge']}', style: const TextStyle(fontSize: 11)) : null,
+                        onTap: () => Navigator.pop(ctx, e));
+                  })),
+        ]),
+      );
+    }),
+  );
+}
+
+class _WsWorkerLine {
+  int? empId;
+  String? empName;
+  String rateType = 'daily';
+  final rate = TextEditingController();
+  final qty = TextEditingController(text: '1');
+  final allow = TextEditingController();
+}
+
+class _WsMaterialLine {
+  int? prodId;
+  String? prodName;
+  double cost = 0;
+  final qty = TextEditingController(text: '1');
+}
+
+class _WorkshopCreateSheet extends StatefulWidget {
+  final Color color;
+  final Map<String, dynamic> options;
+  const _WorkshopCreateSheet({required this.color, required this.options});
+  @override
+  State<_WorkshopCreateSheet> createState() => _WorkshopCreateSheetState();
+}
+
+class _WorkshopCreateSheetState extends State<_WorkshopCreateSheet> {
+  final _title = TextEditingController();
+  final _price = TextEditingController();
+  final _site = TextEditingController();
+  int? _clientId;
+  String? _clientName;
+  String _cat = 'carpet';
+  String _type = 'one_time';
+  DateTime? _start;
+  DateTime? _end;
+  final List<_WsWorkerLine> _workers = [_WsWorkerLine()];
+  final List<_WsMaterialLine> _materials = [];
+
+  List<Map<String, dynamic>> _opt(String k) =>
+      (widget.options[k] as List?)?.map((e) => Map<String, dynamic>.from(e as Map)).toList() ?? [];
+
+  @override
+  void dispose() {
+    _title.dispose(); _price.dispose(); _site.dispose();
+    for (final w in _workers) { w.rate.dispose(); w.qty.dispose(); w.allow.dispose(); }
+    for (final m in _materials) { m.qty.dispose(); }
+    super.dispose();
+  }
+
+  String _fmt(DateTime d) =>
+      '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
+
+  bool get _valid =>
+      _title.text.trim().isNotEmpty && _clientId != null && _workers.any((w) => w.empId != null);
+
+  Map<String, dynamic> _payload(bool submit) => <String, dynamic>{
+        'title': _title.text.trim(),
+        'client_id': _clientId,
+        'service_category': _cat,
+        'workshop_type': _type,
+        'client_price': double.tryParse(_price.text.trim()) ?? 0,
+        if (_site.text.trim().isNotEmpty) 'site_location': _site.text.trim(),
+        if (_start != null) 'date_start': _fmt(_start!),
+        if (_end != null) 'date_end': _fmt(_end!),
+        'workers': [
+          for (final w in _workers)
+            if (w.empId != null)
+              {
+                'employee_id': w.empId,
+                'rate_type': w.rateType,
+                'rate': double.tryParse(w.rate.text.trim()) ?? 0,
+                'quantity': double.tryParse(w.qty.text.trim()) ?? 0,
+                'allowance': double.tryParse(w.allow.text.trim()) ?? 0,
+              }
+        ],
+        'materials': [
+          for (final m in _materials)
+            if (m.prodId != null)
+              {'product_id': m.prodId, 'qty': double.tryParse(m.qty.text.trim()) ?? 0, 'unit_cost': m.cost}
+        ],
+        'submit': submit,
+      };
+
+  Future<void> _pickDate(bool start) async {
+    final now = DateTime.now();
+    final d = await showDatePicker(context: context, initialDate: (start ? _start : _end) ?? now,
+        firstDate: DateTime(now.year - 1), lastDate: DateTime(now.year + 3));
+    if (d != null) setState(() { if (start) { _start = d; } else { _end = d; } });
+  }
+
+  InputDecoration _dec(String label) =>
+      InputDecoration(labelText: label, isDense: true, border: const OutlineInputBorder());
+
+  @override
+  Widget build(BuildContext context) {
+    final c = widget.color;
+    return Padding(
+      padding: EdgeInsets.fromLTRB(16, 0, 16, MediaQuery.of(context).viewInsets.bottom + 16),
+      child: ListView(shrinkWrap: true, children: [
+        Padding(padding: const EdgeInsets.only(bottom: 10),
+            child: Text(tr('ورشة جديدة', 'New workshop'),
+                style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: c))),
+        TextField(controller: _title, decoration: _dec(tr('الموضوع *', 'Subject *'))),
+        const SizedBox(height: 10),
+        InkWell(
+          onTap: () async {
+            final e = await _wsPick(context, c, tr('اختر العميل', 'Pick client'), _opt('clients'));
+            if (e != null) setState(() { _clientId = e['id'] as int?; _clientName = '${e['name']}'; });
+          },
+          child: InputDecorator(decoration: _dec(tr('العميل *', 'Client *')),
+              child: Text(_clientName ?? tr('اختر…', 'Select…'),
+                  style: TextStyle(color: _clientName == null ? Colors.grey : null))),
+        ),
+        const SizedBox(height: 10),
+        Row(children: [
+          Expanded(child: DropdownButtonFormField<String>(value: _cat, isExpanded: true,
+              decoration: _dec(tr('الفئة', 'Category')),
+              items: [for (final o in _opt('categories')) DropdownMenuItem(value: '${o['v']}', child: Text('${o['l']}', overflow: TextOverflow.ellipsis))],
+              onChanged: (v) => setState(() => _cat = v ?? _cat))),
+          const SizedBox(width: 8),
+          Expanded(child: DropdownButtonFormField<String>(value: _type, isExpanded: true,
+              decoration: _dec(tr('النوع', 'Type')),
+              items: [for (final o in _opt('types')) DropdownMenuItem(value: '${o['v']}', child: Text('${o['l']}', overflow: TextOverflow.ellipsis))],
+              onChanged: (v) => setState(() => _type = v ?? _type))),
+        ]),
+        const SizedBox(height: 10),
+        Row(children: [
+          Expanded(child: TextField(controller: _price, keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              decoration: _dec(tr('سعر العميل', 'Client price')))),
+          const SizedBox(width: 8),
+          Expanded(child: TextField(controller: _site, decoration: _dec(tr('الموقع', 'Site')))),
+        ]),
+        const SizedBox(height: 10),
+        Row(children: [
+          Expanded(child: InkWell(onTap: () => _pickDate(true),
+              child: InputDecorator(decoration: _dec(tr('من تاريخ', 'From')),
+                  child: Text(_start == null ? tr('اختياري', 'Optional') : _fmt(_start!),
+                      style: TextStyle(color: _start == null ? Colors.grey : null))))),
+          const SizedBox(width: 8),
+          Expanded(child: InkWell(onTap: () => _pickDate(false),
+              child: InputDecorator(decoration: _dec(tr('إلى تاريخ', 'To')),
+                  child: Text(_end == null ? tr('اختياري', 'Optional') : _fmt(_end!),
+                      style: TextStyle(color: _end == null ? Colors.grey : null))))),
+        ]),
+        const SizedBox(height: 14),
+        // ===== العمال =====
+        Row(children: [
+          Icon(Icons.groups_rounded, color: c, size: 18), const SizedBox(width: 6),
+          Text(tr('العمال *', 'Workers *'), style: TextStyle(fontWeight: FontWeight.w900, color: c)),
+        ]),
+        const SizedBox(height: 6),
+        for (var i = 0; i < _workers.length; i++) _workerCard(i, c),
+        Align(alignment: Alignment.centerRight, child: TextButton.icon(
+          onPressed: () => setState(() => _workers.add(_WsWorkerLine())),
+          icon: Icon(Icons.person_add_alt_1_rounded, color: c),
+          label: Text(tr('إضافة عامل', 'Add worker'), style: TextStyle(color: c, fontWeight: FontWeight.w800)))),
+        const SizedBox(height: 6),
+        // ===== المواد =====
+        Row(children: [
+          Icon(Icons.inventory_2_rounded, color: c, size: 18), const SizedBox(width: 6),
+          Text(tr('المواد (اختياري)', 'Materials (optional)'), style: TextStyle(fontWeight: FontWeight.w900, color: c)),
+        ]),
+        const SizedBox(height: 6),
+        for (var i = 0; i < _materials.length; i++) _materialCard(i, c),
+        Align(alignment: Alignment.centerRight, child: TextButton.icon(
+          onPressed: () => setState(() => _materials.add(_WsMaterialLine())),
+          icon: Icon(Icons.add_box_rounded, color: c),
+          label: Text(tr('إضافة مادة', 'Add material'), style: TextStyle(color: c, fontWeight: FontWeight.w800)))),
+        const SizedBox(height: 12),
+        Row(children: [
+          Expanded(child: OutlinedButton.icon(
+            style: OutlinedButton.styleFrom(foregroundColor: c, side: BorderSide(color: c), padding: const EdgeInsets.symmetric(vertical: 13)),
+            onPressed: _valid ? () => Navigator.pop(context, _payload(false)) : null,
+            icon: const Icon(Icons.save_rounded, size: 18),
+            label: Text(tr('حفظ كمسودّة', 'Save draft'), style: const TextStyle(fontWeight: FontWeight.w800)))),
+          const SizedBox(width: 10),
+          Expanded(child: FilledButton.icon(
+            style: FilledButton.styleFrom(backgroundColor: c, padding: const EdgeInsets.symmetric(vertical: 13)),
+            onPressed: _valid ? () => Navigator.pop(context, _payload(true)) : null,
+            icon: const Icon(Icons.send_rounded, size: 18),
+            label: Text(tr('إرسال للاعتماد', 'Submit'), style: const TextStyle(fontWeight: FontWeight.w800)))),
+        ]),
+      ]),
+    );
+  }
+
+  Widget _workerCard(int i, Color c) {
+    final w = _workers[i];
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8), padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(color: Pms.bg, borderRadius: BorderRadius.circular(12)),
+      child: Column(children: [
+        Row(children: [
+          Expanded(child: InkWell(
+            onTap: () async {
+              final e = await _wsPick(context, c, tr('اختر العامل', 'Pick worker'), _opt('employees'));
+              if (e != null) setState(() { w.empId = e['id'] as int?; w.empName = '${e['name']}'; });
+            },
+            child: InputDecorator(decoration: _dec(tr('العامل', 'Worker')),
+                child: Text(w.empName ?? tr('اختر…', 'Select…'), overflow: TextOverflow.ellipsis,
+                    style: TextStyle(color: w.empName == null ? Colors.grey : null))),
+          )),
+          if (_workers.length > 1) IconButton(
+            icon: const Icon(Icons.remove_circle_outline_rounded, color: Color(0xFFE11D48), size: 20),
+            onPressed: () => setState(() => _workers.removeAt(i))),
+        ]),
+        const SizedBox(height: 8),
+        Row(children: [
+          Expanded(child: DropdownButtonFormField<String>(value: w.rateType, isExpanded: true,
+              decoration: _dec(tr('الأجر', 'Rate')),
+              items: [for (final o in _opt('rate_types')) DropdownMenuItem(value: '${o['v']}', child: Text('${o['l']}', overflow: TextOverflow.ellipsis))],
+              onChanged: (v) => setState(() => w.rateType = v ?? w.rateType))),
+          const SizedBox(width: 8),
+          Expanded(child: TextField(controller: w.rate, keyboardType: const TextInputType.numberWithOptions(decimal: true), decoration: _dec(tr('المعدّل', 'Value')))),
+        ]),
+        const SizedBox(height: 8),
+        Row(children: [
+          Expanded(child: TextField(controller: w.qty, keyboardType: const TextInputType.numberWithOptions(decimal: true), decoration: _dec(tr('الكمية', 'Qty')))),
+          const SizedBox(width: 8),
+          Expanded(child: TextField(controller: w.allow, keyboardType: const TextInputType.numberWithOptions(decimal: true), decoration: _dec(tr('بدلات', 'Allowance')))),
+        ]),
+      ]),
+    );
+  }
+
+  Widget _materialCard(int i, Color c) {
+    final m = _materials[i];
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8), padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(color: Pms.bg, borderRadius: BorderRadius.circular(12)),
+      child: Row(children: [
+        Expanded(flex: 3, child: InkWell(
+          onTap: () async {
+            final e = await _wsPick(context, c, tr('اختر المادة', 'Pick material'), _opt('products'));
+            if (e != null) setState(() { m.prodId = e['id'] as int?; m.prodName = '${e['name']}'; m.cost = (e['cost'] as num?)?.toDouble() ?? 0; });
+          },
+          child: InputDecorator(decoration: _dec(tr('المادة', 'Material')),
+              child: Text(m.prodName ?? tr('اختر…', 'Select…'), overflow: TextOverflow.ellipsis,
+                  style: TextStyle(color: m.prodName == null ? Colors.grey : null))),
+        )),
+        const SizedBox(width: 8),
+        Expanded(flex: 1, child: TextField(controller: m.qty, keyboardType: const TextInputType.numberWithOptions(decimal: true), decoration: _dec(tr('كمية', 'Qty')))),
+        IconButton(icon: const Icon(Icons.remove_circle_outline_rounded, color: Color(0xFFE11D48), size: 20),
+            onPressed: () => setState(() => _materials.removeAt(i))),
+      ]),
+    );
+  }
+}
+
+class _WorkshopDetailSheet extends StatefulWidget {
+  final int workshopId;
+  final Color color;
+  const _WorkshopDetailSheet({required this.workshopId, required this.color});
+  @override
+  State<_WorkshopDetailSheet> createState() => _WorkshopDetailSheetState();
+}
+
+class _WorkshopDetailSheetState extends State<_WorkshopDetailSheet> {
+  Map<String, dynamic>? _d;
+  String? _error;
+  bool _busy = false;
+
+  @override
+  void initState() { super.initState(); _load(); }
+
+  Future<void> _load() async {
+    try {
+      final d = await context.read<AuthProvider>().api.pmsWorkshop(widget.workshopId);
+      if (mounted) setState(() => _d = d);
+    } catch (e) {
+      if (mounted) setState(() => _error = '$e');
+    }
+  }
+
+  Future<void> _submit() async {
+    setState(() => _busy = true);
+    try {
+      final d = await context.read<AuthProvider>().api.pmsWorkshopAction(widget.workshopId, 'submit');
+      if (!mounted) return;
+      setState(() { _d = d; _busy = false; });
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(tr('تم الإرسال للاعتماد', 'Submitted for approval')), backgroundColor: const Color(0xFF16A34A)));
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _busy = false);
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e'), backgroundColor: Pms.red));
+    }
+  }
+
+  String _money(num v) => v.toStringAsFixed(3);
+
+  @override
+  Widget build(BuildContext context) {
+    final c = widget.color;
+    return DraggableScrollableSheet(
+      initialChildSize: 0.86, minChildSize: 0.5, maxChildSize: 0.96, expand: false,
+      builder: (context, sc) {
+        if (_error != null) {
+          return Center(child: Padding(padding: const EdgeInsets.all(24),
+              child: Text(_error!, textAlign: TextAlign.center, style: const TextStyle(color: Colors.grey))));
+        }
+        if (_d == null) return const Center(child: CircularProgressIndicator());
+        final d = _d!;
+        final t = Map<String, dynamic>.from(d['totals'] as Map? ?? {});
+        final cur = '${d['currency'] ?? 'KWD'}';
+        final workers = (d['workers'] as List?) ?? const [];
+        final materials = (d['materials'] as List?) ?? const [];
+        return Stack(children: [
+          ListView(controller: sc, padding: EdgeInsets.zero, children: [
+            Container(
+              padding: const EdgeInsets.fromLTRB(18, 18, 18, 18),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(colors: [c, c.withValues(alpha: 0.78)], begin: Alignment.topLeft, end: Alignment.bottomRight),
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(22)),
+              ),
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Row(children: [
+                  const Icon(Icons.handyman_rounded, color: Colors.white, size: 24),
+                  const SizedBox(width: 10),
+                  Expanded(child: Text('${d['title'] ?? d['name'] ?? ''}',
+                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 16))),
+                  Container(padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                      decoration: BoxDecoration(color: Colors.white24, borderRadius: BorderRadius.circular(9)),
+                      child: Text('${d['state_label'] ?? ''}', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 11))),
+                ]),
+                const SizedBox(height: 8),
+                Wrap(spacing: 6, runSpacing: 6, children: [
+                  _chip('${d['name'] ?? ''}', Icons.tag_rounded),
+                  _chip('${d['client'] ?? ''}', Icons.business_rounded),
+                  _chip('${d['category'] ?? ''}', Icons.category_rounded),
+                  _chip('${d['type'] ?? ''}', Icons.repeat_rounded),
+                ]),
+              ]),
+            ),
+            // totals band
+            Padding(padding: const EdgeInsets.fromLTRB(14, 12, 14, 4),
+              child: Row(children: [
+                _stat(tr('التكلفة', 'Cost'), '${_money((t['cost'] as num?) ?? 0)} $cur', c),
+                _stat(tr('سعر العميل', 'Client'), '${_money((t['client_price'] as num?) ?? 0)} $cur', c),
+                _stat(tr('الهامش', 'Margin'), '${_money((t['margin'] as num?) ?? 0)} $cur', const Color(0xFF16A34A)),
+              ])),
+            Padding(padding: const EdgeInsets.fromLTRB(16, 8, 16, 2), child: Column(children: [
+              _kv(tr('المشروع', 'Project'), '${d['project'] ?? ''}'),
+              if (d['site'] != null) _kv(tr('الموقع', 'Site'), '${d['site']}'),
+              if (d['date_start'] != null) _kv(tr('من', 'From'), '${d['date_start']}'),
+              if (d['date_end'] != null) _kv(tr('إلى', 'To'), '${d['date_end']}'),
+            ])),
+            // workers
+            _sectionHead(tr('العمال', 'Workers'), Icons.groups_rounded, c),
+            for (final w in workers.cast<Map>())
+              ListTile(dense: true,
+                title: Text('${w['name'] ?? ''}', style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
+                subtitle: Text('${w['rate_type'] ?? ''} · ${w['rate'] ?? 0} × ${w['qty'] ?? 0}', style: const TextStyle(fontSize: 11)),
+                trailing: Text('${_money((w['amount'] as num?) ?? 0)}', style: TextStyle(fontWeight: FontWeight.w900, color: c))),
+            if (materials.isNotEmpty) _sectionHead(tr('المواد', 'Materials'), Icons.inventory_2_rounded, c),
+            for (final m in materials.cast<Map>())
+              ListTile(dense: true,
+                title: Text('${m['name'] ?? ''}', style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
+                subtitle: Text('${m['qty'] ?? 0} × ${m['unit_cost'] ?? 0}', style: const TextStyle(fontSize: 11)),
+                trailing: Text('${_money((m['amount'] as num?) ?? 0)}', style: TextStyle(fontWeight: FontWeight.w900, color: c))),
+            Padding(padding: const EdgeInsets.fromLTRB(16, 12, 16, 24), child: Column(children: [
+              SizedBox(width: double.infinity, child: OutlinedButton.icon(
+                style: OutlinedButton.styleFrom(foregroundColor: c, side: BorderSide(color: c.withValues(alpha: 0.5)), padding: const EdgeInsets.symmetric(vertical: 11)),
+                onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => PdfReportScreen(
+                    path: context.read<AuthProvider>().api.pmsWorkshopReportPath(widget.workshopId),
+                    title: tr('تقرير الورشة', 'Workshop report'), fileName: 'workshop-${widget.workshopId}.pdf'))),
+                icon: const Icon(Icons.print_rounded, size: 18),
+                label: Text(tr('طباعة / مشاركة', 'Print / share'), style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 12.5)))),
+              if (d['can_submit'] == true) Padding(padding: const EdgeInsets.only(top: 8),
+                child: SizedBox(width: double.infinity, child: FilledButton.icon(
+                  style: FilledButton.styleFrom(backgroundColor: const Color(0xFF16A34A), padding: const EdgeInsets.symmetric(vertical: 12)),
+                  onPressed: _busy ? null : _submit,
+                  icon: const Icon(Icons.send_rounded, size: 18),
+                  label: Text(tr('إرسال للاعتماد', 'Submit for approval'), style: const TextStyle(fontWeight: FontWeight.w800))))),
+            ])),
+          ]),
+          if (_busy) const Positioned.fill(child: ColoredBox(color: Color(0x11000000), child: Center(child: CircularProgressIndicator()))),
+        ]);
+      },
+    );
+  }
+
+  Widget _chip(String t, IconData ic) => Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(color: Colors.white24, borderRadius: BorderRadius.circular(8)),
+      child: Row(mainAxisSize: MainAxisSize.min, children: [
+        Icon(ic, size: 12, color: Colors.white), const SizedBox(width: 4),
+        Text(t, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 11)),
+      ]));
+
+  Widget _stat(String l, String v, Color c) => Expanded(child: Container(
+      margin: const EdgeInsets.symmetric(horizontal: 3), padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 6),
+      decoration: BoxDecoration(color: c.withValues(alpha: 0.08), borderRadius: BorderRadius.circular(12)),
+      child: Column(children: [
+        Text(v, style: TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: c), textAlign: TextAlign.center),
+        const SizedBox(height: 2),
+        Text(l, style: const TextStyle(fontSize: 10.5, color: Pms.slate), textAlign: TextAlign.center),
+      ])));
+
+  Widget _kv(String k, String v) => Padding(padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        SizedBox(width: 110, child: Text(k, style: const TextStyle(color: Pms.slate, fontSize: 12, fontWeight: FontWeight.w700))),
+        Expanded(child: Text(v, style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700))),
+      ]));
+
+  Widget _sectionHead(String t, IconData ic, Color c) => Padding(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 2),
+      child: Row(children: [Icon(ic, size: 16, color: c), const SizedBox(width: 6),
+        Text(t, style: TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: c))]));
 }

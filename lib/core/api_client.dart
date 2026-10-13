@@ -2271,6 +2271,22 @@ class ApiClient {
 
   String pmsPermitReportPath(int id) => '/pms/permit/$id/report';
 
+  // ---- Workshops (أوامر الورش) ----
+  Future<Map<String, dynamic>> pmsWorkshop(int id) async =>
+      Map<String, dynamic>.from((await _handle(await _net.get(
+          _u('/pms/workshop/$id'), headers: await _headers())))['data'] as Map);
+
+  Future<Map<String, dynamic>> pmsWorkshopCreate(int projectId, Map<String, dynamic> body) async =>
+      Map<String, dynamic>.from((await _handle(await _net.post(
+          _u('/pms/project/$projectId/workshop/create'), headers: await _headers(),
+          body: jsonEncode(body))))['data'] as Map);
+
+  Future<Map<String, dynamic>> pmsWorkshopAction(int id, String act) async =>
+      Map<String, dynamic>.from((await _handle(await _net.post(
+          _u('/pms/workshop/$id/$act'), headers: await _headers())))['data'] as Map);
+
+  String pmsWorkshopReportPath(int id) => '/pms/workshop/$id/report';
+
   // ---- Saved filters / worker-list segments ----
   Future<List<dynamic>> pmsSavedFilters({int? projectId, String? section}) async {
     final q = <String>[];
