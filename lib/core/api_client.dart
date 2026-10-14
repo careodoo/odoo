@@ -2285,6 +2285,11 @@ class ApiClient {
       Map<String, dynamic>.from((await _handle(await _net.post(
           _u('/pms/workshop/$id/$act'), headers: await _headers())))['data'] as Map);
 
+  Future<Map<String, dynamic>> pmsWorkshopUpdate(int id, Map<String, dynamic> body) async =>
+      Map<String, dynamic>.from((await _handle(await _net.post(
+          _u('/pms/workshop/$id/update'), headers: await _headers(),
+          body: jsonEncode(body))))['data'] as Map);
+
   String pmsWorkshopReportPath(int id) => '/pms/workshop/$id/report';
 
   // ---- Saved filters / worker-list segments ----

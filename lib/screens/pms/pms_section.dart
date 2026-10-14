@@ -4511,7 +4511,9 @@ class _WsMaterialLine {
 class _WorkshopCreateSheet extends StatefulWidget {
   final Color color;
   final Map<String, dynamic> options;
-  const _WorkshopCreateSheet({required this.color, required this.options});
+  final Map<String, dynamic>? initial; // للتعديل: بيانات الورشة الحالية
+  final bool isEdit;
+  const _WorkshopCreateSheet({required this.color, required this.options, this.initial, this.isEdit = false});
   @override
   State<_WorkshopCreateSheet> createState() => _WorkshopCreateSheetState();
 }
@@ -4531,6 +4533,44 @@ class _WorkshopCreateSheetState extends State<_WorkshopCreateSheet> {
 
   List<Map<String, dynamic>> _opt(String k) =>
       (widget.options[k] as List?)?.map((e) => Map<String, dynamic>.from(e as Map)).toList() ?? [];
+
+  @override
+  void initState() {
+    super.initState();
+    final d = widget.initial;
+    if (d == null) return;
+    _title.text = '${d['title'] ?? ''}';
+    _clientId = d['client_id'] as int?;
+    _clientName = d['client_name'] as String?;
+    if (d['category_key'] != null) _cat = '${d['category_key']}';
+    if (d['type_key'] != null) _type = '${d['type_key']}';
+    if (d['client_price_raw'] != null) _price.text = '${d['client_price_raw']}';
+    if (d['site'] != null && '${d['site']}' != '—') _site.text = '${d['site']}';
+    _start = (d['date_start'] != null) ? DateTime.tryParse('${d['date_start']}') : null;
+    _end = (d['date_end'] != null) ? DateTime.tryParse('${d['date_end']}') : null;
+    final ws = (d['workers'] as List?) ?? const [];
+    if (ws.isNotEmpty) {
+      _workers.clear();
+      for (final w in ws.cast<Map>()) {
+        final l = _WsWorkerLine()
+          ..empId = w['employee_id'] as int?
+          ..empName = '${w['employee_name'] ?? w['name'] ?? ''}'
+          ..rateType = '${w['rate_type_key'] ?? 'daily'}';
+        l.rate.text = '${w['rate'] ?? ''}';
+        l.qty.text = '${w['qty'] ?? ''}';
+        l.allow.text = '${w['allowance'] ?? ''}';
+        _workers.add(l);
+      }
+    }
+    for (final m in (d['materials'] as List?)?.cast<Map>() ?? const []) {
+      final l = _WsMaterialLine()
+        ..prodId = m['product_id'] as int?
+        ..prodName = '${m['product_name'] ?? m['name'] ?? ''}'
+        ..cost = (m['unit_cost'] as num?)?.toDouble() ?? 0;
+      l.qty.text = '${m['qty'] ?? ''}';
+      _materials.add(l);
+    }
+  }
 
   @override
   void dispose() {
@@ -4591,7 +4631,7 @@ class _WorkshopCreateSheetState extends State<_WorkshopCreateSheet> {
       padding: EdgeInsets.fromLTRB(16, 0, 16, MediaQuery.of(context).viewInsets.bottom + 16),
       child: ListView(shrinkWrap: true, children: [
         Padding(padding: const EdgeInsets.only(bottom: 10),
-            child: Text(tr('ورشة جديدة', 'New workshop'),
+            child: Text(widget.isEdit ? tr('تعديل الورشة', 'Edit workshop') : tr('ورشة جديدة', 'New workshop'),
                 style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: c))),
         TextField(controller: _title, decoration: _dec(tr('الموضوع *', 'Subject *'))),
         const SizedBox(height: 10),
@@ -4780,6 +4820,33 @@ class _WorkshopDetailSheetState extends State<_WorkshopDetailSheet> {
     }
   }
 
+  Future<void> _edit() async {
+    final pid = _d?['project_id'] as int?;
+    if (pid == null) return;
+    Map<String, dynamic> opts = const {};
+    try {
+      opts = await context.read<AuthProvider>().api.pmsSectionOptions(pid, 'workshops');
+    } catch (_) {}
+    if (!mounted) return;
+    final result = await showModalBottomSheet<Map<String, dynamic>>(
+      context: context, isScrollControlled: true, showDragHandle: true,
+      builder: (_) => _WorkshopCreateSheet(color: widget.color, options: opts, initial: _d, isEdit: true),
+    );
+    if (result == null || !mounted) return;
+    setState(() => _busy = true);
+    try {
+      final d = await context.read<AuthProvider>().api.pmsWorkshopUpdate(widget.workshopId, result);
+      if (!mounted) return;
+      setState(() { _d = d; _busy = false; });
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(tr('تم حفظ التعديل', 'Changes saved')), backgroundColor: const Color(0xFF16A34A)));
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _busy = false);
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e'), backgroundColor: Pms.red));
+    }
+  }
+
   String _money(num v) => v.toStringAsFixed(3);
 
   @override
@@ -4859,6 +4926,12 @@ class _WorkshopDetailSheetState extends State<_WorkshopDetailSheet> {
                     title: tr('تقرير الورشة', 'Workshop report'), fileName: 'workshop-${widget.workshopId}.pdf'))),
                 icon: const Icon(Icons.print_rounded, size: 18),
                 label: Text(tr('طباعة / مشاركة', 'Print / share'), style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 12.5)))),
+              if (d['can_edit'] == true) Padding(padding: const EdgeInsets.only(top: 8),
+                child: SizedBox(width: double.infinity, child: OutlinedButton.icon(
+                  style: OutlinedButton.styleFrom(foregroundColor: c, side: BorderSide(color: c), padding: const EdgeInsets.symmetric(vertical: 11)),
+                  onPressed: _busy ? null : _edit,
+                  icon: const Icon(Icons.edit_rounded, size: 18),
+                  label: Text(tr('تعديل المسودّة', 'Edit draft'), style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 12.5))))),
               if (d['can_submit'] == true) Padding(padding: const EdgeInsets.only(top: 8),
                 child: SizedBox(width: double.infinity, child: FilledButton.icon(
                   style: FilledButton.styleFrom(backgroundColor: const Color(0xFF16A34A), padding: const EdgeInsets.symmetric(vertical: 12)),
