@@ -2135,6 +2135,12 @@ class ApiClient {
 
   String pmsLeaveReportPath(int id) => '/pms/leave/$id/report';
 
+  /// Generic record report: renders any whitelisted QWeb report for a record
+  /// the caller may read (e.g. نموذج طلب الاستقالة بعد إنشائه).
+  String pmsRecordReportPath(String model, int id, String report) =>
+      '/pms/record/report?model=${Uri.encodeQueryComponent(model)}'
+      '&id=$id&report=${Uri.encodeQueryComponent(report)}';
+
   Future<Map<String, dynamic>> pmsLoanCreate(int eid, Map<String, dynamic> body) async =>
       Map<String, dynamic>.from((await _handle(await _net.post(_u('/pms/employee/$eid/loan-create'),
           headers: await _headers(), body: jsonEncode(body)))) ['data'] as Map);
@@ -2622,6 +2628,20 @@ class ApiClient {
               headers: await _headers(),
               body: jsonEncode({'model': model, 'employee_id': employeeId, ...vals}))))['data'] as Map);
 
+  /// تعديل سجل عامل مسودة (نفس حقول الإنشاء) — يفشل إن كان مُقدَّماً.
+  Future<Map<String, dynamic>> managementEmpSubEdit(String model, int id, Map<String, dynamic> vals) async =>
+      Map<String, dynamic>.from((await _handle(await _net.post(
+              _u('/management/emp-sub/edit'),
+              headers: await _headers(),
+              body: jsonEncode({'model': model, 'id': id, ...vals}))))['data'] as Map);
+
+  /// إلغاء/حذف سجل عامل مسودة — يفشل إن كان مُقدَّماً.
+  Future<Map<String, dynamic>> managementEmpSubCancel(String model, int id) async =>
+      Map<String, dynamic>.from((await _handle(await _net.post(
+              _u('/management/emp-sub/cancel'),
+              headers: await _headers(),
+              body: jsonEncode({'model': model, 'id': id}))))['data'] as Map);
+
   /// Check a passport out to a custodian (out) or back into the archive (in).
   Future<void> managementPassportMove(int id, String dir, Map<String, dynamic> body) async =>
       _handle(await _net.post(_u('/management/passport/$id/$dir'),
@@ -2756,6 +2776,11 @@ class ApiClient {
 
   Future<void> myDelete(String source, int id) async =>
       _handle(await _net.post(_u('/my/$source/$id/delete'), headers: await _headers()));
+
+  /// أرصدة إجازات الموظف الحالي ومستحقاتها.
+  Future<Map<String, dynamic>> myLeaveBalances() async =>
+      Map<String, dynamic>.from((await _handle(await _net.get(
+              _u('/my/leave-balances'), headers: await _headers())))['data'] as Map);
 
   /// Form spec for creating a self-service request (fields + options).
   Future<Map<String, dynamic>> myMeta(String source) async =>

@@ -8,6 +8,7 @@ import '../pms/pms_section.dart';
 import '../pms/pms_employee_file.dart';
 import '../pdf_report_screen.dart';
 import '../../core/account_deletion.dart';
+import 'leave_balances_screen.dart';
 
 /// The «My» module — the signed-in user's own hub: who they are, how they're
 /// doing, the services they can start, and their requests with live statuses.
@@ -95,6 +96,7 @@ class _MyScreenState extends State<MyScreen> {
     final requests = ((d['requests'] as List?) ?? const []).cast<Map>();
     return ListView(padding: EdgeInsets.zero, children: [
       _headerCard(p, stats),
+      _leaveBalancesEntry(),
       if (_delegations.isNotEmpty) ...[
         _sectionTitle(tr('مفوَّض إليّ للمتابعة', 'Delegated to me'),
             Icons.assignment_ind_rounded, trailing: '${_delegations.length}'),
@@ -123,6 +125,45 @@ class _MyScreenState extends State<MyScreen> {
       const SizedBox(height: 24),
     ]);
   }
+
+  // بطاقة الدخول لأرصدة الإجازات ومستحقاتها
+  Widget _leaveBalancesEntry() => Padding(
+        padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(14),
+          onTap: () => Navigator.push(context,
+              MaterialPageRoute(builder: (_) => LeaveBalancesScreen(accent: _c))),
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: _c.withValues(alpha: 0.25)),
+            ),
+            child: Row(children: [
+              Container(
+                width: 42, height: 42,
+                decoration: BoxDecoration(
+                    color: _c.withValues(alpha: 0.10),
+                    borderRadius: BorderRadius.circular(11)),
+                child: Icon(Icons.event_available_rounded, color: _c, size: 22),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Text(tr('أرصدة إجازاتي ومستحقاتها', 'My leave balances & dues'),
+                      style: const TextStyle(fontWeight: FontWeight.w800, color: _ink)),
+                  const SizedBox(height: 2),
+                  Text(tr('الرصيد المتبقّي والقيمة النقدية وكشف الحركات',
+                          'Remaining, cash value & statement'),
+                      style: const TextStyle(color: _slate, fontSize: 11.5)),
+                ]),
+              ),
+              const Icon(Icons.chevron_right_rounded, color: _slate),
+            ]),
+          ),
+        ),
+      );
 
   // base64 avatar (token auth can't use /web/image) with initial fallback.
   Widget _avatar(String b64, String initial) {

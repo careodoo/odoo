@@ -4495,17 +4495,41 @@ Future<Map<String, dynamic>?> _wsPick(BuildContext context, Color color, String 
 class _WsWorkerLine {
   int? empId;
   String? empName;
+  final classification = TextEditingController();
   String rateType = 'daily';
   final rate = TextEditingController();
   final qty = TextEditingController(text: '1');
   final allow = TextEditingController();
+  final deduct = TextEditingController();
 }
 
 class _WsMaterialLine {
   int? prodId;
   String? prodName;
   double cost = 0;
+  String source = 'stock';
+  final sourceRef = TextEditingController();
   final qty = TextEditingController(text: '1');
+  final unitCost = TextEditingController();
+}
+
+class _WsEquipLine {
+  final name = TextEditingController();
+  String ownership = 'own';
+  final qty = TextEditingController(text: '1');
+  final unitCost = TextEditingController();
+}
+
+class _WsTransportLine {
+  final name = TextEditingController();
+  final desc = TextEditingController();
+  final trips = TextEditingController();
+  final amount = TextEditingController();
+}
+
+class _WsExpenseLine {
+  final name = TextEditingController();
+  final amount = TextEditingController();
 }
 
 class _WorkshopCreateSheet extends StatefulWidget {
@@ -4530,6 +4554,9 @@ class _WorkshopCreateSheetState extends State<_WorkshopCreateSheet> {
   DateTime? _end;
   final List<_WsWorkerLine> _workers = [_WsWorkerLine()];
   final List<_WsMaterialLine> _materials = [];
+  final List<_WsEquipLine> _equipment = [];
+  final List<_WsTransportLine> _transport = [];
+  final List<_WsExpenseLine> _expenses = [];
 
   List<Map<String, dynamic>> _opt(String k) =>
       (widget.options[k] as List?)?.map((e) => Map<String, dynamic>.from(e as Map)).toList() ?? [];
@@ -4556,9 +4583,11 @@ class _WorkshopCreateSheetState extends State<_WorkshopCreateSheet> {
           ..empId = w['employee_id'] as int?
           ..empName = '${w['employee_name'] ?? w['name'] ?? ''}'
           ..rateType = '${w['rate_type_key'] ?? 'daily'}';
+        l.classification.text = '${w['classification'] ?? ''}';
         l.rate.text = '${w['rate'] ?? ''}';
         l.qty.text = '${w['qty'] ?? ''}';
         l.allow.text = '${w['allowance'] ?? ''}';
+        l.deduct.text = '${w['deduction'] ?? ''}';
         _workers.add(l);
       }
     }
@@ -4566,17 +4595,44 @@ class _WorkshopCreateSheetState extends State<_WorkshopCreateSheet> {
       final l = _WsMaterialLine()
         ..prodId = m['product_id'] as int?
         ..prodName = '${m['product_name'] ?? m['name'] ?? ''}'
+        ..source = '${m['source_key'] ?? m['source'] ?? 'stock'}'
         ..cost = (m['unit_cost'] as num?)?.toDouble() ?? 0;
+      l.sourceRef.text = '${m['source_ref'] ?? ''}';
       l.qty.text = '${m['qty'] ?? ''}';
+      l.unitCost.text = m['unit_cost'] != null ? '${m['unit_cost']}' : '';
       _materials.add(l);
+    }
+    for (final e in (d['equipment'] as List?)?.cast<Map>() ?? const []) {
+      final l = _WsEquipLine()..ownership = '${e['ownership_key'] ?? e['ownership'] ?? 'own'}';
+      l.name.text = '${e['name'] ?? ''}';
+      l.qty.text = '${e['qty'] ?? ''}';
+      l.unitCost.text = e['unit_cost'] != null ? '${e['unit_cost']}' : '';
+      _equipment.add(l);
+    }
+    for (final t in (d['transport'] as List?)?.cast<Map>() ?? const []) {
+      final l = _WsTransportLine();
+      l.name.text = '${t['name'] ?? ''}';
+      l.desc.text = '${t['description'] ?? ''}';
+      l.trips.text = t['trips'] != null ? '${t['trips']}' : '';
+      l.amount.text = t['amount'] != null ? '${t['amount']}' : '';
+      _transport.add(l);
+    }
+    for (final x in (d['expenses'] as List?)?.cast<Map>() ?? const []) {
+      final l = _WsExpenseLine();
+      l.name.text = '${x['name'] ?? ''}';
+      l.amount.text = x['amount'] != null ? '${x['amount']}' : '';
+      _expenses.add(l);
     }
   }
 
   @override
   void dispose() {
     _title.dispose(); _price.dispose(); _site.dispose();
-    for (final w in _workers) { w.rate.dispose(); w.qty.dispose(); w.allow.dispose(); }
-    for (final m in _materials) { m.qty.dispose(); }
+    for (final w in _workers) { w.classification.dispose(); w.rate.dispose(); w.qty.dispose(); w.allow.dispose(); w.deduct.dispose(); }
+    for (final m in _materials) { m.sourceRef.dispose(); m.qty.dispose(); m.unitCost.dispose(); }
+    for (final e in _equipment) { e.name.dispose(); e.qty.dispose(); e.unitCost.dispose(); }
+    for (final t in _transport) { t.name.dispose(); t.desc.dispose(); t.trips.dispose(); t.amount.dispose(); }
+    for (final x in _expenses) { x.name.dispose(); x.amount.dispose(); }
     super.dispose();
   }
 
@@ -4600,16 +4656,49 @@ class _WorkshopCreateSheetState extends State<_WorkshopCreateSheet> {
             if (w.empId != null)
               {
                 'employee_id': w.empId,
+                'classification': w.classification.text.trim(),
                 'rate_type': w.rateType,
                 'rate': double.tryParse(w.rate.text.trim()) ?? 0,
                 'quantity': double.tryParse(w.qty.text.trim()) ?? 0,
                 'allowance': double.tryParse(w.allow.text.trim()) ?? 0,
+                'deduction': double.tryParse(w.deduct.text.trim()) ?? 0,
               }
         ],
         'materials': [
           for (final m in _materials)
             if (m.prodId != null)
-              {'product_id': m.prodId, 'qty': double.tryParse(m.qty.text.trim()) ?? 0, 'unit_cost': m.cost}
+              {
+                'product_id': m.prodId,
+                'source': m.source,
+                'source_ref': m.sourceRef.text.trim(),
+                'qty': double.tryParse(m.qty.text.trim()) ?? 0,
+                'unit_cost': double.tryParse(m.unitCost.text.trim()) ?? m.cost,
+              }
+        ],
+        'equipment': [
+          for (final e in _equipment)
+            if (e.name.text.trim().isNotEmpty)
+              {
+                'name': e.name.text.trim(),
+                'ownership': e.ownership,
+                'qty': double.tryParse(e.qty.text.trim()) ?? 1,
+                'unit_cost': double.tryParse(e.unitCost.text.trim()) ?? 0,
+              }
+        ],
+        'transport': [
+          for (final t in _transport)
+            if (t.name.text.trim().isNotEmpty)
+              {
+                'name': t.name.text.trim(),
+                'description': t.desc.text.trim(),
+                'trips': int.tryParse(t.trips.text.trim()) ?? 0,
+                'amount': double.tryParse(t.amount.text.trim()) ?? 0,
+              }
+        ],
+        'expenses': [
+          for (final x in _expenses)
+            if (x.name.text.trim().isNotEmpty)
+              {'name': x.name.text.trim(), 'amount': double.tryParse(x.amount.text.trim()) ?? 0}
         ],
         'submit': submit,
       };
@@ -4699,6 +4788,42 @@ class _WorkshopCreateSheetState extends State<_WorkshopCreateSheet> {
           onPressed: () => setState(() => _materials.add(_WsMaterialLine())),
           icon: Icon(Icons.add_box_rounded, color: c),
           label: Text(tr('إضافة مادة', 'Add material'), style: TextStyle(color: c, fontWeight: FontWeight.w800)))),
+        const SizedBox(height: 6),
+        // ===== المعدات =====
+        Row(children: [
+          Icon(Icons.construction_rounded, color: c, size: 18), const SizedBox(width: 6),
+          Text(tr('المعدات (اختياري)', 'Equipment (optional)'), style: TextStyle(fontWeight: FontWeight.w900, color: c)),
+        ]),
+        const SizedBox(height: 6),
+        for (var i = 0; i < _equipment.length; i++) _equipCard(i, c),
+        Align(alignment: Alignment.centerRight, child: TextButton.icon(
+          onPressed: () => setState(() => _equipment.add(_WsEquipLine())),
+          icon: Icon(Icons.add_rounded, color: c),
+          label: Text(tr('إضافة معدّة', 'Add equipment'), style: TextStyle(color: c, fontWeight: FontWeight.w800)))),
+        const SizedBox(height: 6),
+        // ===== المواصلات =====
+        Row(children: [
+          Icon(Icons.local_shipping_rounded, color: c, size: 18), const SizedBox(width: 6),
+          Text(tr('المواصلات (اختياري)', 'Transport (optional)'), style: TextStyle(fontWeight: FontWeight.w900, color: c)),
+        ]),
+        const SizedBox(height: 6),
+        for (var i = 0; i < _transport.length; i++) _transportCard(i, c),
+        Align(alignment: Alignment.centerRight, child: TextButton.icon(
+          onPressed: () => setState(() => _transport.add(_WsTransportLine())),
+          icon: Icon(Icons.add_rounded, color: c),
+          label: Text(tr('إضافة مواصلات', 'Add transport'), style: TextStyle(color: c, fontWeight: FontWeight.w800)))),
+        const SizedBox(height: 6),
+        // ===== مصاريف أخرى =====
+        Row(children: [
+          Icon(Icons.receipt_long_rounded, color: c, size: 18), const SizedBox(width: 6),
+          Text(tr('مصاريف أخرى (اختياري)', 'Other expenses (optional)'), style: TextStyle(fontWeight: FontWeight.w900, color: c)),
+        ]),
+        const SizedBox(height: 6),
+        for (var i = 0; i < _expenses.length; i++) _expenseCard(i, c),
+        Align(alignment: Alignment.centerRight, child: TextButton.icon(
+          onPressed: () => setState(() => _expenses.add(_WsExpenseLine())),
+          icon: Icon(Icons.add_rounded, color: c),
+          label: Text(tr('إضافة مصروف', 'Add expense'), style: TextStyle(color: c, fontWeight: FontWeight.w800)))),
         const SizedBox(height: 12),
         Row(children: [
           Expanded(child: OutlinedButton.icon(
@@ -4738,6 +4863,8 @@ class _WorkshopCreateSheetState extends State<_WorkshopCreateSheet> {
             onPressed: () => setState(() => _workers.removeAt(i))),
         ]),
         const SizedBox(height: 8),
+        TextField(controller: w.classification, decoration: _dec(tr('التصنيف', 'Classification'))),
+        const SizedBox(height: 8),
         Row(children: [
           Expanded(child: DropdownButtonFormField<String>(value: w.rateType, isExpanded: true,
               decoration: _dec(tr('الأجر', 'Rate')),
@@ -4751,6 +4878,8 @@ class _WorkshopCreateSheetState extends State<_WorkshopCreateSheet> {
           Expanded(child: TextField(controller: w.qty, keyboardType: const TextInputType.numberWithOptions(decimal: true), decoration: _dec(tr('الكمية', 'Qty')))),
           const SizedBox(width: 8),
           Expanded(child: TextField(controller: w.allow, keyboardType: const TextInputType.numberWithOptions(decimal: true), decoration: _dec(tr('بدلات', 'Allowance')))),
+          const SizedBox(width: 8),
+          Expanded(child: TextField(controller: w.deduct, keyboardType: const TextInputType.numberWithOptions(decimal: true), decoration: _dec(tr('خصم', 'Deduct')))),
         ]),
       ]),
     );
@@ -4761,20 +4890,103 @@ class _WorkshopCreateSheetState extends State<_WorkshopCreateSheet> {
     return Container(
       margin: const EdgeInsets.only(bottom: 8), padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(color: Pms.bg, borderRadius: BorderRadius.circular(12)),
+      child: Column(children: [
+        Row(children: [
+          Expanded(child: InkWell(
+            onTap: () async {
+              final e = await _wsPick(context, c, tr('اختر المادة', 'Pick material'), _opt('products'));
+              if (e != null) setState(() {
+                m.prodId = e['id'] as int?; m.prodName = '${e['name']}';
+                m.cost = (e['cost'] as num?)?.toDouble() ?? 0;
+                if (m.unitCost.text.trim().isEmpty) m.unitCost.text = '${m.cost}';
+              });
+            },
+            child: InputDecorator(decoration: _dec(tr('المادة', 'Material')),
+                child: Text(m.prodName ?? tr('اختر…', 'Select…'), overflow: TextOverflow.ellipsis,
+                    style: TextStyle(color: m.prodName == null ? Colors.grey : null))),
+          )),
+          IconButton(icon: const Icon(Icons.remove_circle_outline_rounded, color: Color(0xFFE11D48), size: 20),
+              onPressed: () => setState(() => _materials.removeAt(i))),
+        ]),
+        const SizedBox(height: 8),
+        Row(children: [
+          Expanded(child: DropdownButtonFormField<String>(value: m.source, isExpanded: true,
+              decoration: _dec(tr('المصدر', 'Source')),
+              items: [for (final o in _opt('sources')) DropdownMenuItem(value: '${o['v']}', child: Text('${o['l']}', overflow: TextOverflow.ellipsis))],
+              onChanged: (v) => setState(() => m.source = v ?? m.source))),
+          const SizedBox(width: 8),
+          Expanded(child: TextField(controller: m.sourceRef, decoration: _dec(tr('تفصيل المصدر', 'Source detail')))),
+        ]),
+        const SizedBox(height: 8),
+        Row(children: [
+          Expanded(child: TextField(controller: m.qty, keyboardType: const TextInputType.numberWithOptions(decimal: true), decoration: _dec(tr('الكمية', 'Qty')))),
+          const SizedBox(width: 8),
+          Expanded(child: TextField(controller: m.unitCost, keyboardType: const TextInputType.numberWithOptions(decimal: true), decoration: _dec(tr('تكلفة الوحدة', 'Unit cost')))),
+        ]),
+      ]),
+    );
+  }
+
+  Widget _equipCard(int i, Color c) {
+    final e = _equipment[i];
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8), padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(color: Pms.bg, borderRadius: BorderRadius.circular(12)),
+      child: Column(children: [
+        Row(children: [
+          Expanded(child: TextField(controller: e.name, decoration: _dec(tr('المعدّة', 'Equipment')))),
+          IconButton(icon: const Icon(Icons.remove_circle_outline_rounded, color: Color(0xFFE11D48), size: 20),
+              onPressed: () => setState(() => _equipment.removeAt(i))),
+        ]),
+        const SizedBox(height: 8),
+        Row(children: [
+          Expanded(child: DropdownButtonFormField<String>(value: e.ownership, isExpanded: true,
+              decoration: _dec(tr('الملكية', 'Ownership')),
+              items: [for (final o in _opt('ownerships')) DropdownMenuItem(value: '${o['v']}', child: Text('${o['l']}', overflow: TextOverflow.ellipsis))],
+              onChanged: (v) => setState(() => e.ownership = v ?? e.ownership))),
+          const SizedBox(width: 8),
+          Expanded(child: TextField(controller: e.qty, keyboardType: const TextInputType.numberWithOptions(decimal: true), decoration: _dec(tr('الكمية', 'Qty')))),
+          const SizedBox(width: 8),
+          Expanded(child: TextField(controller: e.unitCost, keyboardType: const TextInputType.numberWithOptions(decimal: true), decoration: _dec(tr('تكلفة الوحدة', 'Unit cost')))),
+        ]),
+      ]),
+    );
+  }
+
+  Widget _transportCard(int i, Color c) {
+    final t = _transport[i];
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8), padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(color: Pms.bg, borderRadius: BorderRadius.circular(12)),
+      child: Column(children: [
+        Row(children: [
+          Expanded(child: TextField(controller: t.name, decoration: _dec(tr('المركبة / النوع', 'Vehicle / Type')))),
+          IconButton(icon: const Icon(Icons.remove_circle_outline_rounded, color: Color(0xFFE11D48), size: 20),
+              onPressed: () => setState(() => _transport.removeAt(i))),
+        ]),
+        const SizedBox(height: 8),
+        TextField(controller: t.desc, decoration: _dec(tr('الوصف', 'Description'))),
+        const SizedBox(height: 8),
+        Row(children: [
+          Expanded(child: TextField(controller: t.trips, keyboardType: TextInputType.number, decoration: _dec(tr('الرحلات', 'Trips')))),
+          const SizedBox(width: 8),
+          Expanded(child: TextField(controller: t.amount, keyboardType: const TextInputType.numberWithOptions(decimal: true), decoration: _dec(tr('التكلفة', 'Cost')))),
+        ]),
+      ]),
+    );
+  }
+
+  Widget _expenseCard(int i, Color c) {
+    final x = _expenses[i];
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8), padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(color: Pms.bg, borderRadius: BorderRadius.circular(12)),
       child: Row(children: [
-        Expanded(flex: 3, child: InkWell(
-          onTap: () async {
-            final e = await _wsPick(context, c, tr('اختر المادة', 'Pick material'), _opt('products'));
-            if (e != null) setState(() { m.prodId = e['id'] as int?; m.prodName = '${e['name']}'; m.cost = (e['cost'] as num?)?.toDouble() ?? 0; });
-          },
-          child: InputDecorator(decoration: _dec(tr('المادة', 'Material')),
-              child: Text(m.prodName ?? tr('اختر…', 'Select…'), overflow: TextOverflow.ellipsis,
-                  style: TextStyle(color: m.prodName == null ? Colors.grey : null))),
-        )),
+        Expanded(flex: 3, child: TextField(controller: x.name, decoration: _dec(tr('الوصف', 'Description')))),
         const SizedBox(width: 8),
-        Expanded(flex: 1, child: TextField(controller: m.qty, keyboardType: const TextInputType.numberWithOptions(decimal: true), decoration: _dec(tr('كمية', 'Qty')))),
+        Expanded(flex: 2, child: TextField(controller: x.amount, keyboardType: const TextInputType.numberWithOptions(decimal: true), decoration: _dec(tr('المبلغ', 'Amount')))),
         IconButton(icon: const Icon(Icons.remove_circle_outline_rounded, color: Color(0xFFE11D48), size: 20),
-            onPressed: () => setState(() => _materials.removeAt(i))),
+            onPressed: () => setState(() => _expenses.removeAt(i))),
       ]),
     );
   }

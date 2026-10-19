@@ -253,6 +253,7 @@ class _PmsEmployeeFileScreenState extends State<PmsEmployeeFileScreen> {
     ('suspension_req', tr('إيقاف عن العمل', 'Work suspension'), Icons.block_rounded, const Color(0xFFB91C1C), 'suspension_req'),
     ('worker_doc', tr('وثيقة عامل', 'Worker document'), Icons.badge_rounded, const Color(0xFFB45309), 'worker_doc'),
     ('resignation', tr('استقالة', 'Resignation'), Icons.waving_hand_rounded, const Color(0xFFEA580C), 'resignation'),
+    ('resign_withdraw', tr('عدول عن استقالة', 'Resignation withdrawal'), Icons.undo_rounded, const Color(0xFF14B8A6), 'resign_withdraw'),
     ('exit_iv', tr('مقابلة إنهاء خدمة', 'Exit interview'), Icons.exit_to_app_rounded, const Color(0xFF7C2D12), 'exit_iv'),
   ];
 
@@ -751,6 +752,16 @@ class _EmpSectionSheetState extends State<_EmpSectionSheet> {
     return const SizedBox.shrink();
   }
 
+  // نموذج التقرير الذي يُعرض تلقائياً بعد إنشاء السجل (يبقى على السجل ويطبع النموذج)
+  static const Map<String, String> _subCreateReport = {
+    'hr.employee.resignation': 'care_reports.action_report_resignation_submit',
+    'employee.shift.request': 'hr_employee_shift.request_for_shift_report',
+  };
+  static const Map<String, String> _subCreateReportTitle = {
+    'hr.employee.resignation': 'نموذج طلب الاستقالة',
+    'employee.shift.request': 'نموذج طلب النقل',
+  };
+
   // section key -> employee sub-module model (backend emp-sub create)
   static const Map<String, String> _subCreateModel = {
     'bonuses': 'bonus.request',
@@ -768,6 +779,7 @@ class _EmpSectionSheetState extends State<_EmpSectionSheet> {
     'suspension_req': 'care.suspension.request',
     'worker_doc': 'care.worker.document',
     'resignation': 'hr.employee.resignation',
+    'resign_withdraw': 'care.resignation.withdrawal',
     'exit_iv': 'exit.interview',
   };
 
@@ -788,17 +800,116 @@ class _EmpSectionSheetState extends State<_EmpSectionSheet> {
     if (vals == null || !mounted) return;
     setState(() => _busy = true);
     try {
-      await api.managementEmpSubCreate(model, widget.employeeId, vals);
+      final res = await api.managementEmpSubCreate(model, widget.employeeId, vals);
       if (!mounted) return;
+      final newId = (res['id'] as num?)?.toInt();
+      final reportRef = _subCreateReport[model];
       Navigator.pop(context); // close section sheet; parent reloads the file
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
           content: Text(tr('✅ تم إضافة السجل', '✅ Record added')), backgroundColor: const Color(0xFF16A34A)));
+      // يبقى المستخدم ويُفتح له التقرير (مثلاً نموذج طلب الاستقالة) تلقائياً
+      if (newId != null && reportRef != null && mounted) {
+        final ttl = tr(_subCreateReportTitle[model] ?? 'التقرير', 'Report');
+        await Navigator.push(context, MaterialPageRoute(builder: (_) => PdfReportScreen(
+          path: api.pmsRecordReportPath(model, newId, reportRef),
+          title: ttl, fileName: 'record-$newId.pdf')));
+      }
     } catch (e) {
       if (mounted) {
         setState(() => _busy = false);
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e'), backgroundColor: Pms.red));
       }
     }
+  }
+
+  // تعديل سجل مسودة (نفس نموذج الإنشاء، مع تعبئة أولية من بيانات السجل)
+  Future<void> _empSubEdit(String model, Map m) async {
+    final api = context.read<AuthProvider>().api;
+    Map<String, dynamic> meta;
+    try {
+      meta = await api.managementEmpSubMeta(model);
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e'), backgroundColor: Pms.red));
+      return;
+    }
+    if (!mounted) return;
+    final initial = <String, dynamic>{};
+    for (final f in (meta['fields'] as List? ?? const []).cast<Map>()) {
+      final n = '${f['name']}';
+      if (m[n] != null) initial[n] = m[n];
+    }
+    final vals = await showModalBottomSheet<Map<String, dynamic>>(
+      context: context, isScrollControlled: true, backgroundColor: Colors.white, showDragHandle: true,
+      builder: (_) => _EmpSubCreateForm(meta: meta, color: color, initial: initial),
+    );
+    if (vals == null || !mounted) return;
+    setState(() => _busy = true);
+    try {
+      await api.managementEmpSubEdit(model, m['id'] as int, vals);
+      if (!mounted) return;
+      Navigator.pop(context);
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(tr('✅ تم تعديل السجل', '✅ Record updated')), backgroundColor: const Color(0xFF16A34A)));
+    } catch (e) {
+      if (mounted) {
+        setState(() => _busy = false);
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e'), backgroundColor: Pms.red));
+      }
+    }
+  }
+
+  // إلغاء/حذف سجل مسودة
+  Future<void> _empSubCancel(String model, Map m) async {
+    final ok = await showDialog<bool>(context: context, builder: (c) => AlertDialog(
+      title: Text(tr('إلغاء السجل', 'Cancel record')),
+      content: Text(tr('هل تريد إلغاء هذا السجل؟ (متاح فقط قبل تقديمه)',
+          'Cancel this record? (only before it is submitted)')),
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(c, false), child: Text(tr('تراجع', 'Back'))),
+        FilledButton(style: FilledButton.styleFrom(backgroundColor: Pms.red),
+            onPressed: () => Navigator.pop(c, true), child: Text(tr('إلغاء السجل', 'Cancel it'))),
+      ],
+    ));
+    if (ok != true || !mounted) return;
+    final api = context.read<AuthProvider>().api;
+    setState(() => _busy = true);
+    try {
+      await api.managementEmpSubCancel(model, m['id'] as int);
+      if (!mounted) return;
+      Navigator.pop(context);
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(tr('تم إلغاء السجل', 'Record cancelled')), backgroundColor: const Color(0xFF16A34A)));
+    } catch (e) {
+      if (mounted) {
+        setState(() => _busy = false);
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e'), backgroundColor: Pms.red));
+      }
+    }
+  }
+
+  // صف أزرار تعديل/إلغاء يظهر فقط للمسودات القابلة للإنشاء عبر emp-sub
+  Widget _recordEditCancel(String? model, Map m) {
+    if (model == null || m['editable'] != true || m['id'] == null) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.only(top: 8),
+      child: Row(children: [
+        Expanded(child: OutlinedButton.icon(
+          style: OutlinedButton.styleFrom(foregroundColor: color, side: BorderSide(color: color),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
+          onPressed: _busy ? null : () => _empSubEdit(model, m),
+          icon: const Icon(Icons.edit_rounded, size: 16),
+          label: Text(tr('تعديل', 'Edit'), style: const TextStyle(fontWeight: FontWeight.w800)),
+        )),
+        const SizedBox(width: 8),
+        Expanded(child: OutlinedButton.icon(
+          style: OutlinedButton.styleFrom(foregroundColor: Pms.red, side: const BorderSide(color: Pms.red),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
+          onPressed: _busy ? null : () => _empSubCancel(model, m),
+          icon: const Icon(Icons.delete_outline_rounded, size: 16),
+          label: Text(tr('إلغاء', 'Cancel'), style: const TextStyle(fontWeight: FontWeight.w800)),
+        )),
+      ]),
+    );
   }
 
   Widget _barBtn(IconData ic, String label, Color c, VoidCallback onTap) => Padding(
@@ -811,6 +922,24 @@ class _EmpSectionSheetState extends State<_EmpSectionSheet> {
           label: Text(label, style: const TextStyle(fontWeight: FontWeight.w800)),
         )),
       );
+
+  // زر طباعة نموذج سجل (نقل/استقالة…) عبر تقرير QWeb العام
+  Widget _recordPrintBtn(String model, int? id, String arTitle, String enTitle) {
+    final report = _subCreateReport[model];
+    if (id == null || report == null) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.only(top: 8),
+      child: SizedBox(width: double.infinity, height: 40, child: OutlinedButton.icon(
+        style: OutlinedButton.styleFrom(foregroundColor: color, side: BorderSide(color: color),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
+        onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => PdfReportScreen(
+            path: context.read<AuthProvider>().api.pmsRecordReportPath(model, id, report),
+            title: tr(arTitle, enTitle), fileName: 'record-$id.pdf'))),
+        icon: const Icon(Icons.print_rounded, size: 17),
+        label: Text(tr('طباعة $arTitle', 'Print $enTitle'), style: const TextStyle(fontWeight: FontWeight.w800)),
+      )),
+    );
+  }
 
   Future<void> _submitLeave() async {
     final api = context.read<AuthProvider>().api;
@@ -1048,6 +1177,9 @@ class _EmpSectionSheetState extends State<_EmpSectionSheet> {
             _kv(tr('الإضافة على الراتب', 'Added to salary'), '${m['additional_amount']}', vc: const Color(0xFF15803D)),
           if (isAdd && m['additional_recurring'] == true)
             _kv(tr('يتكرر شهرياً', 'Recurring'), tr('نعم', 'Yes')),
+          _recordPrintBtn('employee.shift.request', m['id'] as int?,
+              'نموذج طلب النقل', 'Transfer form'),
+          _recordEditCancel('employee.shift.request', m),
         ]);
       case 'documents':
         final imgs = (m['images'] as List?) ?? const [];
@@ -1187,6 +1319,11 @@ class _EmpSectionSheetState extends State<_EmpSectionSheet> {
           for (final k in ['amount', 'loan_amount', 'balance_amount', 'total_amount'])
             if (m[k] != null) _kv(k == 'balance_amount' ? tr('المتبقّي', 'Balance') : tr('المبلغ', 'Amount'), '${m[k]}',
                 vc: k == 'balance_amount' ? Pms.red : Pms.ink),
+          // طباعة نموذج السجل (استقالة…) إن كان لنوع القسم تقرير مُسجَّل
+          if (_subCreateModel[type] != null && _subCreateReport[_subCreateModel[type]!] != null)
+            _recordPrintBtn(_subCreateModel[type]!, m['id'] as int?,
+                _subCreateReportTitle[_subCreateModel[type]!] ?? 'النموذج', 'Form'),
+          _recordEditCancel(_subCreateModel[type], m),
         ]);
     }
   }
@@ -1279,15 +1416,22 @@ class _SuspCreateSheetState extends State<_SuspCreateSheet> {
 /// A compact create form for an employee sub-module (bonus / penalty …),
 /// built from the server's field meta. Returns the entered values (or null).
 class _EmpSubCreateForm extends StatefulWidget {
-  const _EmpSubCreateForm({required this.meta, required this.color});
+  const _EmpSubCreateForm({required this.meta, required this.color, this.initial});
   final Map<String, dynamic> meta;
   final Color color;
+  final Map<String, dynamic>? initial; // قيم أولية لوضع التعديل
   @override
   State<_EmpSubCreateForm> createState() => _EmpSubCreateFormState();
 }
 
 class _EmpSubCreateFormState extends State<_EmpSubCreateForm> {
   final Map<String, dynamic> _vals = {};
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.initial != null) _vals.addAll(widget.initial!);
+  }
 
   List get _fields => (widget.meta['fields'] as List?) ?? const [];
 
