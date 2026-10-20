@@ -80,8 +80,6 @@
 	<string>لمشاركة موقع السائق المباشر مع العميل أثناء الرحلة — Used to share the driver's live location during a trip.</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
 	<string>لمتابعة موقع الرحلة أثناء التوصيل — Used to follow a trip's location during delivery.</string>
-	<key>NFCReaderUsageDescription</key>
-	<string>لقراءة بطاقات المواقع أثناء الجولات — Used to read location tags during patrols.</string>
 	<key>NSFaceIDUsageDescription</key>
 	<string>لتأمين الدخول إلى حسابك — Used to secure access to your account.</string>
 	<!-- push notifications -->
