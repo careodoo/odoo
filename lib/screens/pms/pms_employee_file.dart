@@ -254,6 +254,7 @@ class _PmsEmployeeFileScreenState extends State<PmsEmployeeFileScreen> {
     ('worker_doc', tr('وثيقة عامل', 'Worker document'), Icons.badge_rounded, const Color(0xFFB45309), 'worker_doc'),
     ('resignation', tr('استقالة', 'Resignation'), Icons.waving_hand_rounded, const Color(0xFFEA580C), 'resignation'),
     ('resign_withdraw', tr('عدول عن استقالة', 'Resignation withdrawal'), Icons.undo_rounded, const Color(0xFF14B8A6), 'resign_withdraw'),
+    ('eos_withdraw', tr('عدول عن إنهاء خدمة', 'EOS withdrawal'), Icons.settings_backup_restore_rounded, const Color(0xFF0D9488), 'eos_withdraw'),
     ('exit_iv', tr('مقابلة إنهاء خدمة', 'Exit interview'), Icons.exit_to_app_rounded, const Color(0xFF7C2D12), 'exit_iv'),
   ];
 
@@ -780,6 +781,7 @@ class _EmpSectionSheetState extends State<_EmpSectionSheet> {
     'worker_doc': 'care.worker.document',
     'resignation': 'hr.employee.resignation',
     'resign_withdraw': 'care.resignation.withdrawal',
+    'eos_withdraw': 'care.eos.withdrawal',
     'exit_iv': 'exit.interview',
   };
 
