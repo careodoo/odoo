@@ -23,6 +23,7 @@ import 'invoices_screen.dart';
 import 'shop_screen.dart';
 import 'orders_screen.dart';
 import 'client_structure_screen.dart';
+import 'pms/pms_penalty_bonus.dart';
 import 'client_activity_screen.dart';
 import 'client_inventory_screen.dart';
 import 'client_assets_screen.dart';
@@ -86,6 +87,8 @@ class _ProjectManagerHomeState extends State<ProjectManagerHome> {
       (Icons.qr_code_scanner_rounded, tr('مسح موقع', 'Scan'), const Color(0xFF0891B2), () => go(const ScanScreen())),
       (Icons.badge_rounded, tr('التصاريح', 'Permits'), const Color(0xFF9333EA), () => go(const PermitsScreen())),
       (Icons.verified_user_rounded, tr('التراخيص والاشتراكات', 'Licenses'), const Color(0xFF0F2B5B), () => go(const LicensesScreen())),
+      (Icons.gavel_rounded, tr('الجزاءات', 'Penalties'), const Color(0xFFC0392B), () => go(const PenaltiesScreen())),
+      (Icons.card_giftcard_rounded, tr('المكافآت', 'Bonuses'), const Color(0xFF16A34A), () => go(const BonusesScreen())),
     ];
 
     final clientTools = <(IconData, String, Color, VoidCallback)>[

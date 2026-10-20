@@ -2207,6 +2207,37 @@ class ApiClient {
 
   String pmsSuspensionReportPath(int id) => '/pms/suspension/$id/report';
 
+  // ---- Penalties / Bonuses (الجزاءات والمكافآت) ----
+  Future<Map<String, dynamic>> pmsPenalties() async =>
+      Map<String, dynamic>.from((await _handle(await _net.get(
+          _u('/pms/penalties'), headers: await _headers())))['data'] as Map);
+
+  Future<Map<String, dynamic>> pmsPenaltyCreate(int eid, Map<String, dynamic> body) async =>
+      Map<String, dynamic>.from((await _handle(await _net.post(
+          _u('/pms/employee/$eid/penalty-create'), headers: await _headers(),
+          body: jsonEncode(body))))['data'] as Map);
+
+  Future<Map<String, dynamic>> pmsPenaltyAction(int id, String act) async =>
+      Map<String, dynamic>.from((await _handle(await _net.post(
+          _u('/pms/penalty/$id/$act'), headers: await _headers())))['data'] as Map);
+
+  String pmsPenaltyReportPath(int id) => '/pms/penalty/$id/report';
+
+  Future<Map<String, dynamic>> pmsBonuses() async =>
+      Map<String, dynamic>.from((await _handle(await _net.get(
+          _u('/pms/bonuses'), headers: await _headers())))['data'] as Map);
+
+  Future<Map<String, dynamic>> pmsBonusCreate(int eid, Map<String, dynamic> body) async =>
+      Map<String, dynamic>.from((await _handle(await _net.post(
+          _u('/pms/employee/$eid/bonus-create'), headers: await _headers(),
+          body: jsonEncode(body))))['data'] as Map);
+
+  Future<Map<String, dynamic>> pmsBonusAction(int id, String act) async =>
+      Map<String, dynamic>.from((await _handle(await _net.post(
+          _u('/pms/bonus/$id/$act'), headers: await _headers())))['data'] as Map);
+
+  String pmsBonusReportPath(int id) => '/pms/bonus/$id/report';
+
   // ---- Resume Work (مباشرة العمل بعد توقف) ----
   Future<Map<String, dynamic>> pmsResume(int id) async =>
       Map<String, dynamic>.from((await _handle(await _net.get(
