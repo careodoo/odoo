@@ -2238,6 +2238,36 @@ class ApiClient {
 
   String pmsBonusReportPath(int id) => '/pms/bonus/$id/report';
 
+  // ---- Vehicle Services + Petrol Station (صيانة المركبات + بترول) ----
+  Future<Map<String, dynamic>> pmsVehicles() async =>
+      Map<String, dynamic>.from((await _handle(await _net.get(
+          _u('/pms/vehicles'), headers: await _headers())))['data'] as Map);
+
+  Future<Map<String, dynamic>> pmsVehicleCreate(Map<String, dynamic> body) async =>
+      Map<String, dynamic>.from((await _handle(await _net.post(
+          _u('/pms/vehicle-service/create'), headers: await _headers(),
+          body: jsonEncode(body))))['data'] as Map);
+
+  Future<Map<String, dynamic>> pmsVehicleState(int id, String state) async =>
+      Map<String, dynamic>.from((await _handle(await _net.post(
+          _u('/pms/vehicle/$id/state'), headers: await _headers(),
+          body: jsonEncode({'state': state}))))['data'] as Map);
+
+  String pmsVehicleReportPath(int id) => '/pms/vehicle/$id/report';
+
+  Future<Map<String, dynamic>> pmsPetrol() async =>
+      Map<String, dynamic>.from((await _handle(await _net.get(
+          _u('/pms/petrol'), headers: await _headers())))['data'] as Map);
+
+  Future<void> pmsPetrolCharge(Map<String, dynamic> body) async =>
+      _handle(await _net.post(_u('/pms/petrol/charge'), headers: await _headers(), body: jsonEncode(body)));
+  Future<void> pmsPetrolUse(Map<String, dynamic> body) async =>
+      _handle(await _net.post(_u('/pms/petrol/use'), headers: await _headers(), body: jsonEncode(body)));
+  Future<void> pmsPetrolTransfer(Map<String, dynamic> body) async =>
+      _handle(await _net.post(_u('/pms/petrol/transfer'), headers: await _headers(), body: jsonEncode(body)));
+
+  String pmsPetrolTankReportPath(int id) => '/pms/petrol/tank/$id/report';
+
   // ---- Resume Work (مباشرة العمل بعد توقف) ----
   Future<Map<String, dynamic>> pmsResume(int id) async =>
       Map<String, dynamic>.from((await _handle(await _net.get(

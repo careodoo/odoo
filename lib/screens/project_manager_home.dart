@@ -24,6 +24,7 @@ import 'shop_screen.dart';
 import 'orders_screen.dart';
 import 'client_structure_screen.dart';
 import 'pms/pms_penalty_bonus.dart';
+import 'pms/pms_fleet_petrol.dart';
 import 'client_activity_screen.dart';
 import 'client_inventory_screen.dart';
 import 'client_assets_screen.dart';
@@ -89,6 +90,8 @@ class _ProjectManagerHomeState extends State<ProjectManagerHome> {
       (Icons.verified_user_rounded, tr('التراخيص والاشتراكات', 'Licenses'), const Color(0xFF0F2B5B), () => go(const LicensesScreen())),
       (Icons.gavel_rounded, tr('الجزاءات', 'Penalties'), const Color(0xFFC0392B), () => go(const PenaltiesScreen())),
       (Icons.card_giftcard_rounded, tr('المكافآت', 'Bonuses'), const Color(0xFF16A34A), () => go(const BonusesScreen())),
+      (Icons.car_repair_rounded, tr('صيانة المركبات', 'Vehicle services'), const Color(0xFFC0392B), () => go(const VehicleServicesScreen())),
+      (Icons.local_gas_station_rounded, tr('بترول استيشن', 'Petrol station'), const Color(0xFF0D7A5F), () => go(const PetrolStationScreen())),
     ];
 
     final clientTools = <(IconData, String, Color, VoidCallback)>[
