@@ -757,10 +757,16 @@ class _EmpSectionSheetState extends State<_EmpSectionSheet> {
   static const Map<String, String> _subCreateReport = {
     'hr.employee.resignation': 'care_reports.action_report_resignation_submit',
     'employee.shift.request': 'hr_employee_shift.request_for_shift_report',
+    'hr.action.leave.return': 'care_hr.action_leave_return_report',
+    'hr.action.joining': 'care_hr.action_joining_report',
+    'hr.action.absence': 'care_hr.action_absence_report',
   };
   static const Map<String, String> _subCreateReportTitle = {
     'hr.employee.resignation': 'نموذج طلب الاستقالة',
     'employee.shift.request': 'نموذج طلب النقل',
+    'hr.action.leave.return': 'نموذج العودة من إجازة',
+    'hr.action.joining': 'نموذج مباشرة العمل',
+    'hr.action.absence': 'نموذج الغياب',
   };
 
   // section key -> employee sub-module model (backend emp-sub create)
