@@ -2101,6 +2101,16 @@ class ApiClient {
         _u('/pms/project/$projectId/attendance/records$suffix'), headers: await _headers())))['data'] as Map);
   }
 
+  /// سجلات العمال المجمّعة عبر مشاريع المدير + فلتر فترة + إحصائيات لكل نوع.
+  Future<Map<String, dynamic>> pmsWorkerRecords({String? dateFrom, String? dateTo}) async {
+    final qs = <String>[];
+    if (dateFrom != null && dateFrom.isNotEmpty) qs.add('date_from=$dateFrom');
+    if (dateTo != null && dateTo.isNotEmpty) qs.add('date_to=$dateTo');
+    final suffix = qs.isEmpty ? '' : '?${qs.join('&')}';
+    return Map<String, dynamic>.from((await _handle(await _net.get(
+        _u('/pms/worker-records$suffix'), headers: await _headers())))['data'] as Map);
+  }
+
   /// Finance dashboard for a project (contract, costs, Kuwait target).
   Future<Map<String, dynamic>> pmsFinance(int projectId) async =>
       Map<String, dynamic>.from((await _handle(await _net.get(

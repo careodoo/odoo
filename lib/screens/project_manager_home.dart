@@ -7,6 +7,7 @@ import 'live_stream_banner.dart';
 import 'create_task_screen.dart';
 import 'workorders_screen.dart';
 import 'client_team_screen.dart';
+import 'worker_records_screen.dart';
 import 'quality_screen.dart';
 import 'schedules_screen.dart';
 import 'requests_screen.dart';
@@ -75,6 +76,7 @@ class _ProjectManagerHomeState extends State<ProjectManagerHome> {
       (Icons.add_task_rounded, tr('مهمة جديدة', 'New task'), _teal, () => go(const CreateTaskScreen())),
       (Icons.assignment_rounded, tr('أوامر العمل', 'Work orders'), _navy, () => go(const WorkOrdersScreen())),
       (Icons.groups_rounded, tr('الفريق', 'Team'), const Color(0xFF6366F1), () => go(const ClientTeamScreen())),
+      (Icons.folder_shared_rounded, tr('سجلات العمال', 'Worker records'), const Color(0xFF0E7C86), () => go(const WorkerRecordsScreen())),
       (Icons.fact_check_rounded, tr('الجودة', 'Quality'), const Color(0xFF0EA5A4), () => go(const QualityScreen())),
       (Icons.event_repeat_rounded, tr('الجدولة', 'Schedules'), const Color(0xFF0D9488), () => go(const SchedulesScreen())),
       (Icons.inbox_rounded, tr('طلبات الخدمة', 'Requests'), const Color(0xFFE6295C), () => go(const RequestsScreen())),
