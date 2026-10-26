@@ -249,6 +249,9 @@ class _PmsEmployeeFileScreenState extends State<PmsEmployeeFileScreen> {
     ('return', tr('العودة من إجازة', 'Leave return'), Icons.keyboard_return_rounded, const Color(0xFF0891B2), 'return'),
     ('joining', tr('التحاق', 'Joining'), Icons.login_rounded, const Color(0xFF16A34A), 'joining'),
     ('absence', tr('غياب', 'Absence'), Icons.event_busy_rounded, const Color(0xFFDC2626), 'absence'),
+    ('passport_req', tr('طلب سحب الجواز', 'Passport withdrawal'), Icons.flight_takeoff_rounded, const Color(0xFF0E7C86), 'passport_req'),
+    ('absconding', tr('بلاغات الهروب والتغيب', 'Absconding'), Icons.directions_run_rounded, const Color(0xFFB91C1C), 'absconding'),
+    ('bankcard', tr('طلب كارت بنك', 'Bank card'), Icons.credit_card_rounded, const Color(0xFF2563EB), 'bankcard'),
     ('clearance', tr('إخلاء طرف', 'Clearance'), Icons.assignment_turned_in_rounded, const Color(0xFF7C3AED), 'clearance'),
     ('suspension_req', tr('إيقاف عن العمل', 'Work suspension'), Icons.block_rounded, const Color(0xFFB91C1C), 'suspension_req'),
     ('worker_doc', tr('وثيقة عامل', 'Worker document'), Icons.badge_rounded, const Color(0xFFB45309), 'worker_doc'),
@@ -760,6 +763,8 @@ class _EmpSectionSheetState extends State<_EmpSectionSheet> {
     'hr.action.leave.return': 'care_hr.action_leave_return_report',
     'hr.action.joining': 'care_hr.action_joining_report',
     'hr.action.absence': 'care_hr.action_absence_report',
+    'care.bank.card.request': 'care_bank_card.action_report_bank_card',
+    'care.passport.request': 'care_passport_request.action_report_passport_request',
   };
   static const Map<String, String> _subCreateReportTitle = {
     'hr.employee.resignation': 'نموذج طلب الاستقالة',
@@ -767,6 +772,8 @@ class _EmpSectionSheetState extends State<_EmpSectionSheet> {
     'hr.action.leave.return': 'نموذج العودة من إجازة',
     'hr.action.joining': 'نموذج مباشرة العمل',
     'hr.action.absence': 'نموذج الغياب',
+    'care.bank.card.request': 'نموذج طلب كارت البنك',
+    'care.passport.request': 'نموذج طلب سحب الجواز',
   };
 
   // section key -> employee sub-module model (backend emp-sub create)
@@ -782,6 +789,9 @@ class _EmpSectionSheetState extends State<_EmpSectionSheet> {
     'return': 'hr.action.leave.return',
     'joining': 'hr.action.joining',
     'absence': 'hr.action.absence',
+    'passport_req': 'care.passport.request',
+    'absconding': 'care.absconding.report',
+    'bankcard': 'care.bank.card.request',
     'clearance': 'hr.action.clearance',
     'suspension_req': 'care.suspension.request',
     'worker_doc': 'care.worker.document',
