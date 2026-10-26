@@ -1,11 +1,14 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../core/auth.dart';
 import '../../core/i18n.dart';
 import '../scan_screen.dart';
+import '../pdf_report_screen.dart';
 
 /// ====== ثيم نظام التحصيل ======
 class Coll {
@@ -571,6 +574,8 @@ class _CollectionsDetailState extends State<CollectionsDetail> {
       _infoRow(Icons.event_busy_rounded, tr('تاريخ الاستحقاق', 'Due date'), '${d['date_due'] ?? '-'}',
           trailing: d['is_overdue'] == true
               ? '${numOf(d['days_overdue']).toInt()} ${tr('يوم تأخّر', 'days late')}' : null),
+      if ('${d['collection_date'] ?? ''}'.isNotEmpty)
+        _infoRow(Icons.event_available_rounded, tr('تاريخ التحصيل', 'Collection date'), '${d['collection_date']}'),
       if ('${d['forecast'] ?? ''}'.isNotEmpty)
         _infoRow(Icons.schedule_rounded, tr('المتوقّع', 'Forecast'), '${d['forecast']}'),
       if ('${d['collector'] ?? ''}'.isNotEmpty)
@@ -587,12 +592,24 @@ class _CollectionsDetailState extends State<CollectionsDetail> {
                 style: const TextStyle(color: Coll.ink, fontSize: 13)))])),
       ],
       const SizedBox(height: 10),
-      OutlinedButton.icon(onPressed: () => Navigator.push(context, MaterialPageRoute(
-          builder: (_) => CustomerStatement(partnerId: d['partner_id'] as int))),
-        icon: const Icon(Icons.account_balance_wallet_rounded, size: 18),
-        label: Text(tr('كشف حساب العميل', 'Customer statement')),
-        style: OutlinedButton.styleFrom(foregroundColor: Coll.green,
-            side: const BorderSide(color: Coll.green))),
+      // حالة التسليم
+      _deliveryCard(d),
+      const SizedBox(height: 8),
+      Row(children: [
+        if (d['has_pdf'] == true)
+          Expanded(child: OutlinedButton.icon(onPressed: () => _openPdf(d),
+            icon: const Icon(Icons.picture_as_pdf_rounded, size: 18),
+            label: Text(tr('عرض الفاتورة', 'View invoice')),
+            style: OutlinedButton.styleFrom(foregroundColor: const Color(0xFF7A1340),
+                side: const BorderSide(color: Color(0xFF7A1340))))),
+        if (d['has_pdf'] == true) const SizedBox(width: 8),
+        Expanded(child: OutlinedButton.icon(onPressed: () => Navigator.push(context, MaterialPageRoute(
+            builder: (_) => CustomerStatement(partnerId: d['partner_id'] as int))),
+          icon: const Icon(Icons.account_balance_wallet_rounded, size: 18),
+          label: Text(tr('كشف الحساب', 'Statement')),
+          style: OutlinedButton.styleFrom(foregroundColor: Coll.green,
+              side: const BorderSide(color: Coll.green)))),
+      ]),
       const SizedBox(height: 18),
       // الدفعات
       _blockTitle(tr('الدفعات', 'Payments'), '${payments.length}'),
@@ -604,6 +621,88 @@ class _CollectionsDetailState extends State<CollectionsDetail> {
       if (activities.isEmpty) _emptyHint(tr('لا أنشطة بعد', 'No activities yet'))
       else ...activities.map((a) => _actTile(a as Map)),
     ]);
+  }
+
+  Widget _deliveryCard(Map d) {
+    final delivered = d['delivered'] == true;
+    final c = delivered ? Coll.green : Coll.slate;
+    return InkWell(
+      borderRadius: BorderRadius.circular(12),
+      onTap: _deliverDialog,
+      child: Container(padding: const EdgeInsets.all(13),
+        decoration: BoxDecoration(color: delivered ? const Color(0xFFEAF6F1) : Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: c.withValues(alpha: delivered ? 0.3 : 0.12))),
+        child: Row(children: [
+          Icon(delivered ? Icons.mark_email_read_rounded : Icons.local_shipping_outlined, color: c, size: 20),
+          const SizedBox(width: 10),
+          Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text(delivered ? tr('تم تسليم الفاتورة', 'Invoice delivered') : tr('لم تُسلَّم الفاتورة بعد', 'Not delivered yet'),
+                style: const TextStyle(fontWeight: FontWeight.w800, color: Coll.ink, fontSize: 13.5)),
+            if (delivered)
+              Text('${d['delivery_method_label'] ?? ''} · ${d['delivery_date'] ?? ''}'
+                  '${d['has_delivery_attachment'] == true ? tr(' · مرفق ✓', ' · attach ✓') : ''}',
+                  style: const TextStyle(color: Coll.slate, fontSize: 11.5)),
+          ])),
+          Icon(Icons.chevron_left_rounded, color: c),
+        ])),
+    );
+  }
+
+  Future<void> _openPdf(Map d) async {
+    final url = await _ap.api.collectionsPdfUrl(widget.id);
+    if (!mounted) return;
+    Navigator.push(context, MaterialPageRoute(builder: (_) => PdfReportScreen(
+        url: url, title: tr('فاتورة ${d['name'] ?? ''}', 'Invoice ${d['name'] ?? ''}'),
+        fileName: 'invoice-${d['name'] ?? ''}.pdf')));
+  }
+
+  Future<void> _deliverDialog() async {
+    String method = 'hand';
+    final note = TextEditingController();
+    String? photo;
+    final res = await showModalBottomSheet<bool>(context: context, isScrollControlled: true,
+      backgroundColor: Colors.white, shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(22))),
+      builder: (ctx) => StatefulBuilder(builder: (ctx, setM) => Directionality(
+        textDirection: gLang == 'en' ? TextDirection.ltr : TextDirection.rtl,
+        child: Padding(padding: EdgeInsets.fromLTRB(18, 16, 18, MediaQuery.of(ctx).viewInsets.bottom + 18),
+          child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+            _sheetHandle(), _sheetTitle(tr('تسليم الفاتورة للعميل', 'Deliver invoice')),
+            const SizedBox(height: 10),
+            Wrap(spacing: 8, children: [
+              ['hand', tr('✋ يدوي', '✋ Hand')], ['email', tr('📧 إلكتروني/إيميل', '📧 Email')], ['courier', tr('🚚 مندوب', '🚚 Courier')],
+            ].map((m) => ChoiceChip(label: Text(m[1]), selected: method == m[0],
+                selectedColor: Coll.green,
+                labelStyle: TextStyle(color: method == m[0] ? Colors.white : Coll.ink),
+                onSelected: (_) => setM(() => method = m[0]))).toList()),
+            const SizedBox(height: 12),
+            _field(note, tr('ملاحظة التسليم', 'Delivery note')),
+            const SizedBox(height: 10),
+            OutlinedButton.icon(onPressed: () async {
+                final x = await ImagePicker().pickImage(source: ImageSource.camera, imageQuality: 65, maxWidth: 1600);
+                if (x != null) { final b = await x.readAsBytes(); setM(() => photo = base64Encode(b)); }
+              },
+              icon: Icon(photo == null ? Icons.add_a_photo_rounded : Icons.check_circle_rounded,
+                  color: photo == null ? Coll.slate : Coll.green),
+              label: Text(photo == null ? tr('إرفاق صورة التسليم (اختياري)', 'Attach photo (optional)')
+                  : tr('أُرفقت الصورة ✓', 'Photo attached ✓'))),
+            const SizedBox(height: 16),
+            SizedBox(width: double.infinity, child: FilledButton(
+              style: FilledButton.styleFrom(backgroundColor: Coll.green,
+                  padding: const EdgeInsets.symmetric(vertical: 14)),
+              onPressed: () => Navigator.pop(ctx, true),
+              child: Text(tr('تأكيد التسليم', 'Confirm delivery'), style: const TextStyle(fontWeight: FontWeight.w800)))),
+          ])))));
+    if (res != true) return;
+    try {
+      await _ap.api.collectionsDeliver(widget.id, {
+        'method': method, 'note': note.text.trim(),
+        if (photo != null) 'attachment': photo,
+      });
+      _snack(tr('سُجّل تسليم الفاتورة', 'Delivery recorded'));
+      _load();
+    } catch (e) { _snack('$e'); }
   }
 
   Widget _heroAmt(String l, String v, bool big) => Column(
@@ -750,6 +849,7 @@ class _CollectionsDetailState extends State<CollectionsDetail> {
     final chequeBank = TextEditingController();
     final note = TextEditingController();
     String method = 'cash';
+    DateTime payDate = DateTime.now();
     final res = await showModalBottomSheet<bool>(context: context, isScrollControlled: true,
       backgroundColor: Colors.white, shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(22))),
@@ -765,7 +865,26 @@ class _CollectionsDetailState extends State<CollectionsDetail> {
                 selectedColor: Coll.green,
                 labelStyle: TextStyle(color: method == m[0] ? Colors.white : Coll.ink),
                 onSelected: (_) => setM(() => method = m[0]))).toList()),
-            const SizedBox(height: 12),
+            const SizedBox(height: 10),
+            // تاريخ التحصيل الفعلي (يمكن اختيار تاريخ قديم)
+            InkWell(onTap: () async {
+                final d = await showDatePicker(context: ctx, initialDate: payDate,
+                    firstDate: DateTime(2020), lastDate: DateTime.now());
+                if (d != null) setM(() => payDate = d);
+              },
+              borderRadius: BorderRadius.circular(10),
+              child: Container(padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                decoration: BoxDecoration(borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: Colors.black26)),
+                child: Row(children: [
+                  const Icon(Icons.event_rounded, size: 18, color: Coll.green),
+                  const SizedBox(width: 8),
+                  Text('${tr('تاريخ التحصيل', 'Collection date')}: ${payDate.toIso8601String().substring(0, 10)}',
+                      style: const TextStyle(fontWeight: FontWeight.w700, color: Coll.ink)),
+                  const Spacer(),
+                  const Icon(Icons.edit_calendar_rounded, size: 18, color: Coll.slate),
+                ]))),
+            const SizedBox(height: 10),
             _field(amount, tr('المبلغ المحصّل', 'Amount'), number: true),
             if (method == 'cheque') ...[
               const SizedBox(height: 10), _field(chequeNo, tr('رقم الشيك', 'Cheque no')),
@@ -786,6 +905,7 @@ class _CollectionsDetailState extends State<CollectionsDetail> {
     try {
       await _ap.api.collectionsPay(widget.id, {
         'method': method, 'amount': amt,
+        'date': payDate.toIso8601String().substring(0, 10),
         'recipient': recipient.text.trim(), 'note': note.text.trim(),
         if (method == 'cheque') 'cheque_no': chequeNo.text.trim(),
         if (method == 'cheque') 'cheque_bank': chequeBank.text.trim(),

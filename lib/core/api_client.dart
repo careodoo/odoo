@@ -2672,6 +2672,16 @@ class ApiClient {
               _u('/collections/reminders/send'),
               headers: await _headers(), body: jsonEncode({}))))['data'] as Map);
 
+  /// تسليم الفاتورة للعميل (يدوي/إيميل/مندوب) مع مرفق اختياري (base64).
+  Future<Map<String, dynamic>> collectionsDeliver(int id, Map<String, dynamic> body) async =>
+      Map<String, dynamic>.from((await _handle(await _net.post(
+              _u('/collections/invoice/$id/deliver'),
+              headers: await _headers(), body: jsonEncode(body))))['data'] as Map);
+
+  /// رابط PDF الفاتورة (موثّق بالتوكن) لعرضه في عارض الـ PDF.
+  Future<String> collectionsPdfUrl(int id) async =>
+      '$baseUrl/collections/invoice/$id/pdf?token=${Uri.encodeQueryComponent(await token ?? '')}';
+
   Future<Map<String, dynamic>> managementProposalUpdate(int id, Map<String, dynamic> vals) async =>
       Map<String, dynamic>.from((await _handle(await _net.post(
               _u('/management/proposals/$id/update'),
