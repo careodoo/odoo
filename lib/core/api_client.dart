@@ -2682,6 +2682,18 @@ class ApiClient {
   Future<String> collectionsPdfUrl(int id) async =>
       '$baseUrl/collections/invoice/$id/pdf?token=${Uri.encodeQueryComponent(await token ?? '')}';
 
+  /// إحصائيات التحصيل الكاملة (نفس الباك-إند) مع الفلاتر.
+  Future<Map<String, dynamic>> collectionsStats({Map<String, String>? filters}) async {
+    final qs = (filters ?? {}).entries
+        .map((e) => '${e.key}=${Uri.encodeQueryComponent(e.value)}').join('&');
+    return Map<String, dynamic>.from((await _handle(await _net.get(
+        _u('/collections/stats${qs.isEmpty ? '' : '?$qs'}'), headers: await _headers())))['data'] as Map);
+  }
+
+  Future<Map<String, dynamic>> collectionsFilterOptions() async =>
+      Map<String, dynamic>.from((await _handle(await _net.get(
+              _u('/collections/filter-options'), headers: await _headers())))['data'] as Map);
+
   Future<Map<String, dynamic>> managementProposalUpdate(int id, Map<String, dynamic> vals) async =>
       Map<String, dynamic>.from((await _handle(await _net.post(
               _u('/management/proposals/$id/update'),

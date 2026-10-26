@@ -9,6 +9,7 @@ import '../../core/auth.dart';
 import '../../core/i18n.dart';
 import '../scan_screen.dart';
 import '../pdf_report_screen.dart';
+import 'collections_stats.dart';
 
 /// ====== ثيم نظام التحصيل ======
 class Coll {
@@ -176,6 +177,9 @@ class _CollectionsHomeState extends State<CollectionsHome> {
           _forecastCard('month', tr('خلال شهر', 'Within a month'), fc, sym),
           const SizedBox(height: 18),
           // أزرار
+          _bigBtn(Icons.insights_rounded, tr('📊 الإحصائيات التفصيلية', '📊 Full analytics'), const Color(0xFF2563EB),
+              () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CollectionsStats()))),
+          const SizedBox(height: 10),
           _bigBtn(Icons.list_alt_rounded, tr('كل فواتيري', 'All my invoices'), Coll.green,
               () => _openList(title: tr('فواتير التحصيل', 'Collection invoices'))),
           const SizedBox(height: 10),
