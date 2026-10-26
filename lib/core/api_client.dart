@@ -2613,6 +2613,65 @@ class ApiClient {
       Map<String, dynamic>.from((await _handle(await _net.get(
               _u('/management/proposals/$id/edit-data'), headers: await _headers())))['data'] as Map);
 
+  // ---- collections (التحصيل) ----------------------------------------------
+  /// لوحة إحصائيات المحصّل (متأخرات/محصّل الشهر/حسب الحالة/المتوقّع).
+  Future<Map<String, dynamic>> collectionsHome() async =>
+      Map<String, dynamic>.from((await _handle(await _net.get(
+              _u('/collections/home'), headers: await _headers())))['data'] as Map);
+
+  /// قائمة فواتير التحصيل المسندة (مع فلتر وبحث). تُعيد {data, total}.
+  Future<Map<String, dynamic>> collectionsInvoices(
+      {String f = '', String q = '', int limit = 80, int offset = 0}) async {
+    final params = <String, String>{
+      if (f.isNotEmpty) 'f': f,
+      if (q.isNotEmpty) 'q': q,
+      'limit': '$limit', 'offset': '$offset',
+    };
+    final qs = params.entries
+        .map((e) => '${e.key}=${Uri.encodeQueryComponent(e.value)}')
+        .join('&');
+    return Map<String, dynamic>.from(await _handle(await _net.get(
+        _u('/collections/invoices?$qs'), headers: await _headers())) as Map);
+  }
+
+  Future<Map<String, dynamic>> collectionsInvoice(int id) async =>
+      Map<String, dynamic>.from((await _handle(await _net.get(
+              _u('/collections/invoice/$id'), headers: await _headers())))['data'] as Map);
+
+  Future<Map<String, dynamic>> collectionsBarcode(String code) async =>
+      Map<String, dynamic>.from((await _handle(await _net.get(
+              _u('/collections/barcode?code=${Uri.encodeQueryComponent(code)}'),
+              headers: await _headers())))['data'] as Map);
+
+  Future<Map<String, dynamic>> collectionsPay(int id, Map<String, dynamic> body) async =>
+      Map<String, dynamic>.from((await _handle(await _net.post(
+              _u('/collections/invoice/$id/pay'),
+              headers: await _headers(), body: jsonEncode(body))))['data'] as Map);
+
+  Future<Map<String, dynamic>> collectionsActivity(int id, Map<String, dynamic> body) async =>
+      Map<String, dynamic>.from((await _handle(await _net.post(
+              _u('/collections/invoice/$id/activity'),
+              headers: await _headers(), body: jsonEncode(body))))['data'] as Map);
+
+  Future<Map<String, dynamic>> collectionsState(int id, Map<String, dynamic> body) async =>
+      Map<String, dynamic>.from((await _handle(await _net.post(
+              _u('/collections/invoice/$id/state'),
+              headers: await _headers(), body: jsonEncode(body))))['data'] as Map);
+
+  Future<Map<String, dynamic>> collectionsLegal(int id, String reason) async =>
+      Map<String, dynamic>.from((await _handle(await _net.post(
+              _u('/collections/invoice/$id/legal'),
+              headers: await _headers(), body: jsonEncode({'reason': reason}))))['data'] as Map);
+
+  Future<Map<String, dynamic>> collectionsStatement(int partnerId) async =>
+      Map<String, dynamic>.from((await _handle(await _net.get(
+              _u('/collections/customer/$partnerId/statement'), headers: await _headers())))['data'] as Map);
+
+  Future<Map<String, dynamic>> collectionsRemindersSend() async =>
+      Map<String, dynamic>.from((await _handle(await _net.post(
+              _u('/collections/reminders/send'),
+              headers: await _headers(), body: jsonEncode({}))))['data'] as Map);
+
   Future<Map<String, dynamic>> managementProposalUpdate(int id, Map<String, dynamic> vals) async =>
       Map<String, dynamic>.from((await _handle(await _net.post(
               _u('/management/proposals/$id/update'),
