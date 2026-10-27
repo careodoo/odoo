@@ -177,21 +177,23 @@ class _CollectionsHomeState extends State<CollectionsHome> {
           _forecastCard('current_month', tr('خلال الشهر الحالي', 'This month'), fc, sym),
           _forecastCard('month', tr('خلال شهر', 'Within a month'), fc, sym),
           const SizedBox(height: 18),
-          // أزرار
-          _bigBtn(Icons.insights_rounded, tr('📊 الإحصائيات التفصيلية', '📊 Full analytics'), const Color(0xFF2563EB),
-              () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CollectionsStats()))),
-          const SizedBox(height: 10),
-          _bigBtn(Icons.list_alt_rounded, tr('كل فواتيري', 'All my invoices'), Coll.green,
-              () => _openList(title: tr('فواتير التحصيل', 'Collection invoices'))),
-          _bigBtn(Icons.people_alt_rounded, tr('👥 قائمة العملاء', '👥 Customers'), const Color(0xFF7A1340),
-              () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CollectionsCustomers()))),
-          const SizedBox(height: 10),
-          _bigBtn(Icons.qr_code_scanner_rounded, tr('بحث بالباركود', 'Scan barcode'), Coll.gold, _scan),
-          if (isMgr) ...[
-            const SizedBox(height: 10),
-            _bigBtn(Icons.notifications_active_rounded, tr('إرسال تذكيرات للمحصّلين', 'Send reminders'),
-                const Color(0xFF6D28D9), _sendReminders),
-          ],
+          // أزرار مربّعة منظّمة — 3 في السطر
+          GridView.count(
+            crossAxisCount: 3, shrinkWrap: true, physics: const NeverScrollableScrollPhysics(),
+            mainAxisSpacing: 10, crossAxisSpacing: 10, childAspectRatio: 1,
+            children: [
+              _sqTile(Icons.insights_rounded, tr('الإحصائيات', 'Analytics'), const Color(0xFF2563EB),
+                  () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CollectionsStats()))),
+              _sqTile(Icons.list_alt_rounded, tr('الفواتير', 'Invoices'), Coll.green,
+                  () => _openList(title: tr('فواتير التحصيل', 'Collection invoices'))),
+              _sqTile(Icons.people_alt_rounded, tr('العملاء', 'Customers'), const Color(0xFF7A1340),
+                  () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CollectionsCustomers()))),
+              _sqTile(Icons.qr_code_scanner_rounded, tr('بحث', 'Search'), Coll.gold, _scan),
+              if (isMgr)
+                _sqTile(Icons.notifications_active_rounded, tr('تذكيرات', 'Reminders'),
+                    const Color(0xFF6D28D9), _sendReminders),
+            ],
+          ),
         ])),
       ),
     ]);
@@ -327,14 +329,22 @@ class _CollectionsHomeState extends State<CollectionsHome> {
     );
   }
 
-  Widget _bigBtn(IconData ic, String t, Color c, VoidCallback onTap) => Material(
-      color: c, borderRadius: BorderRadius.circular(14),
-      child: InkWell(borderRadius: BorderRadius.circular(14), onTap: onTap,
-        child: Container(padding: const EdgeInsets.symmetric(vertical: 15), alignment: Alignment.center,
-          child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-            Icon(ic, color: Colors.white, size: 20),
-            const SizedBox(width: 10),
-            Text(t, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 15)),
+  // مربّع احترافي منظّم (أيقونة فوق + مسمّى مختصر)
+  Widget _sqTile(IconData ic, String t, Color c, VoidCallback onTap) => Material(
+      color: Colors.white, borderRadius: BorderRadius.circular(16),
+      child: InkWell(borderRadius: BorderRadius.circular(16), onTap: onTap,
+        child: Container(
+          decoration: BoxDecoration(borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: c.withValues(alpha: 0.18)),
+              boxShadow: [BoxShadow(color: c.withValues(alpha: 0.06), blurRadius: 10, offset: const Offset(0, 4))]),
+          padding: const EdgeInsets.all(10),
+          child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+            Container(width: 46, height: 46,
+              decoration: BoxDecoration(color: c.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(13)),
+              child: Icon(ic, color: c, size: 24)),
+            const SizedBox(height: 8),
+            Text(t, maxLines: 1, overflow: TextOverflow.ellipsis,
+                style: const TextStyle(color: Coll.ink, fontWeight: FontWeight.w800, fontSize: 12.5)),
           ]))));
 }
 
