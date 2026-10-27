@@ -203,7 +203,7 @@ class _CollectionsStatsState extends State<CollectionsStats> {
     return ListView(padding: const EdgeInsets.fromLTRB(12, 12, 12, 28), children: [
       // KPIs
       GridView.count(crossAxisCount: 2, shrinkWrap: true, physics: const NeverScrollableScrollPhysics(),
-        mainAxisSpacing: 10, crossAxisSpacing: 10, childAspectRatio: 1.7, children: [
+        mainAxisSpacing: 10, crossAxisSpacing: 10, childAspectRatio: 1.5, children: [
           _kpi('🧾', tr('المُصدَر', 'Invoiced'), money(numOf(k['invoiced']), _sym), Coll.green,
               '${numOf(k['invoice_count']).toInt()} ${tr('فاتورة', 'inv')}'),
           _kpi('💵', tr('المحصّل', 'Collected'), money(numOf(k['collected']), _sym), Coll.gold, ''),
@@ -263,17 +263,24 @@ class _CollectionsStatsState extends State<CollectionsStats> {
         const SizedBox(height: 12), child,
       ]));
 
+  // الأيقونة فوق الرقم؛ الرقم داخل FittedBox يتقلّص ليظهر كاملاً مهما كبر (ملايين).
   Widget _kpi(String ic, String l, String v, Color c, String sub) => Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14),
           border: Border.all(color: Colors.black.withValues(alpha: 0.05))),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Row(children: [Text(ic, style: const TextStyle(fontSize: 16)), const Spacer(),
-          Flexible(child: Text(v, maxLines: 1, overflow: TextOverflow.ellipsis, textAlign: TextAlign.end,
-              style: TextStyle(fontWeight: FontWeight.w900, color: c, fontSize: 15)))]),
-        const Spacer(),
-        Text(l, style: const TextStyle(fontWeight: FontWeight.w700, color: Coll.ink, fontSize: 12.5)),
-        if (sub.isNotEmpty) Text(sub, style: const TextStyle(color: Coll.slate, fontSize: 10.5)),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+        Container(width: 32, height: 32, alignment: Alignment.center,
+          decoration: BoxDecoration(color: c.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(9)),
+          child: Text(ic, style: const TextStyle(fontSize: 16))),
+        SizedBox(width: double.infinity, child: FittedBox(fit: BoxFit.scaleDown, alignment: AlignmentDirectional.centerStart,
+          child: Text(v, maxLines: 1, style: TextStyle(fontWeight: FontWeight.w900, color: c, fontSize: 21)))),
+        Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text(l, maxLines: 1, overflow: TextOverflow.ellipsis,
+              style: const TextStyle(fontWeight: FontWeight.w700, color: Coll.ink, fontSize: 12.5)),
+          if (sub.isNotEmpty) Text(sub, maxLines: 1, overflow: TextOverflow.ellipsis,
+              style: const TextStyle(color: Coll.slate, fontSize: 10.5)),
+        ]),
       ]));
 
   Widget _rateCard(double rate) => _card(Column(children: [

@@ -10,6 +10,7 @@ import '../../core/i18n.dart';
 import '../scan_screen.dart';
 import '../pdf_report_screen.dart';
 import 'collections_stats.dart';
+import 'collections_customers.dart';
 
 /// ====== ثيم نظام التحصيل ======
 class Coll {
@@ -182,6 +183,8 @@ class _CollectionsHomeState extends State<CollectionsHome> {
           const SizedBox(height: 10),
           _bigBtn(Icons.list_alt_rounded, tr('كل فواتيري', 'All my invoices'), Coll.green,
               () => _openList(title: tr('فواتير التحصيل', 'Collection invoices'))),
+          _bigBtn(Icons.people_alt_rounded, tr('👥 قائمة العملاء', '👥 Customers'), const Color(0xFF7A1340),
+              () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CollectionsCustomers()))),
           const SizedBox(height: 10),
           _bigBtn(Icons.qr_code_scanner_rounded, tr('بحث بالباركود', 'Scan barcode'), Coll.gold, _scan),
           if (isMgr) ...[
@@ -363,7 +366,7 @@ class _CollectionsListState extends State<CollectionsList> {
     setState(() => _loading = true);
     try {
       final r = await context.read<AuthProvider>().api
-          .collectionsInvoices(f: _f, q: _q, limit: 120);
+          .collectionsInvoices(f: _f, q: _q, limit: 500);
       if (mounted) {
         setState(() {
           _rows..clear()..addAll((r['data'] as List?) ?? []);
@@ -393,6 +396,7 @@ class _CollectionsListState extends State<CollectionsList> {
         body: Column(children: [
           _searchBar(),
           _filterChips(),
+          if (!_loading && _rows.isNotEmpty) _statStrip(),
           Expanded(child: _loading
               ? const Center(child: CircularProgressIndicator())
               : _rows.isEmpty
@@ -423,6 +427,8 @@ class _CollectionsListState extends State<CollectionsList> {
   Widget _filterChips() {
     final chips = [
       ['', tr('الكل', 'All')],
+      ['unpaid', tr('غير محصّلة', 'Uncollected')],
+      ['paid', tr('محصّلة', 'Collected')],
       ['overdue', tr('متأخّرة', 'Overdue')],
       ['no_response', tr('لا يتجاوب', 'No reply')],
       ['refuses', tr('يرفض', 'Refuses')],
@@ -442,10 +448,44 @@ class _CollectionsListState extends State<CollectionsList> {
       }).toList()));
   }
 
+  // شرائح إحصائية صغيرة أسفل الفلاتر (محسوبة من القائمة المعروضة)
+  Widget _statStrip() {
+    final customers = _rows.map((e) => (e as Map)['partner_id']).toSet().length;
+    num value = 0, overdueAmt = 0;
+    for (final e in _rows) {
+      final m = e as Map;
+      value += numOf(m['amount_residual']);
+      if (m['is_overdue'] == true) overdueAmt += numOf(m['amount_residual']);
+    }
+    final sym = _rows.isNotEmpty ? '${(_rows.first as Map)['symbol'] ?? ''}' : '';
+    Widget chip(IconData ic, String v, String l, Color c) => Container(
+        margin: const EdgeInsetsDirectional.only(end: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: Colors.black.withValues(alpha: 0.06))),
+        child: Row(mainAxisSize: MainAxisSize.min, children: [
+          Icon(ic, size: 15, color: c), const SizedBox(width: 5),
+          Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
+            Text(v, style: TextStyle(fontWeight: FontWeight.w900, color: c, fontSize: 12.5)),
+            Text(l, style: const TextStyle(color: Coll.slate, fontSize: 9.5)),
+          ]),
+        ]));
+    return SizedBox(height: 48, child: ListView(scrollDirection: Axis.horizontal,
+      padding: const EdgeInsets.fromLTRB(12, 2, 12, 4), children: [
+        chip(Icons.people_alt_rounded, '$customers', tr('عملاء', 'Customers'), const Color(0xFF2563EB)),
+        chip(Icons.receipt_long_rounded, '$_total', tr('فواتير', 'Invoices'), Coll.green),
+        chip(Icons.payments_rounded, money(value, sym), tr('قيمة المتبقّي', 'Outstanding'), Coll.gold),
+        chip(Icons.warning_amber_rounded, money(overdueAmt, sym), tr('المتأخّر', 'Overdue'), const Color(0xFFDC2626)),
+      ]));
+  }
+
   Widget _invCard(Map r) {
     final sc = '${r['state_code'] ?? ''}';
     final c = Coll.state(sc);
     final overdue = r['is_overdue'] == true;
+    final paid = '${r['payment_state'] ?? ''}' == 'paid';
+    final delivered = r['delivered'] == true;
+    final lastAct = '${r['last_activity'] ?? ''}';
     return Card(margin: const EdgeInsets.only(bottom: 10), elevation: 0,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14),
           side: BorderSide(color: Colors.black.withValues(alpha: 0.06))),
@@ -481,8 +521,29 @@ class _CollectionsListState extends State<CollectionsList> {
                   child: Text('${numOf(r['days_overdue']).toInt()} ${tr('يوم تأخّر', 'd late')}',
                       style: const TextStyle(color: Color(0xFFDC2626), fontWeight: FontWeight.w700, fontSize: 11))),
             ]),
+            const SizedBox(height: 9),
+            const Divider(height: 1),
+            const SizedBox(height: 8),
+            Wrap(spacing: 6, runSpacing: 6, crossAxisAlignment: WrapCrossAlignment.center, children: [
+              _tag(paid ? Icons.check_circle_rounded : Icons.pending_rounded,
+                  paid ? tr('محصّلة', 'Collected') : tr('غير محصّلة', 'Uncollected'),
+                  paid ? const Color(0xFF16A34A) : const Color(0xFFD97706)),
+              _tag(delivered ? Icons.local_shipping_rounded : Icons.inbox_rounded,
+                  delivered ? tr('مُسلّمة', 'Delivered') : tr('غير مُسلّمة', 'Not delivered'),
+                  delivered ? Coll.green : Coll.slate),
+              if (lastAct.isNotEmpty)
+                _tag(Icons.history_rounded, '${tr('آخر نشاط', 'Last')}: $lastAct', const Color(0xFF2563EB)),
+            ]),
           ]))));
   }
+
+  Widget _tag(IconData ic, String l, Color c) => Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(color: c.withValues(alpha: 0.10), borderRadius: BorderRadius.circular(8)),
+      child: Row(mainAxisSize: MainAxisSize.min, children: [
+        Icon(ic, size: 12.5, color: c), const SizedBox(width: 4),
+        Text(l, style: TextStyle(color: c, fontWeight: FontWeight.w700, fontSize: 10.5)),
+      ]));
 
   Widget _miniStat(String l, String v, Color c) => Column(
       crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -552,8 +613,16 @@ class _CollectionsDetailState extends State<CollectionsDetail> {
           gradient: const LinearGradient(colors: [Coll.greenD, Coll.green])),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Row(children: [
-            Expanded(child: Text('${d['partner'] ?? ''}',
-                style: const TextStyle(color: Colors.white, fontSize: 17, fontWeight: FontWeight.w900))),
+            Expanded(child: InkWell(
+              onTap: d['partner_id'] == null ? null : () => Navigator.push(context, MaterialPageRoute(
+                  builder: (_) => CustomerProfile(partnerId: d['partner_id'] as int))).then((_) => _load()),
+              child: Row(children: [
+                Flexible(child: Text('${d['partner'] ?? ''}',
+                    style: const TextStyle(color: Colors.white, fontSize: 17, fontWeight: FontWeight.w900,
+                        decoration: TextDecoration.underline, decorationColor: Colors.white54))),
+                const SizedBox(width: 4),
+                const Icon(Icons.open_in_new_rounded, color: Colors.white70, size: 15),
+              ]))),
             if (sc.isNotEmpty)
               Container(padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.22),
@@ -632,7 +701,7 @@ class _CollectionsDetailState extends State<CollectionsDetail> {
     final c = delivered ? Coll.green : Coll.slate;
     return InkWell(
       borderRadius: BorderRadius.circular(12),
-      onTap: _deliverDialog,
+      onTap: delivered ? () => _showDeliveryInfo(d) : _deliverDialog,
       child: Container(padding: const EdgeInsets.all(13),
         decoration: BoxDecoration(color: delivered ? const Color(0xFFEAF6F1) : Colors.white,
             borderRadius: BorderRadius.circular(12),
@@ -660,6 +729,54 @@ class _CollectionsDetailState extends State<CollectionsDetail> {
         url: url, title: tr('فاتورة ${d['name'] ?? ''}', 'Invoice ${d['name'] ?? ''}'),
         fileName: 'invoice-${d['name'] ?? ''}.pdf')));
   }
+
+  // عرض بيانات وصورة التسليم لفاتورة مُسلّمة (بدل فتح نموذج التسجيل من جديد)
+  Future<void> _showDeliveryInfo(Map d) async {
+    final hasImg = d['has_delivery_attachment'] == true;
+    final imgUrl = hasImg ? await _ap.api.collectionsDeliveryImageUrl(widget.id) : null;
+    if (!mounted) return;
+    await showModalBottomSheet(context: context, isScrollControlled: true, backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (_) => Directionality(
+        textDirection: gLang == 'en' ? TextDirection.ltr : TextDirection.rtl,
+        child: Padding(padding: EdgeInsets.fromLTRB(18, 16, 18, 16 + MediaQuery.of(context).viewInsets.bottom),
+          child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Row(children: [
+              const Icon(Icons.mark_email_read_rounded, color: Coll.green),
+              const SizedBox(width: 8),
+              Text(tr('بيانات التسليم', 'Delivery details'),
+                  style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: Coll.ink)),
+            ]),
+            const SizedBox(height: 12),
+            _dRow(tr('طريقة التسليم', 'Method'), '${d['delivery_method_label'] ?? '—'}'),
+            _dRow(tr('تاريخ التسليم', 'Date'), '${d['delivery_date'] ?? '—'}'),
+            _dRow(tr('سلّمها', 'By'), '${d['delivered_by'] ?? '—'}'),
+            if ('${d['delivery_note'] ?? ''}'.isNotEmpty) _dRow(tr('ملاحظة', 'Note'), '${d['delivery_note']}'),
+            const SizedBox(height: 12),
+            if (hasImg && imgUrl != null) ...[
+              Text(tr('صورة إثبات التسليم', 'Proof photo'),
+                  style: const TextStyle(fontWeight: FontWeight.w700, color: Coll.slate, fontSize: 12.5)),
+              const SizedBox(height: 8),
+              ClipRRect(borderRadius: BorderRadius.circular(12),
+                child: Image.network(imgUrl, fit: BoxFit.cover, width: double.infinity,
+                  loadingBuilder: (c, ch, p) => p == null ? ch : const SizedBox(height: 160, child: Center(child: CircularProgressIndicator())),
+                  errorBuilder: (c, e, s) => Container(height: 120, alignment: Alignment.center,
+                      color: const Color(0xFFF1F3F4), child: Text(tr('تعذّر تحميل الصورة', 'Image failed'), style: const TextStyle(color: Coll.slate))))),
+            ] else
+              Text(tr('لا توجد صورة مرفقة', 'No attached photo'), style: const TextStyle(color: Coll.slate)),
+            const SizedBox(height: 14),
+            SizedBox(width: double.infinity, child: OutlinedButton.icon(
+              onPressed: () { Navigator.pop(context); _deliverDialog(); },
+              icon: const Icon(Icons.edit_rounded, size: 18),
+              label: Text(tr('تعديل التسليم', 'Edit delivery')))),
+          ]))));
+  }
+
+  Widget _dRow(String l, String v) => Padding(padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        SizedBox(width: 110, child: Text(l, style: const TextStyle(color: Coll.slate, fontSize: 12.5))),
+        Expanded(child: Text(v, style: const TextStyle(fontWeight: FontWeight.w700, color: Coll.ink, fontSize: 13))),
+      ]));
 
   Future<void> _deliverDialog() async {
     String method = 'hand';

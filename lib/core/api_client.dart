@@ -2694,6 +2694,27 @@ class ApiClient {
       Map<String, dynamic>.from((await _handle(await _net.get(
               _u('/collections/filter-options'), headers: await _headers())))['data'] as Map);
 
+  /// رابط صورة إثبات التسليم (موثّق بالتوكن).
+  Future<String> collectionsDeliveryImageUrl(int id) async =>
+      '$baseUrl/collections/invoice/$id/delivery-image?token=${Uri.encodeQueryComponent(await token ?? '')}';
+
+  /// قائمة العملاء وأرصدتهم (للمحصّل).
+  Future<Map<String, dynamic>> collectionsCustomers({String q = ''}) async =>
+      Map<String, dynamic>.from((await _handle(await _net.get(
+              _u('/collections/customers${q.isEmpty ? '' : '?q=${Uri.encodeQueryComponent(q)}'}'),
+              headers: await _headers())))['data'] as Map);
+
+  /// ملف العميل الغنيّ.
+  Future<Map<String, dynamic>> collectionsCustomer(int pid) async =>
+      Map<String, dynamic>.from((await _handle(await _net.get(
+              _u('/collections/customer/$pid'), headers: await _headers())))['data'] as Map);
+
+  /// ضبط حالة تحصيل العميل (تتعاقب على فواتيره).
+  Future<Map<String, dynamic>> collectionsSetCustomerState(int pid, String state) async =>
+      Map<String, dynamic>.from((await _handle(await _net.post(
+              _u('/collections/customer/$pid/state'), headers: await _headers(),
+              body: jsonEncode({'state': state}))))['data'] as Map);
+
   Future<Map<String, dynamic>> managementProposalUpdate(int id, Map<String, dynamic> vals) async =>
       Map<String, dynamic>.from((await _handle(await _net.post(
               _u('/management/proposals/$id/update'),
