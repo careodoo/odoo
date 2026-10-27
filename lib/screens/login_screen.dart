@@ -196,16 +196,16 @@ class _LoginScreenState extends State<LoginScreen> {
         );
       } catch (_) {}
     }
-    // fallback emblem
+    // الشعار الرسمي الجديد (CARE 2 CARE) من أصول التطبيق
     return Container(
-      height: 100, width: 100,
-      alignment: Alignment.center,
+      padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 18),
+      constraints: const BoxConstraints(maxWidth: 240),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(28),
+        borderRadius: BorderRadius.circular(24),
         boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 20, offset: Offset(0, 8))],
       ),
-      child: const Text('🏢', style: TextStyle(fontSize: 50)),
+      child: Image.asset('assets/app_logo.png', height: 96, fit: BoxFit.contain),
     );
   }
 
