@@ -20,6 +20,7 @@ class Coll {
   static const bg = Color(0xFFF4F6F7);
   static const ink = Color(0xFF14241E);
   static const slate = Color(0xFF6B7A75);
+  static const red = Color(0xFFDC2626);
 
   static Color state(String code) {
     switch (code) {
@@ -605,7 +606,7 @@ class _CollectionsDetailState extends State<CollectionsDetail> {
             : _d == null
                 ? Center(child: Text(tr('تعذّر التحميل', 'Load failed')))
                 : RefreshIndicator(onRefresh: _load, child: _body()),
-        bottomNavigationBar: _d == null ? null : _actionBar(),
+        bottomNavigationBar: (_d == null || _d?['readonly'] == true) ? null : _actionBar(),
       ),
     );
   }
@@ -711,7 +712,7 @@ class _CollectionsDetailState extends State<CollectionsDetail> {
     final c = delivered ? Coll.green : Coll.slate;
     return InkWell(
       borderRadius: BorderRadius.circular(12),
-      onTap: delivered ? () => _showDeliveryInfo(d) : _deliverDialog,
+      onTap: (delivered || _d?['readonly'] == true) ? () => _showDeliveryInfo(d) : _deliverDialog,
       child: Container(padding: const EdgeInsets.all(13),
         decoration: BoxDecoration(color: delivered ? const Color(0xFFEAF6F1) : Colors.white,
             borderRadius: BorderRadius.circular(12),
@@ -920,7 +921,41 @@ class _CollectionsDetailState extends State<CollectionsDetail> {
           Padding(padding: const EdgeInsets.only(top: 4),
             child: Text('${tr('شيك', 'Cheque')} ${p['cheque_no']} — ${p['cheque_bank'] ?? ''}',
                 style: const TextStyle(color: Coll.slate, fontSize: 11.5))),
+        // زر التراجع عن الدفعة — لمدير التحصيل فقط
+        if (_d?['is_manager'] == true && p['id'] != null) ...[
+          const Divider(height: 14),
+          Align(alignment: AlignmentDirectional.centerEnd,
+            child: TextButton.icon(
+              style: TextButton.styleFrom(foregroundColor: Coll.red,
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2)),
+              onPressed: _loading ? null : () => _undoPayment(p),
+              icon: const Icon(Icons.undo_rounded, size: 16),
+              label: Text(tr('تراجع عن التحصيل', 'Undo payment'),
+                  style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 12)))),
+        ],
       ]));
+  }
+
+  // ===== تراجع عن دفعة تحصيل (مدير التحصيل) =====
+  Future<void> _undoPayment(Map p) async {
+    final ok = await showDialog<bool>(context: context, builder: (c) => AlertDialog(
+      title: Text(tr('تراجع عن التحصيل', 'Undo payment')),
+      content: Text(tr('سيتم حذف دفعة التحصيل (${money(numOf(p['amount']), '')}) وإزالة التحصيل عن الفاتورة. متابعة؟',
+          'This will delete the payment and remove it from the invoice. Continue?')),
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(c, false), child: Text(tr('إلغاء', 'Cancel'))),
+        FilledButton(style: FilledButton.styleFrom(backgroundColor: Coll.red),
+            onPressed: () => Navigator.pop(c, true), child: Text(tr('تراجع', 'Undo'))),
+      ]));
+    if (ok != true || !mounted) return;
+    try {
+      await _ap.api.collectionsUndoPayment(p['id'] as int);
+      if (!mounted) return;
+      _snack(tr('تمّ التراجع عن التحصيل', 'Payment undone'));
+      await _load();
+    } catch (e) {
+      if (mounted) _snack('$e');
+    }
   }
 
   Widget _actTile(Map a) {
