@@ -273,16 +273,23 @@ class _CustomerProfileState extends State<CustomerProfile> {
       ]),
     ]));
 
+  Color _hex(String? h) {
+    h = (h ?? '').replaceAll('#', '');
+    if (h.length == 6) {
+      final v = int.tryParse(h, radix: 16);
+      if (v != null) return Color(0xFF000000 | v);
+    }
+    return Coll.slate;
+  }
+
   Widget _aging() {
-    final a = (_d['aging'] as Map?) ?? {};
-    final items = [
-      ['0-30', numOf(a['d0_30']), const Color(0xFF16A34A)],
-      ['31-60', numOf(a['d31_60']), const Color(0xFFD97706)],
-      ['61-90', numOf(a['d61_90']), const Color(0xFFEA580C)],
-      ['91-120', numOf(a['d91_120']), const Color(0xFFDC2626)],
-      ['121-180', numOf(a['d121_180']), const Color(0xFFB91C1C)],
-      ['180+', numOf(a['d180p']), const Color(0xFF7F1D1D)],
-    ];
+    // الشرائح السبع تأتي كقائمة بالألوان والمسمّيات من الخادم
+    final list = (_d['aging'] as List?) ?? const [];
+    final items = list.map((e) {
+      final m = e as Map;
+      return [m['label'] ?? '', numOf(m['amount']), _hex('${m['color']}')];
+    }).toList();
+    if (items.isEmpty) return const SizedBox.shrink();
     final maxV = items.map((e) => e[1] as num).fold<num>(1, (p, e) => e > p ? e : p);
     return Container(padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16),
@@ -291,12 +298,12 @@ class _CustomerProfileState extends State<CustomerProfile> {
         Text(tr('أعمار الديون', 'Aging'), style: const TextStyle(fontWeight: FontWeight.w800, color: Coll.ink, fontSize: 13.5)),
         const SizedBox(height: 10),
         ...items.map((e) => Padding(padding: const EdgeInsets.symmetric(vertical: 4), child: Row(children: [
-          SizedBox(width: 48, child: Text('${e[0]} ${tr('ي', 'd')}', style: const TextStyle(fontSize: 11.5, color: Coll.slate))),
+          SizedBox(width: 70, child: Text('${e[0]}', style: const TextStyle(fontSize: 11, color: Coll.slate))),
           Expanded(child: ClipRRect(borderRadius: BorderRadius.circular(6),
             child: LinearProgressIndicator(value: ((e[1] as num) / maxV).clamp(0.0, 1.0).toDouble(),
                 minHeight: 10, backgroundColor: const Color(0xFFF1F3F4), color: e[2] as Color))),
           const SizedBox(width: 8),
-          SizedBox(width: 92, child: Text(money(e[1] as num, _sym), textAlign: TextAlign.end,
+          SizedBox(width: 88, child: Text(money(e[1] as num, _sym), textAlign: TextAlign.end,
               style: TextStyle(fontWeight: FontWeight.w800, fontSize: 11.5, color: e[2] as Color))),
         ]))),
       ]));

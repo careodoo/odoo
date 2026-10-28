@@ -349,17 +349,20 @@ class _CollectionsStatsState extends State<CollectionsStats> {
       ]))]);
   }
 
+  Color _hex(String? h) {
+    h = (h ?? '').replaceAll('#', '');
+    if (h.length == 6) { final v = int.tryParse(h, radix: 16); if (v != null) return Color(0xFF000000 | v); }
+    return Coll.slate;
+  }
+
   Widget _aging(List a, num total) {
     if (a.isEmpty) return _empty();
-    Color ac(String b) => {'0-30': const Color(0xFF16A34A), '31-60': const Color(0xFFD97706),
-      '61-90': const Color(0xFFEA580C), '91-120': const Color(0xFFDC2626),
-      '121-180': const Color(0xFFB91C1C), '180+': const Color(0xFF7F1D1D)}[b] ?? Coll.slate;
     return Column(children: [for (final x in a) Padding(padding: const EdgeInsets.symmetric(vertical: 5),
       child: Row(children: [
-        SizedBox(width: 48, child: Text('${x['bucket']}', style: const TextStyle(fontWeight: FontWeight.w700, color: Coll.ink, fontSize: 12.5))),
+        SizedBox(width: 74, child: Text('${x['bucket']}', style: const TextStyle(fontWeight: FontWeight.w700, color: Coll.ink, fontSize: 11.5))),
         Expanded(child: ClipRRect(borderRadius: BorderRadius.circular(6),
           child: LinearProgressIndicator(value: total > 0 ? (numOf(x['amount']) / total).clamp(0, 1).toDouble() : 0,
-            minHeight: 13, backgroundColor: const Color(0xFFEEF2F1), color: ac('${x['bucket']}')))),
+            minHeight: 13, backgroundColor: const Color(0xFFEEF2F1), color: _hex('${x['color']}')))),
         const SizedBox(width: 10),
         Text('${money(numOf(x['amount']), _sym)} · ${x['count']}', style: const TextStyle(color: Coll.slate, fontSize: 11)),
       ]))]);
