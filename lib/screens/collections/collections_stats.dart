@@ -352,7 +352,8 @@ class _CollectionsStatsState extends State<CollectionsStats> {
   Widget _aging(List a, num total) {
     if (a.isEmpty) return _empty();
     Color ac(String b) => {'0-30': const Color(0xFF16A34A), '31-60': const Color(0xFFD97706),
-      '61-90': const Color(0xFFEA580C), '90+': const Color(0xFFDC2626)}[b] ?? Coll.slate;
+      '61-90': const Color(0xFFEA580C), '91-120': const Color(0xFFDC2626),
+      '121-180': const Color(0xFFB91C1C), '180+': const Color(0xFF7F1D1D)}[b] ?? Coll.slate;
     return Column(children: [for (final x in a) Padding(padding: const EdgeInsets.symmetric(vertical: 5),
       child: Row(children: [
         SizedBox(width: 48, child: Text('${x['bucket']}', style: const TextStyle(fontWeight: FontWeight.w700, color: Coll.ink, fontSize: 12.5))),

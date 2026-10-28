@@ -279,7 +279,9 @@ class _CustomerProfileState extends State<CustomerProfile> {
       ['0-30', numOf(a['d0_30']), const Color(0xFF16A34A)],
       ['31-60', numOf(a['d31_60']), const Color(0xFFD97706)],
       ['61-90', numOf(a['d61_90']), const Color(0xFFEA580C)],
-      ['90+', numOf(a['d90p']), const Color(0xFFDC2626)],
+      ['91-120', numOf(a['d91_120']), const Color(0xFFDC2626)],
+      ['121-180', numOf(a['d121_180']), const Color(0xFFB91C1C)],
+      ['180+', numOf(a['d180p']), const Color(0xFF7F1D1D)],
     ];
     final maxV = items.map((e) => e[1] as num).fold<num>(1, (p, e) => e > p ? e : p);
     return Container(padding: const EdgeInsets.all(14),
