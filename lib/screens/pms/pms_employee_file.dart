@@ -227,6 +227,7 @@ class _PmsEmployeeFileScreenState extends State<PmsEmployeeFileScreen> {
     ('attendance', tr('الحضور والانصراف', 'Attendance'), Icons.schedule_rounded, const Color(0xFF2563EB), 'attendance'),
     ('leaves', tr('الإجازات', 'Leaves'), Icons.beach_access_rounded, const Color(0xFF0891B2), 'leaves'),
     ('allowances', tr('البدلات', 'Allowances'), Icons.payments_rounded, const Color(0xFF0D9488), 'allowances'),
+    ('extra_work', tr('العمل الإضافي', 'Extra work'), Icons.more_time_rounded, const Color(0xFF9333EA), 'extra_work'),
     ('eos', tr('إنهاء الخدمة', 'End of service'), Icons.logout_rounded, const Color(0xFFB91C1C), 'eos'),
     ('permissions', tr('الاستئذانات', 'Permissions'), Icons.access_time_rounded, const Color(0xFF6D28D9), 'permissions'),
     ('custody', tr('العهد', 'Custody'), Icons.inventory_2_rounded, const Color(0xFF9A3412), 'custody'),
@@ -254,6 +255,7 @@ class _PmsEmployeeFileScreenState extends State<PmsEmployeeFileScreen> {
     ('bankcard', tr('طلب كارت بنك', 'Bank card'), Icons.credit_card_rounded, const Color(0xFF2563EB), 'bankcard'),
     ('clearance', tr('إخلاء طرف', 'Clearance'), Icons.assignment_turned_in_rounded, const Color(0xFF7C3AED), 'clearance'),
     ('suspension_req', tr('إيقاف عن العمل', 'Work suspension'), Icons.block_rounded, const Color(0xFFB91C1C), 'suspension_req'),
+    ('resume_work', tr('مباشرة العمل بعد التوقف', 'Resume work'), Icons.play_circle_outline_rounded, const Color(0xFF16A34A), 'resume_work'),
     ('worker_doc', tr('وثيقة عامل', 'Worker document'), Icons.badge_rounded, const Color(0xFFB45309), 'worker_doc'),
     ('resignation', tr('استقالة', 'Resignation'), Icons.waving_hand_rounded, const Color(0xFFEA580C), 'resignation'),
     ('resign_withdraw', tr('عدول عن استقالة', 'Resignation withdrawal'), Icons.undo_rounded, const Color(0xFF14B8A6), 'resign_withdraw'),
@@ -759,6 +761,9 @@ class _EmpSectionSheetState extends State<_EmpSectionSheet> {
   // نموذج التقرير الذي يُعرض تلقائياً بعد إنشاء السجل (يبقى على السجل ويطبع النموذج)
   static const Map<String, String> _subCreateReport = {
     'hr.employee.resignation': 'care_reports.action_report_resignation_submit',
+    'care.eos': 'care_eos_approval.action_report_eos_request',
+    'care.extra.work': 'care_extra_work.action_report_extra_work',
+    'care.resume.request': 'care_suspension.action_report_resume',
     'employee.shift.request': 'hr_employee_shift.request_for_shift_report',
     'hr.action.leave.return': 'care_hr.action_leave_return_report',
     'hr.action.joining': 'care_hr.action_joining_report',
@@ -768,6 +773,9 @@ class _EmpSectionSheetState extends State<_EmpSectionSheet> {
   };
   static const Map<String, String> _subCreateReportTitle = {
     'hr.employee.resignation': 'نموذج طلب الاستقالة',
+    'care.eos': 'نموذج طلب إنهاء الخدمة',
+    'care.extra.work': 'نموذج طلب عمل إضافي',
+    'care.resume.request': 'نموذج مباشرة العمل بعد التوقف',
     'employee.shift.request': 'نموذج طلب النقل',
     'hr.action.leave.return': 'نموذج العودة من إجازة',
     'hr.action.joining': 'نموذج مباشرة العمل',
@@ -781,6 +789,7 @@ class _EmpSectionSheetState extends State<_EmpSectionSheet> {
     'bonuses': 'bonus.request',
     'penalties': 'penalty.request',
     'allowances': 'care.allowance',
+    'extra_work': 'care.extra.work',
     'eos': 'care.eos',
     'permissions': 'permission.request',
     'custody': 'care.custody',
@@ -795,6 +804,7 @@ class _EmpSectionSheetState extends State<_EmpSectionSheet> {
     'clearance': 'hr.action.clearance',
     'suspension_req': 'care.suspension.request',
     'worker_doc': 'care.worker.document',
+    'resume_work': 'care.resume.request',
     'resignation': 'hr.employee.resignation',
     'resign_withdraw': 'care.resignation.withdrawal',
     'eos_withdraw': 'care.eos.withdrawal',
@@ -905,27 +915,34 @@ class _EmpSectionSheetState extends State<_EmpSectionSheet> {
     }
   }
 
-  // صف أزرار تعديل/إلغاء يظهر فقط للمسودات القابلة للإنشاء عبر emp-sub
+  // صف أزرار تعديل/إلغاء يظهر فقط للمسودات القابلة للإنشاء عبر emp-sub.
+  // يعتمد على can_edit/can_cancel من الباك-إند (مع دعم المفتاح القديم editable).
   Widget _recordEditCancel(String? model, Map m) {
-    if (model == null || m['editable'] != true || m['id'] == null) return const SizedBox.shrink();
+    final canEdit = m['can_edit'] == true || m['editable'] == true;
+    final canCancel = m['can_cancel'] == true || m['editable'] == true;
+    if (model == null || m['id'] == null || !(canEdit || canCancel)) {
+      return const SizedBox.shrink();
+    }
     return Padding(
       padding: const EdgeInsets.only(top: 8),
       child: Row(children: [
-        Expanded(child: OutlinedButton.icon(
-          style: OutlinedButton.styleFrom(foregroundColor: color, side: BorderSide(color: color),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
-          onPressed: _busy ? null : () => _empSubEdit(model, m),
-          icon: const Icon(Icons.edit_rounded, size: 16),
-          label: Text(tr('تعديل', 'Edit'), style: const TextStyle(fontWeight: FontWeight.w800)),
-        )),
-        const SizedBox(width: 8),
-        Expanded(child: OutlinedButton.icon(
-          style: OutlinedButton.styleFrom(foregroundColor: Pms.red, side: const BorderSide(color: Pms.red),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
-          onPressed: _busy ? null : () => _empSubCancel(model, m),
-          icon: const Icon(Icons.delete_outline_rounded, size: 16),
-          label: Text(tr('إلغاء', 'Cancel'), style: const TextStyle(fontWeight: FontWeight.w800)),
-        )),
+        if (canEdit)
+          Expanded(child: OutlinedButton.icon(
+            style: OutlinedButton.styleFrom(foregroundColor: color, side: BorderSide(color: color),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
+            onPressed: _busy ? null : () => _empSubEdit(model, m),
+            icon: const Icon(Icons.edit_rounded, size: 16),
+            label: Text(tr('تعديل', 'Edit'), style: const TextStyle(fontWeight: FontWeight.w800)),
+          )),
+        if (canEdit && canCancel) const SizedBox(width: 8),
+        if (canCancel)
+          Expanded(child: OutlinedButton.icon(
+            style: OutlinedButton.styleFrom(foregroundColor: Pms.red, side: const BorderSide(color: Pms.red),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
+            onPressed: _busy ? null : () => _empSubCancel(model, m),
+            icon: const Icon(Icons.delete_outline_rounded, size: 16),
+            label: Text(tr('إلغاء', 'Cancel'), style: const TextStyle(fontWeight: FontWeight.w800)),
+          )),
       ]),
     );
   }
