@@ -574,6 +574,7 @@ class CollectionsDetail extends StatefulWidget {
 class _CollectionsDetailState extends State<CollectionsDetail> {
   Map<String, dynamic>? _d;
   bool _loading = true;
+  String? _err; // نصّ الخطأ الفعلي — يظهر للمستخدم بدل رسالة عامة
 
   @override
   void initState() {
@@ -582,12 +583,12 @@ class _CollectionsDetailState extends State<CollectionsDetail> {
   }
 
   Future<void> _load() async {
-    setState(() => _loading = true);
+    setState(() { _loading = true; _err = null; });
     try {
-      final d = await context.read<AuthProvider>().api.collectionsInvoice(widget.id);
+      final d = await _ap.api.collectionsInvoice(widget.id);
       if (mounted) setState(() { _d = d; _loading = false; });
     } catch (e) {
-      if (mounted) setState(() => _loading = false);
+      if (mounted) setState(() { _err = '$e'; _loading = false; });
     }
   }
 
@@ -604,7 +605,23 @@ class _CollectionsDetailState extends State<CollectionsDetail> {
         body: _loading
             ? const Center(child: CircularProgressIndicator())
             : _d == null
-                ? Center(child: Text(tr('تعذّر التحميل', 'Load failed')))
+                ? Center(child: Padding(padding: const EdgeInsets.all(24),
+                    child: Column(mainAxisSize: MainAxisSize.min, children: [
+                      const Icon(Icons.error_outline_rounded, color: Coll.red, size: 40),
+                      const SizedBox(height: 10),
+                      Text(tr('تعذّر فتح الفاتورة', 'Could not open invoice'),
+                          style: const TextStyle(fontWeight: FontWeight.w800, color: Coll.ink, fontSize: 15)),
+                      if ((_err ?? '').isNotEmpty) ...[
+                        const SizedBox(height: 8),
+                        Text(_err!, textAlign: TextAlign.center,
+                            style: const TextStyle(color: Coll.slate, fontSize: 12.5)),
+                      ],
+                      const SizedBox(height: 16),
+                      FilledButton.icon(onPressed: _load,
+                          style: FilledButton.styleFrom(backgroundColor: Coll.green),
+                          icon: const Icon(Icons.refresh_rounded, size: 18),
+                          label: Text(tr('إعادة المحاولة', 'Retry'))),
+                    ])))
                 : RefreshIndicator(onRefresh: _load, child: _body()),
         bottomNavigationBar: (_d == null || _d?['readonly'] == true) ? null : _actionBar(),
       ),
