@@ -1466,9 +1466,54 @@ class _EmpSubCreateFormState extends State<_EmpSubCreateForm> {
   void initState() {
     super.initState();
     if (widget.initial != null) _vals.addAll(widget.initial!);
+    // تهيئة القيم الافتراضية (toggle فترة الإنذار / أيام الإنذار / تاريخ اليوم)
+    for (final f in _fields.cast<Map>()) {
+      final name = '${f['name']}';
+      if (_vals.containsKey(name)) continue;
+      if (f.containsKey('default')) {
+        _vals[name] = f['default'];
+      } else if (f['default_today'] == true && (f['type'] == 'date' || f['type'] == 'datetime')) {
+        _vals[name] = DateTime.now().toIso8601String().substring(0, 10);
+      }
+    }
   }
 
   List get _fields => (widget.meta['fields'] as List?) ?? const [];
+
+  // إظهار شرطي: حقل بـshow_if يظهر فقط حين تتطابق القيم الحالية
+  bool _visible(Map f) {
+    final sif = f['show_if'];
+    if (sif is! Map) return true;
+    for (final e in sif.entries) {
+      final cur = _vals['${e.key}'];
+      final curB = cur == true || cur == 'true' || cur == 1;
+      final wantB = e.value == true || e.value == 'true' || e.value == 1;
+      if (curB != wantB) return false;
+    }
+    return true;
+  }
+
+  // معاينة «آخر يوم عمل المحتسب» = بدء الإنذار + أيام الإنذار (حين تفعيل الإنذار)
+  Widget _noticePreview() {
+    final np = widget.meta['notice_preview'];
+    if (np is! Map) return const SizedBox.shrink();
+    if (_vals['${np['toggle']}'] != true) return const SizedBox.shrink();
+    final start = _vals['${np['start']}'];
+    final days = _vals['${np['days']}'];
+    final sd = (start is String && start.isNotEmpty) ? DateTime.tryParse(start) : null;
+    final dd = int.tryParse('${days ?? ''}');
+    if (sd == null || dd == null) return const SizedBox.shrink();
+    final res = sd.add(Duration(days: dd)).toIso8601String().substring(0, 10);
+    final label = gLang == 'en' ? '${np['result_en']}' : '${np['result_ar']}';
+    return Container(margin: const EdgeInsets.only(top: 12), padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(color: widget.color.withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(12), border: Border.all(color: widget.color.withValues(alpha: 0.3))),
+      child: Row(children: [
+        Icon(Icons.event_available_rounded, color: widget.color, size: 18), const SizedBox(width: 8),
+        Expanded(child: Text(label, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12.5, color: Pms.ink))),
+        Text(res, style: TextStyle(fontWeight: FontWeight.w900, color: widget.color, fontSize: 13.5)),
+      ]));
+  }
 
   Future<void> _pickDate(String name) async {
     final cur = _vals[name];
@@ -1479,13 +1524,22 @@ class _EmpSubCreateFormState extends State<_EmpSubCreateForm> {
 
   void _submit() {
     for (final f in _fields.cast<Map>()) {
+      if (!_visible(f)) continue; // الحقول المخفيّة شرطياً لا تُطلب
       if (f['required'] == true && (_vals['${f['name']}'] == null || '${_vals['${f['name']}']}'.trim().isEmpty)) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
             content: Text(tr('«${f['ar']}» مطلوب', '"${f['en']}" required')), backgroundColor: Pms.red));
         return;
       }
     }
-    Navigator.pop(context, Map<String, dynamic>.from(_vals));
+    // إرسال الحقول الظاهرة فقط (+ المفاتيح المنطقية دائماً)
+    final out = <String, dynamic>{};
+    for (final f in _fields.cast<Map>()) {
+      final name = '${f['name']}';
+      if (f['type'] == 'bool' || _visible(f)) {
+        if (_vals.containsKey(name)) out[name] = _vals[name];
+      }
+    }
+    Navigator.pop(context, out);
   }
 
   InputDecoration _dec(String h) => InputDecoration(
@@ -1498,6 +1552,18 @@ class _EmpSubCreateFormState extends State<_EmpSubCreateForm> {
     final name = '${f['name']}';
     final type = '${f['type']}';
     final label = gLang == 'en' ? '${f['en']}' : '${f['ar']}';
+    // مفتاح منطقي (toggle) — مثل «تطبيق فترة الإنذار»
+    if (type == 'bool') {
+      return Container(margin: const EdgeInsets.only(top: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
+        decoration: BoxDecoration(color: Pms.bg, borderRadius: BorderRadius.circular(12)),
+        child: SwitchListTile(
+          contentPadding: EdgeInsets.zero, dense: true,
+          title: Text(label, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: Pms.ink)),
+          value: _vals[name] == true, activeColor: widget.color,
+          onChanged: (v) => setState(() => _vals[name] = v),
+        ));
+    }
     Widget input;
     if (type == 'selection') {
       final opts = ((f['options'] as List?) ?? const []).cast<Map>();
@@ -1525,7 +1591,8 @@ class _EmpSubCreateFormState extends State<_EmpSubCreateForm> {
         ),
       );
     } else {
-      input = TextField(
+      input = TextFormField(
+        initialValue: _vals[name] == null ? null : '${_vals[name]}',
         keyboardType: (type == 'float' || type == 'monetary' || type == 'integer') ? TextInputType.number : null,
         maxLines: type == 'text' ? 3 : 1,
         onChanged: (v) => _vals[name] = v,
@@ -1551,7 +1618,8 @@ class _EmpSubCreateFormState extends State<_EmpSubCreateForm> {
             Icon(Icons.add_circle_rounded, color: widget.color), const SizedBox(width: 8),
             Text(title, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
           ]),
-          for (final f in _fields.cast<Map>()) _field(f),
+          for (final f in _fields.cast<Map>()) if (_visible(f)) _field(f),
+          _noticePreview(),
           const SizedBox(height: 18),
           SizedBox(width: double.infinity, height: 48, child: FilledButton.icon(
             style: FilledButton.styleFrom(backgroundColor: widget.color, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(13))),
