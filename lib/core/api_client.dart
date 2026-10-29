@@ -2653,6 +2653,11 @@ class ApiClient {
               _u('/collections/payment/$paymentId/delete'),
               headers: await _headers(), body: jsonEncode({}))))['data'] as Map);
 
+  /// أهداف التحصيل (التارجت) + العمولات — يُرجع {active, history, commission_due_total}.
+  Future<Map<String, dynamic>> collectionsTargets() async =>
+      Map<String, dynamic>.from((await _handle(await _net.get(
+              _u('/collections/targets'), headers: await _headers())))['data'] as Map);
+
   Future<Map<String, dynamic>> collectionsActivity(int id, Map<String, dynamic> body) async =>
       Map<String, dynamic>.from((await _handle(await _net.post(
               _u('/collections/invoice/$id/activity'),

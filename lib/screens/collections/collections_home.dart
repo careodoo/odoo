@@ -11,6 +11,7 @@ import '../scan_screen.dart';
 import '../pdf_report_screen.dart';
 import 'collections_stats.dart';
 import 'collections_customers.dart';
+import 'collections_targets.dart';
 
 /// ====== ثيم نظام التحصيل ======
 class Coll {
@@ -189,6 +190,8 @@ class _CollectionsHomeState extends State<CollectionsHome> {
                   () => _openList(title: tr('فواتير التحصيل', 'Collection invoices'))),
               _sqTile(Icons.people_alt_rounded, tr('العملاء', 'Customers'), const Color(0xFF7A1340),
                   () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CollectionsCustomers()))),
+              _sqTile(Icons.flag_rounded, tr('التارجت', 'Targets'), const Color(0xFF0891B2),
+                  () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CollectionsTargets()))),
               _sqTile(Icons.qr_code_scanner_rounded, tr('بحث', 'Search'), Coll.gold, _scan),
               if (isMgr)
                 _sqTile(Icons.notifications_active_rounded, tr('تذكيرات', 'Reminders'),
