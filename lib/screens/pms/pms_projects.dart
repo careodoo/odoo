@@ -5,6 +5,7 @@ import '../../core/auth.dart';
 import '../../core/i18n.dart';
 import 'pms_shell.dart' show Pms;
 import 'pms_section.dart';
+import 'pms_extra_work.dart';
 import 'pms_tasks.dart';
 
 /// Projects the user may see (Odoo record rules decide), with real progress.
@@ -321,8 +322,10 @@ class _PmsProjectDetailState extends State<PmsProjectDetail> {
                     child: InkWell(
                       borderRadius: BorderRadius.circular(16),
                       onTap: () => Navigator.push(ctx, MaterialPageRoute(
-                          builder: (_) => PmsSectionScreen(
-                              projectId: widget.projectId, code: code, label: '${x['label']}'))),
+                          builder: (_) => code == 'extra_work'
+                              ? ExtraWorkScreen(projectId: widget.projectId, label: '${x['label']}')
+                              : PmsSectionScreen(
+                                  projectId: widget.projectId, code: code, label: '${x['label']}'))),
                       onLongPress: () => _delegateSheet(code, '${x['label']}'),
                       child: Container(
                         padding: const EdgeInsets.all(10),
@@ -652,6 +655,7 @@ class _PmsProjectDetailState extends State<PmsProjectDetail> {
     'groups': Icons.groups_rounded,
     'fmd_good': Icons.fmd_good_rounded,
     'verified_user': Icons.verified_user_rounded,
+    'group_add': Icons.group_add_rounded,
     'directions_car': Icons.directions_car_rounded,
     'mail': Icons.mail_rounded,
     'inventory_2': Icons.inventory_2_rounded,

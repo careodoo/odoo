@@ -2201,6 +2201,19 @@ class ApiClient {
           _u('/pms/project/$id/$action/create'), headers: await _headers(),
           body: jsonEncode(vals))))['data'] as Map);
 
+  // ---- Incoming extra work (العمل الإضافي الوارد) ----
+  Future<Map<String, dynamic>> pmsExtraWork(int projectId) async =>
+      Map<String, dynamic>.from((await _handle(await _net.get(
+          _u('/pms/project/$projectId/extra-work'), headers: await _headers())))['data'] as Map);
+
+  Future<Map<String, dynamic>> pmsExtraWorkStop(int rid, String kind, {String? reason}) async =>
+      Map<String, dynamic>.from((await _handle(await _net.post(
+          _u('/pms/extra-work/$rid/$kind'), headers: await _headers(),
+          body: jsonEncode({'reason': reason ?? ''}))))['data'] as Map);
+
+  /// PDF URL for the extra-work form (opened in the in-app viewer / browser).
+  String pmsExtraWorkPrintUrl(int rid) => _u('/pms/extra-work/$rid/print').toString();
+
   // ---- Work suspension (طلب الإيقاف عن العمل) ----
   Future<Map<String, dynamic>> pmsSuspension(int id) async =>
       Map<String, dynamic>.from((await _handle(await _net.get(
