@@ -172,6 +172,31 @@ class ApiClient {
       _handle(await _net.post(_u('/workorders/$id/reject'),
           headers: await _headers(), body: jsonEncode({'reason': reason})));
 
+  // ---- كشوف الدوام (Timesheet) --------------------------------------------
+  Future<List<dynamic>> tsProjects() async => List<dynamic>.from((await _handle(
+      await _net.get(_u('/timesheet/projects'), headers: await _headers())))['data'] as List);
+
+  Future<Map<String, dynamic>> tsSheets(int projectId) async =>
+      Map<String, dynamic>.from((await _handle(await _net.get(
+          _u('/timesheet/sheets?project_id=$projectId'), headers: await _headers())))['data'] as Map);
+
+  Future<Map<String, dynamic>> tsSheet(int tid) async =>
+      Map<String, dynamic>.from((await _handle(await _net.get(
+          _u('/timesheet/sheet/$tid'), headers: await _headers())))['data'] as Map);
+
+  Future<Map<String, dynamic>> tsDayToggle(int dayId, {String? status}) async =>
+      Map<String, dynamic>.from((await _handle(await _net.post(
+          _u('/timesheet/day/$dayId/toggle'), headers: await _headers(),
+          body: jsonEncode(status != null ? {'status': status} : {}))))['data'] as Map);
+
+  Future<Map<String, dynamic>> tsAction(int tid, String act) async =>
+      Map<String, dynamic>.from((await _handle(await _net.post(
+          _u('/timesheet/sheet/$tid/$act'), headers: await _headers(), body: '{}')))['data'] as Map);
+
+  Future<Map<String, dynamic>> tsCreate(Map<String, dynamic> body) async =>
+      Map<String, dynamic>.from((await _handle(await _net.post(
+          _u('/timesheet/create'), headers: await _headers(), body: jsonEncode(body))))['data'] as Map);
+
   Future<Map<String, dynamic>> createWorkOrder(Map<String, dynamic> body) async =>
       Map<String, dynamic>.from((await _handle(await _net.post(
               _u('/workorders/create'), headers: await _headers(), body: jsonEncode(body))))['data'] as Map);
