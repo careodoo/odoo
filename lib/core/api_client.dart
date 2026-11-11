@@ -2216,6 +2216,11 @@ class ApiClient {
       Map<String, dynamic>.from((await _handle(
           await _net.get(_u('/pms/employee/$id/file'), headers: await _headers())))['data'] as Map);
 
+  /// حفظ مقاسات الزي والقياسات للعامل (مدير المشروع) — يرجّع مَن/متى آخر تحديث.
+  Future<Map<String, dynamic>> pmsEmployeeSizesSave(int eid, Map<String, dynamic> body) async =>
+      Map<String, dynamic>.from((await _handle(await _net.post(_u('/pms/employee/$eid/sizes'),
+          headers: await _headers(), body: jsonEncode(body))))['data'] as Map);
+
   Future<Map<String, dynamic>> pmsVehicleFile(int id) async =>
       Map<String, dynamic>.from((await _handle(
           await _net.get(_u('/pms/vehicle/$id/file'), headers: await _headers())))['data'] as Map);

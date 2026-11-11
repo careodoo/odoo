@@ -59,6 +59,7 @@ class _PmsEmployeeFileScreenState extends State<PmsEmployeeFileScreen> {
             _identity(e),
             const SizedBox(height: 14),
             if (compliance.isNotEmpty) ...[_compliance(compliance), const SizedBox(height: 14)],
+            if ((d['sizes'] as Map?) != null) ...[_sizesCard(d['sizes'] as Map), const SizedBox(height: 14)],
             // professional sections hub — each opens its own detail
             _sectionsHub(d),
             const SizedBox(height: 14),
@@ -653,6 +654,101 @@ class _PmsEmployeeFileScreenState extends State<PmsEmployeeFileScreen> {
           }),
         ]),
       );
+
+  // ===================== مقاسات الزي والقياسات (عرض + تعديل) =====================
+  Widget _sizesCard(Map sizes) {
+    final vals = (sizes['values'] as Map?) ?? const {};
+    final canEdit = (sizes['can_edit'] ?? false) == true;
+    final updBy = sizes['updated_by'];
+    final age = sizes['age_days'];
+    final items = <List<String>>[
+      [tr('مقاس علوي', 'Top'), '${vals['uniform_top_size'] ?? ''}'],
+      [tr('بنطال', 'Trousers'), '${vals['uniform_bottom_size'] ?? ''}'],
+      [tr('حذاء', 'Shoe'), '${vals['shoe_size'] ?? ''}'],
+      [tr('قبّعة', 'Cap'), '${vals['cap_size'] ?? ''}'],
+      [tr('الوزن', 'Weight'), (vals['body_weight'] ?? 0) == 0 ? '' : '${vals['body_weight']} kg'],
+      [tr('الطول', 'Height'), (vals['body_height'] ?? 0) == 0 ? '' : '${vals['body_height']} cm'],
+    ];
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white, borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: Colors.black.withValues(alpha: 0.06)),
+      ),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Row(children: [
+          const Icon(Icons.straighten_rounded, size: 15, color: Color(0xFFC8962C)),
+          const SizedBox(width: 6),
+          Text(tr('مقاسات الزي والقياسات', 'Uniform sizes'),
+              style: TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: Pms.ink)),
+          const Spacer(),
+          if (canEdit)
+            InkWell(
+              onTap: () => _editSizes(vals),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                decoration: BoxDecoration(color: Pms.ink, borderRadius: BorderRadius.circular(9)),
+                child: Row(children: [
+                  const Icon(Icons.edit_rounded, size: 12, color: Colors.white),
+                  const SizedBox(width: 4),
+                  Text(tr('تعديل', 'Edit'),
+                      style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: Colors.white)),
+                ]),
+              ),
+            ),
+        ]),
+        const SizedBox(height: 10),
+        Wrap(spacing: 8, runSpacing: 8, children: [
+          for (final it in items)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+              decoration: BoxDecoration(
+                color: it[1].isEmpty ? const Color(0xFFFDECEB) : const Color(0xFFEEF3FB),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Text(it[0], style: TextStyle(fontSize: 10, color: Colors.grey.shade600, fontWeight: FontWeight.w700)),
+                Text(it[1].isEmpty ? tr('غير محدّد', 'not set') : it[1],
+                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.w900,
+                        color: it[1].isEmpty ? const Color(0xFFC0392B) : Pms.ink)),
+              ]),
+            ),
+        ]),
+        if (updBy != null) ...[
+          const SizedBox(height: 9),
+          Text(
+            tr('🕒 آخر تحديث بواسطة $updBy${age != null ? ' · منذ $age يوم' : ''}',
+               '🕒 Updated by $updBy${age != null ? ' · ${age}d ago' : ''}'),
+            style: TextStyle(fontSize: 10.5, color: Colors.grey.shade600, fontWeight: FontWeight.w600)),
+        ],
+      ]),
+    );
+  }
+
+  Future<void> _editSizes(Map current) async {
+    final data = (await _f) ?? const <String, dynamic>{};
+    final sizes = (data['sizes'] as Map?) ?? const {};
+    final opts = (sizes['options'] as Map?) ?? const {};
+    final result = await showModalBottomSheet<Map<String, dynamic>>(
+      context: context, isScrollControlled: true, backgroundColor: Colors.transparent,
+      builder: (_) => _SizesEditSheet(current: current, options: opts),
+    );
+    if (result == null) return;
+    try {
+      final api = context.read<AuthProvider>().api;
+      await api.pmsEmployeeSizesSave(widget.employeeId, result);
+      if (mounted) {
+        setState(() => _f = api.pmsEmployeeFile(widget.employeeId));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(tr('💾 تم حفظ المقاسات', '💾 Sizes saved'))));
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(tr('تعذّر الحفظ: $e', 'Save failed: $e'))));
+      }
+    }
+  }
 
 }
 
@@ -1683,6 +1779,168 @@ class _EmpSubCreateFormState extends State<_EmpSubCreateForm> {
             label: Text(tr('إضافة', 'Add'), style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15)),
           )),
         ]),
+      ),
+    );
+  }
+}
+
+/// شيت تعديل مقاسات الزي والقياسات (مدير المشروع).
+class _SizesEditSheet extends StatefulWidget {
+  final Map current;
+  final Map options;
+  const _SizesEditSheet({required this.current, required this.options});
+  @override
+  State<_SizesEditSheet> createState() => _SizesEditSheetState();
+}
+
+class _SizesEditSheetState extends State<_SizesEditSheet> {
+  late String? _top, _bottom, _shoe, _cap;
+  late TextEditingController _weight, _height, _note;
+
+  @override
+  void initState() {
+    super.initState();
+    String? g(String k) {
+      final v = '${widget.current[k] ?? ''}';
+      return v.isEmpty ? null : v;
+    }
+    _top = g('uniform_top_size');
+    _bottom = g('uniform_bottom_size');
+    _shoe = g('shoe_size');
+    _cap = g('cap_size');
+    final w = widget.current['body_weight'];
+    final h = widget.current['body_height'];
+    _weight = TextEditingController(text: (w == null || w == 0) ? '' : '$w');
+    _height = TextEditingController(text: (h == null || h == 0) ? '' : '$h');
+    _note = TextEditingController(text: '${widget.current['uniform_size_note'] ?? ''}');
+  }
+
+  @override
+  void dispose() {
+    _weight.dispose(); _height.dispose(); _note.dispose();
+    super.dispose();
+  }
+
+  List<DropdownMenuItem<String>> _items(String key) {
+    final opts = (widget.options[key] as List?) ?? const [];
+    return [
+      DropdownMenuItem<String>(value: null, child: Text(tr('— غير محدّد —', '— none —'))),
+      for (final o in opts)
+        DropdownMenuItem<String>(value: '${(o as Map)['value']}', child: Text('${o['label']}')),
+    ];
+  }
+
+  Widget _dd(String label, String key, String? val, void Function(String?) on) => Padding(
+    padding: const EdgeInsets.only(bottom: 10),
+    child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      Text(label, style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w800, color: Colors.grey.shade700)),
+      const SizedBox(height: 4),
+      Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF4F7FC), borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: const Color(0xFFE2E9F5)),
+        ),
+        child: DropdownButtonHideUnderline(
+          child: DropdownButton<String>(
+            value: val, isExpanded: true, items: _items(key), onChanged: on),
+        ),
+      ),
+    ]),
+  );
+
+  Widget _num(String label, TextEditingController c, String suffix) => Expanded(
+    child: Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Text(label, style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w800, color: Colors.grey.shade700)),
+        const SizedBox(height: 4),
+        TextField(
+          controller: c,
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          decoration: InputDecoration(
+            isDense: true, suffixText: suffix,
+            filled: true, fillColor: const Color(0xFFF4F7FC),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
+          ),
+        ),
+      ]),
+    ),
+  );
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+      child: Container(
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 18),
+        child: SingleChildScrollView(
+          child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Center(child: Container(width: 40, height: 4, margin: const EdgeInsets.only(bottom: 14),
+              decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(2)))),
+            Row(children: [
+              const Icon(Icons.straighten_rounded, color: Color(0xFFC8962C)),
+              const SizedBox(width: 8),
+              Text(tr('تعديل المقاسات', 'Edit sizes'),
+                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900)),
+            ]),
+            const SizedBox(height: 14),
+            _dd(tr('مقاس علوي (قميص/جاكيت)', 'Top (shirt/jacket)'), 'uniform_top_size', _top, (v) => setState(() => _top = v)),
+            _dd(tr('مقاس البنطال', 'Trousers'), 'uniform_bottom_size', _bottom, (v) => setState(() => _bottom = v)),
+            _dd(tr('مقاس الحذاء', 'Shoe'), 'shoe_size', _shoe, (v) => setState(() => _shoe = v)),
+            _dd(tr('مقاس القبّعة', 'Cap'), 'cap_size', _cap, (v) => setState(() => _cap = v)),
+            Row(children: [
+              _num(tr('الوزن', 'Weight'), _weight, 'kg'),
+              const SizedBox(width: 10),
+              _num(tr('الطول', 'Height'), _height, 'cm'),
+            ]),
+            Padding(
+              padding: const EdgeInsets.only(bottom: 14),
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Text(tr('ملاحظات المقاسات', 'Size notes'),
+                    style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w800, color: Colors.grey.shade700)),
+                const SizedBox(height: 4),
+                TextField(
+                  controller: _note,
+                  decoration: InputDecoration(
+                    isDense: true, filled: true, fillColor: const Color(0xFFF4F7FC),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
+                  ),
+                ),
+              ]),
+            ),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Pms.ink, foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+                onPressed: () {
+                  Navigator.pop<Map<String, dynamic>>(context, {
+                    'uniform_top_size': _top ?? '',
+                    'uniform_bottom_size': _bottom ?? '',
+                    'shoe_size': _shoe ?? '',
+                    'cap_size': _cap ?? '',
+                    'body_weight': double.tryParse(_weight.text.trim()) ?? 0,
+                    'body_height': double.tryParse(_height.text.trim()) ?? 0,
+                    'uniform_size_note': _note.text.trim(),
+                  });
+                },
+                icon: const Icon(Icons.save_rounded, size: 18),
+                label: Text(tr('حفظ المقاسات', 'Save sizes'),
+                    style: const TextStyle(fontWeight: FontWeight.w900)),
+              ),
+            ),
+          ]),
+        ),
       ),
     );
   }
