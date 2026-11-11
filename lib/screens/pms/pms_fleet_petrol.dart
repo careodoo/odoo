@@ -1,4 +1,4 @@
-// شاشتا صيانة المركبات + بترول استيشن لمدير المشروع.
+// The two vehicle-maintenance + petrol-station screens for the project manager.
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -6,7 +6,7 @@ import '../../core/auth.dart';
 import '../../core/i18n.dart';
 import 'pms_shell.dart';
 
-// ========================= صيانة المركبات =========================
+// ========================= Vehicle maintenance =========================
 class VehicleServicesScreen extends StatefulWidget {
   const VehicleServicesScreen({super.key});
   @override
@@ -196,7 +196,7 @@ class _VehicleCreateSheetState extends State<_VehicleCreateSheet> {
       items: opts.map((o) => DropdownMenuItem<String>(value: o['value']?.toString(), child: Text('${o['label']}', overflow: TextOverflow.ellipsis))).toList(), onChanged: onCh); }
 }
 
-// ========================= بترول استيشن =========================
+// ========================= Petrol station =========================
 class PetrolStationScreen extends StatefulWidget {
   const PetrolStationScreen({super.key});
   @override

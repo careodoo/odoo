@@ -3,10 +3,10 @@ import 'package:provider/provider.dart';
 import '../core/auth.dart';
 import '../core/i18n.dart';
 
-/// «سجلات العمال» — شاشة مجمّعة على مستوى مشاريع مدير المشروع:
-/// فلتر فترة زمنية، بطاقات إحصائيات لكل نوع طلب (تتغيّر بالفترة)، وقائمة
-/// بكل السجلات في تلك الفترة عبر كل أنواع إجراءات العمال.
-/// تطابق شاشة البوابة /my/pm/worker-records.
+/// "Worker Records" - an aggregated screen across the project manager's projects:
+/// a date-range filter, stats cards per request type (changing with the period), and a list
+/// of all records in that period across every type of worker action.
+/// Matches the portal screen /my/pm/worker-records.
 class WorkerRecordsScreen extends StatefulWidget {
   const WorkerRecordsScreen({super.key});
   @override
@@ -127,7 +127,7 @@ class _WorkerRecordsScreenState extends State<WorkerRecordsScreen> {
     );
   }
 
-  // شريط فلتر الفترة
+  // Period filter bar
   Widget _dateBar() {
     Widget box(String label, DateTime v, bool isFrom) => Expanded(
           child: InkWell(
@@ -197,7 +197,7 @@ class _WorkerRecordsScreenState extends State<WorkerRecordsScreen> {
     );
   }
 
-  // شبكة بطاقات الإحصائيات لكل نوع — الضغط يفلتر القائمة
+  // Grid of stats cards per type - tapping filters the list
   Widget _statsGrid(List<Map<String, dynamic>> stats) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(10, 10, 10, 2),

@@ -7,7 +7,7 @@ import '../../core/i18n.dart';
 import 'management_home.dart' show Mgmt;
 import 'management_list.dart' show mgmtHex, RelationSearchSheet;
 
-/// The «السكن» hub — occupancy stats, buildings, and a beds view where a worker
+/// The «Housing» hub — occupancy stats, buildings, and a beds view where a worker
 /// can be assigned to or removed from a bed.
 class HousingHubScreen extends StatefulWidget {
   const HousingHubScreen({super.key, this.accent = Mgmt.red});

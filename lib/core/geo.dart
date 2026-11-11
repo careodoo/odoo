@@ -3,11 +3,11 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
 
-/// أدوات موقع موحّدة لكل الخرائط: جلب موقع المستخدم بشكل موثوق (خدمة + أذونات +
-/// دقة عالية) + نقطة «موقعي» الزرقاء القياسية (كخرائط جوجل).
+/// Unified location utilities for all maps: fetch the user's location reliably (service + permissions +
+/// high accuracy) + the standard blue «my location» dot (like Google Maps).
 class Geo {
-  /// يجلب موقع المستخدم الحالي بدقة عالية. يعيد null عند تعذّر (خدمة مغلقة أو
-  /// إذن مرفوض)، مع الرجوع لآخر موقع معروف كحلّ أخير.
+  /// Fetches the user's current location at high accuracy. Returns null when unavailable (service off or
+  /// permission denied), falling back to the last known location as a last resort.
   static Future<LatLng?> current() async {
     try {
       if (!await Geolocator.isLocationServiceEnabled()) {
@@ -41,14 +41,14 @@ class Geo {
     }
   }
 
-  /// علامة «موقعي» لطبقة العلامات (نقطة زرقاء نابضة قياسية).
+  /// «My location» marker for the markers layer (a standard pulsing blue dot).
   static Marker meMarker(LatLng at) => Marker(
         point: at, width: 34, height: 34,
         child: const MyLocationDot(),
       );
 }
 
-/// نقطة الموقع الزرقاء القياسية: هالة شفّافة نابضة + قرص أزرق بحدّ أبيض.
+/// The standard blue location dot: a translucent pulsing halo + a blue disc with a white border.
 class MyLocationDot extends StatefulWidget {
   const MyLocationDot({super.key});
   @override
@@ -73,7 +73,7 @@ class _MyLocationDotState extends State<MyLocationDot> with SingleTickerProvider
       builder: (_, __) {
         final t = _c.value; // 0..1
         return Stack(alignment: Alignment.center, children: [
-          // الهالة النابضة
+          // The pulsing halo
           Container(
             width: 14 + 20 * t,
             height: 14 + 20 * t,
@@ -82,7 +82,7 @@ class _MyLocationDotState extends State<MyLocationDot> with SingleTickerProvider
               color: blue.withValues(alpha: (1 - t) * 0.25),
             ),
           ),
-          // القرص الأزرق بحدّ أبيض
+          // The blue disc with a white border
           Container(
             width: 16, height: 16,
             decoration: BoxDecoration(

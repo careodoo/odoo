@@ -1,6 +1,6 @@
 // Non-invasive translation overlay for the CARE app.
 //
-// The app is authored bilingually with inline `tr('عربي','English')` calls.
+// The app is authored bilingually with inline `tr('Arabic','English')` calls.
 // For any language other than Arabic/English, `tr()` looks the ENGLISH string
 // up in these per-language maps and falls back to English when a key is absent.
 // This lets us add languages without touching the ~700 call sites; we localise

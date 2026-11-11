@@ -3,7 +3,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'i18n_dict.dart';
 
 /// Lightweight multilingual layer. Strings are supplied inline as
-/// `tr('عربي','EN')` so the Arabic source stays readable and English is added
+/// `tr('Arabic','EN')` so the Arabic source stays readable and English is added
 /// alongside — no separate key files to keep in sync for those two. For any
 /// other language, the English string is looked up in [kDict] (see i18n_dict.dart)
 /// and falls back to English when a key is missing.

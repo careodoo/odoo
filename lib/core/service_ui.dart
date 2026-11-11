@@ -166,7 +166,7 @@ class ServiceTabs extends StatelessWidget {
 
 /// A list that shows a first page and reveals the rest on demand. Long lists
 /// used to render every row at once; now the count is stated up front and
-/// "المزيد" is an explicit, visible action rather than an endless scroll.
+/// "More" is an explicit, visible action rather than an endless scroll.
 class MoreList extends StatefulWidget {
   const MoreList({
     super.key,

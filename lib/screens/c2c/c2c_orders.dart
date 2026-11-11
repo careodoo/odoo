@@ -4,7 +4,7 @@ import '../../core/auth.dart';
 import '../../core/i18n.dart';
 import 'c2c_shell.dart';
 
-/// Customer "My Orders" (طلباتي) — store product orders with live status
+/// Customer "My Orders" (My Orders) — store product orders with live status
 /// tracking, full detail and a cancel request.
 class C2COrdersScreen extends StatefulWidget {
   const C2COrdersScreen({super.key});

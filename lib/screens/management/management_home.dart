@@ -218,7 +218,7 @@ class _ManagementHomeState extends State<ManagementHome> {
     );
   }
 
-  // Featured «الاعتمادات» tile — full width, above the systems grid. Shows the
+  // Featured «Approvals» tile — full width, above the systems grid. Shows the
   // total awaiting the user plus the source workflows each with its own count.
   Widget _inboxTile() {
     final ib = _inbox;
@@ -383,7 +383,7 @@ class _ManagementHomeState extends State<ManagementHome> {
   }
 
   // Stat cell: value + label. The label wraps to two lines so long Arabic
-  // captions ("بانتظار اعتمادك") never spill past the divider.
+  // captions ("Awaiting your approval") never spill past the divider.
   Widget _statCell(Map s) => Column(mainAxisSize: MainAxisSize.min, children: [
         Text('${s['value'] ?? 0}', maxLines: 1, overflow: TextOverflow.ellipsis,
             style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 18, color: Mgmt.ink)),

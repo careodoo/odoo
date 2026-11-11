@@ -273,7 +273,7 @@ class _C2CHomeScreenState extends State<C2CHomeScreen> {
 
   /// A deliberately distinctive band for the services section — it is the
   /// heart of the storefront, so it should not look like every other row title.
-  /// A clean "Title  ·  عرض الكل" row, like the reference. Extra top space on
+  /// A clean "Title  ·  View all" row, like the reference. Extra top space on
   /// the first one leaves room for the floating search bar to overlap.
   Widget _sectionRow(String title, VoidCallback onAll, {double top = 16}) => SliverToBoxAdapter(
         child: Padding(

@@ -5,8 +5,8 @@ import 'package:url_launcher/url_launcher.dart';
 import '../core/auth.dart';
 import '../core/i18n.dart';
 
-/// «ملفي المهني» — بطاقة الحارس الاحترافية: الهوية + إحصائيات الأداء + الشهادات
-/// والرخص (بحالة الانتهاء) + المهارات + المعدّات بعهدته + الرتبة والدور.
+/// "My Professional Profile" - the guard's professional card: identity + performance stats + certificates
+/// and licenses (with expiry status) + skills + equipment in his custody + rank and role.
 class SecurityMyProfileScreen extends StatefulWidget {
   const SecurityMyProfileScreen({super.key});
   @override

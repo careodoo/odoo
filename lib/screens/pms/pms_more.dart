@@ -15,7 +15,7 @@ import '../update_gate.dart';
 import '../pms/pms_employee_file.dart';
 import 'pms_shell.dart';
 
-/// «المزيد» — the project-management shell's settings & account hub, replacing
+/// «More» — the project-management shell's settings & account hub, replacing
 /// the old Alerts tab. User header, quick preferences (language / theme /
 /// notifications), account shortcuts, and help — the settings other apps have.
 class PmsMoreScreen extends StatelessWidget {
@@ -89,7 +89,7 @@ class PmsMoreScreen extends StatelessWidget {
             badge: unread,
             onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const NotificationsScreen()))),
 
-        // ===== أدوات إدارية (للمخوّلين فقط: مدير/مشرف — لا لمدير عقد عادي) =====
+        // ===== Administrative tools (for authorized users only: manager/supervisor — not a regular contract manager) =====
         _tile(context, Icons.calendar_month_rounded, tr('كشوف الدوام', 'Attendance sheets'), const Color(0xFF6D33D6),
             onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const TimesheetScreen()))),
         if ((p?.isAdmin ?? false) || (p?.isSupervisor ?? false)) ...[

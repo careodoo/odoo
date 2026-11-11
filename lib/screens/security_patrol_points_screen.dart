@@ -3,9 +3,9 @@ import 'package:provider/provider.dart';
 import '../core/auth.dart';
 import '../core/i18n.dart';
 
-/// «نقاط الدوريات» — احترافية: نقاط الفحص مجمّعة حسب المرفق، مع ترويسة إحصائيات
-/// (إجمالي/مرافق/مفحوصة اليوم)، تصنيف حسب النوع، وحالة الفحص لكل نقطة (في الموعد/
-/// متأخر/فائت) — مستوحاة من الموديل القديم ومطوّرة.
+/// «Patrol Points» — professional: checkpoints grouped by facility, with a stats header
+/// (total/facilities/checked today), classified by type, and each point's check status (on time/
+/// late/missed) — inspired by the old model and enhanced.
 class SecurityPatrolPointsScreen extends StatefulWidget {
   const SecurityPatrolPointsScreen({super.key});
   @override
@@ -170,8 +170,8 @@ class _SecurityPatrolPointsScreenState extends State<SecurityPatrolPointsScreen>
         child: Text(s, style: TextStyle(color: c, fontSize: 9.5, fontWeight: FontWeight.w700)),
       );
 
-  /// وسم الحالة: مفحوصة مرّة واحدة → «تم ✓» أخضر؛ متكرّرة → عدّاد عكسي حتى الفحص
-  /// التالي (يُعاد ضبطه مع كل سكان)؛ وإلا «بانتظار».
+  /// Status tag: checked once → «Done ✓» green; recurring → countdown to the next check
+  /// (reset with each scan); otherwise «Pending».
   (String, Color, IconData) _pointBadge(Map p) {
     final scanned = p['scanned'] == true;
     final recurring = p['recurring'] == true;
@@ -190,7 +190,7 @@ class _SecurityPatrolPointsScreenState extends State<SecurityPatrolPointsScreen>
       if (scanned) return (tr('مفحوصة', 'Scanned'), _green, Icons.check_circle_rounded);
       return (tr('بانتظار', 'Pending'), const Color(0xFF64748B), Icons.timelapse_rounded);
     }
-    // مرّة واحدة
+    // once
     if (scanned) return (tr('تم', 'Done'), _green, Icons.check_circle_rounded);
     return (tr('بانتظار', 'Pending'), const Color(0xFF64748B), Icons.radio_button_unchecked_rounded);
   }

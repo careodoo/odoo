@@ -3,8 +3,8 @@ import 'package:provider/provider.dart';
 import '../core/auth.dart';
 import '../core/i18n.dart';
 
-/// «الأوامر الدائمة / تعليمات الموقع» (Post Orders / SOP) — التعليمات الثابتة لكل
-/// موقع يقرؤها الحارس ويُقرّ بالاطلاع عليها. مصنّفة (بوابة/دوريات/طوارئ/إبلاغ).
+/// "Standing Orders / Site Instructions" (Post Orders / SOP) - the fixed instructions for each
+/// site that the guard reads and acknowledges. Categorized (gate/patrols/emergency/reporting).
 class SecurityPostOrdersScreen extends StatefulWidget {
   const SecurityPostOrdersScreen({super.key});
   @override

@@ -10,7 +10,7 @@ import '../core/widgets.dart';
 const _navy = Color(0xFF0E3A5F);
 const _accent = Color(0xFF0891B2);
 
-/// الدعم الفني — the app's support desk, backed by Odoo Helpdesk: raise a
+/// Technical support - the app's support desk, backed by Odoo Helpdesk: raise a
 /// ticket, watch its status, and reply on its thread. Phone/email/web stay one
 /// tap away for anything urgent.
 class SupportScreen extends StatefulWidget {

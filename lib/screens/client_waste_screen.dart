@@ -709,7 +709,7 @@ class _ClientWasteScreenState extends State<ClientWasteScreen> {
             Expanded(child: Text(v, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12.5, color: Color(0xFF0F172A)))),
           ]));
 
-    // رسالة نصّية منسّقة بكل تفاصيل الطلب — للمشاركة على واتساب أو أي تطبيق
+    // A formatted text message with all the request details - for sharing on WhatsApp or any app
     String shareText() {
       final b = StringBuffer();
       b.writeln('♻️ ${tr('طلب نقل ومعالجة نفايات', 'Waste transfer & treatment order')} — ${res['serial'] ?? ''}');
@@ -732,7 +732,7 @@ class _ClientWasteScreenState extends State<ClientWasteScreen> {
       } catch (_) {}
     }
 
-    // التقاط صورة احترافية لبطاقة التأكيد ومشاركتها كصورة
+    // Capture a professional image of the confirmation card and share it as an image
     Future<void> shareShot() async {
       try {
         final bo = shotKey.currentContext?.findRenderObject() as RenderRepaintBoundary?;
@@ -752,7 +752,7 @@ class _ClientWasteScreenState extends State<ClientWasteScreen> {
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 420),
         child: SingleChildScrollView(child: Column(mainAxisSize: MainAxisSize.min, children: [
-          // البطاقة القابلة للالتقاط كصورة للمشاركة
+          // The card capturable as an image for sharing
           RepaintBoundary(key: shotKey, child: Container(color: Colors.white, child: Column(mainAxisSize: MainAxisSize.min, children: [
           // celebratory header
           Container(
@@ -818,7 +818,7 @@ class _ClientWasteScreenState extends State<ClientWasteScreen> {
           ])),
           ]))),
           Padding(padding: const EdgeInsets.fromLTRB(16, 8, 16, 16), child: Column(children: [
-            // ① مشاركة نصّية على واتساب أو أي تطبيق
+            // (1) Text sharing on WhatsApp or any app
             SizedBox(width: double.infinity, child: FilledButton.icon(
               style: FilledButton.styleFrom(backgroundColor: const Color(0xFF25D366), padding: const EdgeInsets.symmetric(vertical: 13)),
               onPressed: shareTextMsg,
@@ -827,7 +827,7 @@ class _ClientWasteScreenState extends State<ClientWasteScreen> {
                   style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 12.5)),
             )),
             const SizedBox(height: 6),
-            // ② التقاط صورة لبطاقة التأكيد ومشاركتها
+            // (2) Capture an image of the confirmation card and share it
             SizedBox(width: double.infinity, child: OutlinedButton.icon(
               style: OutlinedButton.styleFrom(foregroundColor: green, side: const BorderSide(color: green),
                   padding: const EdgeInsets.symmetric(vertical: 12)),
@@ -837,7 +837,7 @@ class _ClientWasteScreenState extends State<ClientWasteScreen> {
                   style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 12.5)),
             )),
             const SizedBox(height: 6),
-            // ③ التقرير الكامل PDF + QR
+            // (3) Full report PDF + QR
             SizedBox(width: double.infinity, child: TextButton.icon(
               onPressed: () {
                 Navigator.pop(ctx);

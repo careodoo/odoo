@@ -5,9 +5,9 @@ import '../core/api_client.dart';
 import '../core/i18n.dart';
 import 'excel_export.dart';
 
-/// موديول البترول/خزّانات الوقود بالكامل: هيدر بإحصائيات غنية + أقسام لكل
-/// المداولات الداخلية (الخزّانات · الشحن Charges · الاستهلاك Uses · التحويل
-/// Transfers) بفلاتر متعدّدة ونماذج إضافة مطابقة تماماً لحقول الباك ايند.
+/// The complete fuel/fuel-tanks module: a header with rich statistics + sections for all
+/// internal transactions (Tanks . Charges . Uses . Transfers)
+/// with multiple filters and add forms matching the backend fields exactly.
 class PetrolScreen extends StatefulWidget {
   const PetrolScreen({super.key});
   @override
@@ -25,7 +25,7 @@ class _PetrolScreenState extends State<PetrolScreen> with SingleTickerProviderSt
   Map<String, dynamic>? _opts;
   bool _loading = true;
 
-  // بيانات الأقسام + الفلاتر
+  // Section data + filters
   List _tanks = const [], _charges = const [], _uses = const [], _transfers = const [];
   Map _cTotals = const {}, _uTotals = const {}, _xTotals = const {};
   int? _fTank, _fVehicle, _fStage;
@@ -142,7 +142,7 @@ class _PetrolScreenState extends State<PetrolScreen> with SingleTickerProviderSt
   String _createLabel() => [tr('خزّان', 'Tank'), tr('شحن', 'Charge'), tr('استهلاك', 'Use'), tr('تحويل', 'Transfer')][_tabs.index];
   void _createForCurrentTab() => [_tankForm, _chargeForm, _useForm, _transferForm][_tabs.index]();
 
-  // ---- هيدر الإحصائيات (كثيرة) -----------------------------------------
+  // ---- Statistics header (many) -----------------------------------------
   Widget _statsHeader() {
     final s = (_ov?['stats'] as Map?) ?? const {};
     final chips = <(String, String, IconData, Color)>[
@@ -190,7 +190,7 @@ class _PetrolScreenState extends State<PetrolScreen> with SingleTickerProviderSt
     return d % 1 == 0 ? d.toInt().toString() : d.toStringAsFixed(1);
   }
 
-  // ---- تبويب الخزّانات --------------------------------------------------
+  // ---- Tanks tab --------------------------------------------------
   Widget _tanksTab() {
     return Column(children: [
       _filterBar([
@@ -235,7 +235,7 @@ class _PetrolScreenState extends State<PetrolScreen> with SingleTickerProviderSt
     ]);
   }
 
-  // ---- تبويب الشحن ------------------------------------------------------
+  // ---- Charges tab ------------------------------------------------------
   Widget _chargesTab() {
     return Column(children: [
       _filterBar([
@@ -252,7 +252,7 @@ class _PetrolScreenState extends State<PetrolScreen> with SingleTickerProviderSt
     ]);
   }
 
-  // ---- تبويب الاستهلاك --------------------------------------------------
+  // ---- Uses tab --------------------------------------------------
   Widget _usesTab() {
     return Column(children: [
       _filterBar([
@@ -273,7 +273,7 @@ class _PetrolScreenState extends State<PetrolScreen> with SingleTickerProviderSt
     ]);
   }
 
-  // ---- تبويب التحويلات --------------------------------------------------
+  // ---- Transfers tab --------------------------------------------------
   Widget _transfersTab() {
     return Column(children: [
       _filterBar([
@@ -317,7 +317,7 @@ class _PetrolScreenState extends State<PetrolScreen> with SingleTickerProviderSt
     } catch (e) { _err('$e'.replaceFirst('Exception: ', '')); }
   }
 
-  // ---- تفاصيل الخزّان ---------------------------------------------------
+  // ---- Tank details ---------------------------------------------------
   Future<void> _tankDetail(Map t) async {
     showModalBottomSheet(context: context, isScrollControlled: true, backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
@@ -368,7 +368,7 @@ class _PetrolScreenState extends State<PetrolScreen> with SingleTickerProviderSt
     ]),
   );
 
-  // ================= نماذج الإضافة (مطابقة للباك ايند) =================
+  // ================= Add forms (matching the backend) =================
   void _tankForm() {
     final name = TextEditingController(); final cap = TextEditingController();
     int? stage;
@@ -433,7 +433,7 @@ class _PetrolScreenState extends State<PetrolScreen> with SingleTickerProviderSt
     });
   }
 
-  // ================= أدوات واجهة مشتركة =================
+  // ================= Shared UI helpers =================
   Widget _list(List items, Widget Function(dynamic) builder) {
     if (items.isEmpty) return Center(child: Text(tr('لا سجلات', 'No records'), style: const TextStyle(color: _grey)));
     return RefreshIndicator(onRefresh: _loadSection, color: _amber,
@@ -516,7 +516,7 @@ class _PetrolScreenState extends State<PetrolScreen> with SingleTickerProviderSt
       Text(v, style: const TextStyle(color: _ink, fontWeight: FontWeight.w900, fontSize: 17)),
     ]));
 
-  // نماذج: ورقة سفلية + حقول
+  // Forms: bottom sheet + fields
   void _sheet(String title, List<Widget> Function(StateSetter) fields, Future<void> Function() onSubmit) {
     showModalBottomSheet(context: context, isScrollControlled: true, backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),

@@ -4,7 +4,7 @@ import '../../core/auth.dart';
 import '../../core/i18n.dart';
 import 'c2c_shell.dart';
 
-/// اشتراكاتي — the customer's subscription requests and their state.
+/// My Subscriptions — the customer's subscription requests and their state.
 class C2CSubscriptionsScreen extends StatefulWidget {
   const C2CSubscriptionsScreen({super.key});
   @override

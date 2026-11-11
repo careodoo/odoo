@@ -34,7 +34,7 @@ class _ReceiverWasteScreenState extends State<ReceiverWasteScreen> {
     try {
       final c = await context.read<AuthProvider>().api.wasteReceiverItems();
       if (mounted) setState(() => _catalog = c.cast<Map>());
-    } catch (_) {/* الكتالوج اختياري — الاستلام يعمل بدونه */}
+    } catch (_) {/* The catalog is optional - receiving works without it */}
   }
 
   @override
@@ -91,8 +91,8 @@ class _ReceiverWasteScreenState extends State<ReceiverWasteScreen> {
     final weight = TextEditingController(text: '${o['final_weight'] ?? ''}');
     final note = TextEditingController(text: '${o['final_note'] ?? ''}');
     bool weightTouched = (o['final_weight'] ?? 0) != 0; // هل حرّر المستخدم الوزن يدوياً؟
-    // كل سطر يحمل معرّف الصنف + اسمه + وزن القطعة + متحكّم كمية خاص به (يُنشأ مرة
-    // واحدة لتفادي إعادة ضبط المؤشّر عند إعادة البناء).
+    // Each line carries the item id + its name + piece weight + its own quantity controller (created once
+    // to avoid resetting the cursor on rebuild).
     final lines = <Map<String, dynamic>>[
       for (final i in (o['items'] as List? ?? []))
         {
@@ -112,7 +112,7 @@ class _ReceiverWasteScreenState extends State<ReceiverWasteScreen> {
     await showModalBottomSheet(
       context: context, isScrollControlled: true, backgroundColor: Colors.transparent,
       builder: (ctx) => StatefulBuilder(builder: (ctx, setSt) {
-        // كلما تغيّرت الأصناف نزامن حقل الوزن النهائي بالمحتسب (ما لم يُحرّره المستخدم يدوياً)
+        // Whenever the items change we sync the final weight field with the computed one (unless the user edited it manually)
         void syncWeight() {
           if (!weightTouched) {
             final t = totalWeight();
@@ -134,7 +134,7 @@ class _ReceiverWasteScreenState extends State<ReceiverWasteScreen> {
           if (chosen == null) return;
           final existing = lines.indexWhere((l) => l['item_id'] == chosen['id']);
           if (existing >= 0) {
-            // موجود مسبقاً → نزيد الكمية 1
+            // Already present -> increase the quantity by 1
             final c = lines[existing]['ctrl'] as TextEditingController;
             c.text = '${(double.tryParse(c.text) ?? 0) + 1}';
           } else {
@@ -176,7 +176,7 @@ class _ReceiverWasteScreenState extends State<ReceiverWasteScreen> {
               const SizedBox(height: 12),
               Text('${tr('استلام الطلب', 'Receive order')} ${o['serial']}', style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 18, color: _navy)),
               const SizedBox(height: 14),
-              // ---- الأصناف والكميات المستلمة ----
+              // ---- Received items and quantities ----
               Row(children: [
                 Expanded(child: _sec(tr('الأصناف والكميات المستلمة', 'Received types & quantities'))),
                 TextButton.icon(
@@ -214,7 +214,7 @@ class _ReceiverWasteScreenState extends State<ReceiverWasteScreen> {
                     onPressed: () { (lines[i]['ctrl'] as TextEditingController).dispose(); setSt(() => lines.removeAt(i)); setSt(syncWeight); }),
                 ]),
               ),
-              // ---- ملخّص الإجمالي (احترافي) ----
+              // ---- Total summary (professional) ----
               const SizedBox(height: 6),
               Container(
                 padding: const EdgeInsets.all(14),
@@ -270,7 +270,7 @@ class _ReceiverWasteScreenState extends State<ReceiverWasteScreen> {
     note.dispose();
   }
 
-  /// منتقي الأصناف من الكتالوج (بحث + وزن القطعة).
+  /// Item picker from the catalog (search + piece weight).
   Future<Map?> _pickFromCatalog(BuildContext ctx) async {
     if (_catalog.isEmpty) {
       ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(content: Text(tr('لا يوجد كتالوج أصناف', 'No item catalog available'))));

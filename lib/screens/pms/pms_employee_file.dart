@@ -246,7 +246,7 @@ class _PmsEmployeeFileScreenState extends State<PmsEmployeeFileScreen> {
     ('violations', tr('المخالفات المرورية', 'Traffic violations'), Icons.report_rounded, const Color(0xFFDC2626), 'violations'),
     ('legal', tr('الحالة القانونية', 'Legal status'), Icons.balance_rounded, const Color(0xFF7C2D12), 'legal'),
     ('devices', tr('أجهزة البصمة', 'Biometric devices'), Icons.fingerprint_rounded, const Color(0xFF475569), 'devices'),
-    // ===== إجراءات العامل (مطابقة لبورتال مدير المشاريع) =====
+    // ===== Worker actions (matching the project manager portal) =====
     ('return', tr('العودة من إجازة', 'Leave return'), Icons.keyboard_return_rounded, const Color(0xFF0891B2), 'return'),
     ('joining', tr('التحاق', 'Joining'), Icons.login_rounded, const Color(0xFF16A34A), 'joining'),
     ('absence', tr('غياب', 'Absence'), Icons.event_busy_rounded, const Color(0xFFDC2626), 'absence'),
@@ -319,7 +319,7 @@ class _PmsEmployeeFileScreenState extends State<PmsEmployeeFileScreen> {
     );
   }
 
-  // ===== Work suspension (طلب الإيقاف عن العمل) =====
+  // ===== Work suspension (work suspension request) =====
   static const _suspColor = Color(0xFFD97706);
 
   Widget _suspensionCard(Map s, Map emp) {
@@ -359,7 +359,7 @@ class _PmsEmployeeFileScreenState extends State<PmsEmployeeFileScreen> {
                 label: Text(tr('طلب إيقاف عن العمل', 'New suspension request'),
                     style: const TextStyle(fontWeight: FontWeight.w800)),
               )),
-            // زر مباشرة العمل — يظهر للعامل الموقوف حالياً (يُلغي الإيقاف عند الاعتماد)
+            // Resume work button — shown for the currently suspended worker (cancels the suspension on approval)
             if ((s['can_create'] ?? false) == true && _isSuspended(emp))
               Padding(padding: const EdgeInsets.only(top: 8),
                 child: SizedBox(width: double.infinity, child: FilledButton.icon(
@@ -452,7 +452,7 @@ class _PmsEmployeeFileScreenState extends State<PmsEmployeeFileScreen> {
     }
   }
 
-  // هل العامل موقوف حالياً؟ (من علامات worker_status)
+  // Is the worker currently suspended? (from the worker_status flags)
   bool _isSuspended(Map emp) {
     final marks = (emp['marks'] as List?) ?? const [];
     return marks.any((m) => (m is Map) &&
@@ -758,7 +758,7 @@ class _EmpSectionSheetState extends State<_EmpSectionSheet> {
     return const SizedBox.shrink();
   }
 
-  // نموذج التقرير الذي يُعرض تلقائياً بعد إنشاء السجل (يبقى على السجل ويطبع النموذج)
+  // The report form shown automatically after creating the record (stays on the record and prints the form)
   static const Map<String, String> _subCreateReport = {
     'hr.employee.resignation': 'care_reports.action_report_resignation_submit',
     'care.eos': 'care_eos_approval.action_report_eos_request',
@@ -793,7 +793,7 @@ class _EmpSectionSheetState extends State<_EmpSectionSheet> {
     'eos': 'care.eos',
     'permissions': 'permission.request',
     'custody': 'care.custody',
-    // إجراءات العامل
+    // Worker actions
     'transfers': 'employee.shift.request',
     'return': 'hr.action.leave.return',
     'joining': 'hr.action.joining',
@@ -815,7 +815,7 @@ class _EmpSectionSheetState extends State<_EmpSectionSheet> {
     final api = context.read<AuthProvider>().api;
     Map<String, dynamic> meta;
     try {
-      meta = await api.managementEmpSubMeta(model);
+      meta = await api.managementEmpSubMeta(model, employeeId: widget.employeeId);
     } catch (e) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e'), backgroundColor: Pms.red));
       return;
@@ -835,7 +835,7 @@ class _EmpSectionSheetState extends State<_EmpSectionSheet> {
       Navigator.pop(context); // close section sheet; parent reloads the file
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
           content: Text(tr('✅ تم إضافة السجل', '✅ Record added')), backgroundColor: const Color(0xFF16A34A)));
-      // يبقى المستخدم ويُفتح له التقرير (مثلاً نموذج طلب الاستقالة) تلقائياً
+      // The user stays and the report (e.g. the resignation request form) is opened for them automatically
       if (newId != null && reportRef != null && mounted) {
         final ttl = tr(_subCreateReportTitle[model] ?? 'التقرير', 'Report');
         await Navigator.push(context, MaterialPageRoute(builder: (_) => PdfReportScreen(
@@ -850,12 +850,12 @@ class _EmpSectionSheetState extends State<_EmpSectionSheet> {
     }
   }
 
-  // تعديل سجل مسودة (نفس نموذج الإنشاء، مع تعبئة أولية من بيانات السجل)
+  // Edit a draft record (same creation form, with an initial fill from the record's data)
   Future<void> _empSubEdit(String model, Map m) async {
     final api = context.read<AuthProvider>().api;
     Map<String, dynamic> meta;
     try {
-      meta = await api.managementEmpSubMeta(model);
+      meta = await api.managementEmpSubMeta(model, employeeId: widget.employeeId);
     } catch (e) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e'), backgroundColor: Pms.red));
       return;
@@ -886,7 +886,7 @@ class _EmpSectionSheetState extends State<_EmpSectionSheet> {
     }
   }
 
-  // إلغاء/حذف سجل مسودة
+  // Cancel/delete a draft record
   Future<void> _empSubCancel(String model, Map m) async {
     final ok = await showDialog<bool>(context: context, builder: (c) => AlertDialog(
       title: Text(tr('إلغاء السجل', 'Cancel record')),
@@ -915,8 +915,8 @@ class _EmpSectionSheetState extends State<_EmpSectionSheet> {
     }
   }
 
-  // صف أزرار تعديل/إلغاء يظهر فقط للمسودات القابلة للإنشاء عبر emp-sub.
-  // يعتمد على can_edit/can_cancel من الباك-إند (مع دعم المفتاح القديم editable).
+  // Edit/cancel buttons row shown only for drafts creatable via emp-sub.
+  // Relies on can_edit/can_cancel from the backend (with support for the old editable key).
   Widget _recordEditCancel(String? model, Map m) {
     final canEdit = m['can_edit'] == true || m['editable'] == true;
     final canCancel = m['can_cancel'] == true || m['editable'] == true;
@@ -958,7 +958,7 @@ class _EmpSectionSheetState extends State<_EmpSectionSheet> {
         )),
       );
 
-  // زر طباعة نموذج سجل (نقل/استقالة…) عبر تقرير QWeb العام
+  // Button to print a record form (transfer/resignation…) via the generic QWeb report
   Widget _recordPrintBtn(String model, int? id, String arTitle, String enTitle) {
     final report = _subCreateReport[model];
     if (id == null || report == null) return const SizedBox.shrink();
@@ -1354,7 +1354,7 @@ class _EmpSectionSheetState extends State<_EmpSectionSheet> {
           for (final k in ['amount', 'loan_amount', 'balance_amount', 'total_amount'])
             if (m[k] != null) _kv(k == 'balance_amount' ? tr('المتبقّي', 'Balance') : tr('المبلغ', 'Amount'), '${m[k]}',
                 vc: k == 'balance_amount' ? Pms.red : Pms.ink),
-          // طباعة نموذج السجل (استقالة…) إن كان لنوع القسم تقرير مُسجَّل
+          // Print the record form (resignation…) if the section type has a registered report
           if (_subCreateModel[type] != null && _subCreateReport[_subCreateModel[type]!] != null)
             _recordPrintBtn(_subCreateModel[type]!, m['id'] as int?,
                 _subCreateReportTitle[_subCreateModel[type]!] ?? 'النموذج', 'Form'),
@@ -1466,7 +1466,7 @@ class _EmpSubCreateFormState extends State<_EmpSubCreateForm> {
   void initState() {
     super.initState();
     if (widget.initial != null) _vals.addAll(widget.initial!);
-    // تهيئة القيم الافتراضية (toggle فترة الإنذار / أيام الإنذار / تاريخ اليوم)
+    // Initialize the default values (toggle notice period / notice days / today's date)
     for (final f in _fields.cast<Map>()) {
       final name = '${f['name']}';
       if (_vals.containsKey(name)) continue;
@@ -1480,7 +1480,7 @@ class _EmpSubCreateFormState extends State<_EmpSubCreateForm> {
 
   List get _fields => (widget.meta['fields'] as List?) ?? const [];
 
-  // إظهار شرطي: حقل بـshow_if يظهر فقط حين تتطابق القيم الحالية
+  // Conditional display: a field with show_if appears only when the current values match
   bool _visible(Map f) {
     final sif = f['show_if'];
     if (sif is! Map) return true;
@@ -1493,7 +1493,7 @@ class _EmpSubCreateFormState extends State<_EmpSubCreateForm> {
     return true;
   }
 
-  // معاينة «آخر يوم عمل المحتسب» = بدء الإنذار + أيام الإنذار (حين تفعيل الإنذار)
+  // Preview of «last counted working day» = notice start + notice days (when notice is enabled)
   Widget _noticePreview() {
     final np = widget.meta['notice_preview'];
     if (np is! Map) return const SizedBox.shrink();
@@ -1515,6 +1515,59 @@ class _EmpSubCreateFormState extends State<_EmpSubCreateForm> {
       ]));
   }
 
+  // مطابقة شرط الرسالة بالقيمة (مثل shift_type == 'additional')
+  bool _condMatch(Map when) {
+    for (final e in when.entries) {
+      if ('${_vals['${e.key}']}' != '${e.value}') return false;
+    }
+    return true;
+  }
+
+  // الإدارة الحالية للعامل (تظهر تلقائياً من الخادم)
+  Widget _currentInfo() {
+    final ci = widget.meta['current_info'];
+    if (ci is! Map) return const SizedBox.shrink();
+    final lbl = gLang == 'en' ? '${ci['en']}' : '${ci['ar']}';
+    return Container(
+      margin: const EdgeInsets.only(top: 10), padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(color: const Color(0xFFEEF3FF),
+          borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFFCFE0FF))),
+      child: Row(children: [
+        const Icon(Icons.apartment_rounded, size: 18, color: Pms.ink), const SizedBox(width: 8),
+        Expanded(child: RichText(text: TextSpan(
+          style: const TextStyle(fontSize: 12.5, color: Pms.ink),
+          children: [
+            TextSpan(text: '$lbl: ', style: const TextStyle(fontWeight: FontWeight.w800)),
+            TextSpan(text: '${ci['value'] ?? '—'}'),
+          ]))),
+      ]));
+  }
+
+  // رسائل المعلومات (مثل رسالة النقل الدائم / التكليف الإضافي) حسب قيمة الحقل
+  Widget _notices() {
+    final ns = widget.meta['notices'];
+    if (ns is! List) return const SizedBox.shrink();
+    final items = <Widget>[];
+    for (final n in ns.cast<Map>()) {
+      final when = n['when'];
+      if (when is Map && !_condMatch(when)) continue;
+      final txt = gLang == 'en' ? '${n['en']}' : '${n['ar']}';
+      final warn = '${n['style']}' == 'warn';
+      final bg = warn ? const Color(0xFFFFF7E6) : const Color(0xFFE8F4FF);
+      final bd = warn ? const Color(0xFFF3D99B) : const Color(0xFFBFE0FF);
+      final fg = warn ? const Color(0xFF7A5B16) : Pms.ink;
+      items.add(Container(
+        margin: const EdgeInsets.only(top: 10), padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(12), border: Border.all(color: bd)),
+        child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Icon(warn ? Icons.info_outline_rounded : Icons.lightbulb_outline_rounded, size: 18, color: fg),
+          const SizedBox(width: 8),
+          Expanded(child: Text(txt, style: TextStyle(fontSize: 12, height: 1.5, color: fg, fontWeight: FontWeight.w600))),
+        ])));
+    }
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: items);
+  }
+
   Future<void> _pickDate(String name) async {
     final cur = _vals[name];
     final init = (cur is String && cur.isNotEmpty) ? DateTime.tryParse(cur) ?? DateTime.now() : DateTime.now();
@@ -1531,7 +1584,7 @@ class _EmpSubCreateFormState extends State<_EmpSubCreateForm> {
         return;
       }
     }
-    // إرسال الحقول الظاهرة فقط (+ المفاتيح المنطقية دائماً)
+    // Send only the visible fields (+ the boolean keys always)
     final out = <String, dynamic>{};
     for (final f in _fields.cast<Map>()) {
       final name = '${f['name']}';
@@ -1552,7 +1605,7 @@ class _EmpSubCreateFormState extends State<_EmpSubCreateForm> {
     final name = '${f['name']}';
     final type = '${f['type']}';
     final label = gLang == 'en' ? '${f['en']}' : '${f['ar']}';
-    // مفتاح منطقي (toggle) — مثل «تطبيق فترة الإنذار»
+    // A boolean key (toggle) — like «apply notice period»
     if (type == 'bool') {
       return Container(margin: const EdgeInsets.only(top: 10),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
@@ -1618,7 +1671,9 @@ class _EmpSubCreateFormState extends State<_EmpSubCreateForm> {
             Icon(Icons.add_circle_rounded, color: widget.color), const SizedBox(width: 8),
             Text(title, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
           ]),
+          _currentInfo(),
           for (final f in _fields.cast<Map>()) if (_visible(f)) _field(f),
+          _notices(),
           _noticePreview(),
           const SizedBox(height: 18),
           SizedBox(width: double.infinity, height: 48, child: FilledButton.icon(

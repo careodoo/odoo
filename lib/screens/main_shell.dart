@@ -52,7 +52,7 @@ class _MainShellState extends State<MainShell> {
 
   List<_Tab> _tabs(profile) {
     final home = _Tab(Icons.home_rounded, tr('الرئيسية', 'Home'), const HomeScreen());
-    // "إنجازاتي" — a rich personal dashboard replaces the plain alerts tab
+    // "My Achievements" — a rich personal dashboard replaces the plain alerts tab
     // (notifications stay reachable from its header bell and the home app bars).
     final mine = _Tab(Icons.workspace_premium_rounded, tr('إنجازاتي', 'My profile'), const MyProfileScreen());
     final more = _Tab(Icons.grid_view_rounded, tr('المزيد', 'More'), const MoreScreen());

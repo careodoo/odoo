@@ -10,7 +10,7 @@ import '../core/i18n.dart';
 const _navy = Color(0xFF0E3A5F);
 const _accent = Color(0xFF0E7490);
 
-/// التواصل — recent conversations + a live people-directory search. Tapping a
+/// Communication - recent conversations + a live people-directory search. Tapping a
 /// person or thread opens the 1:1 chat.
 class ChatHubScreen extends StatefulWidget {
   const ChatHubScreen({super.key});

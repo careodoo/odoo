@@ -7,9 +7,9 @@ import '../core/auth.dart';
 import '../core/i18n.dart';
 import 'chat_screen.dart';
 
-/// «فريقي» — الحارس يرى أعضاء فريقه فقط: بطاقات احترافية قابلة للضغط تفتح ملفّ
-/// العضو (بياناته + حالته: وردية/دورية/مهمة + موقعه) مع شات مباشر واتصال، وترويسة
-/// «موقعي الآن» من GPS الجهاز (تُرسَل أيضاً كنبضة موقع للخادم).
+/// «My Team» — the guard sees only their team members: professional tappable cards that open the
+/// member's file (their data + status: shift/patrol/task + location) with live chat and calling, and a
+/// «My Location Now» header from the device GPS (also sent as a location heartbeat to the server).
 class SecurityMyTeamScreen extends StatefulWidget {
   const SecurityMyTeamScreen({super.key});
   @override
@@ -46,7 +46,7 @@ class _SecurityMyTeamScreenState extends State<SecurityMyTeamScreen> {
     }
   }
 
-  /// موقعي الآن من GPS الجهاز، ونرسله كنبضة موقع للخادم (يظهر لبقية الفريق).
+  /// My location now from the device GPS, sent as a location heartbeat to the server (visible to the rest of the team).
   Future<void> _locate() async {
     final api = context.read<AuthProvider>().api; // نلتقطه قبل أي await
     try {
@@ -59,7 +59,7 @@ class _SecurityMyTeamScreenState extends State<SecurityMyTeamScreen> {
       final p = await Geolocator.getCurrentPosition(
           locationSettings: const LocationSettings(accuracy: LocationAccuracy.high));
       if (mounted) setState(() { _myPos = p; _posErr = null; });
-      // نبضة موقع للخادم
+      // Location heartbeat to the server
       try {
         await api.securityGuardHeartbeat(lat: p.latitude, lng: p.longitude, moving: true);
       } catch (_) {}
@@ -258,7 +258,7 @@ class _SecurityMyTeamScreenState extends State<SecurityMyTeamScreen> {
   }
 }
 
-// ============ ورقة تفاصيل العضو ============
+// ============ Member details sheet ============
 class _MemberSheet extends StatelessWidget {
   final Map m;
   final bool self;
@@ -290,7 +290,7 @@ class _MemberSheet extends StatelessWidget {
             Padding(padding: const EdgeInsets.only(top: 3),
                 child: Text([m['role'], m['rank']].where((x) => x != null).join(' · '), style: const TextStyle(color: _muted, fontSize: 12.5))),
           const SizedBox(height: 12),
-          // شرائح الحالة
+          // Status chips
           Wrap(spacing: 7, runSpacing: 7, alignment: WrapAlignment.center, children: [
             if (m['on_shift'] == true) _pill(tr('في وردية', 'On shift'), _blue, Icons.badge_rounded),
             if (m['on_patrol'] == true) _pill(tr('في دورية', 'On patrol'), const Color(0xFFF7A23B), Icons.directions_walk_rounded),

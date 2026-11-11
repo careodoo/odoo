@@ -50,9 +50,9 @@ class _RootShellState extends State<RootShell> {
 
   @override
   Widget build(BuildContext context) {
-    // نراقب فقط ما يؤثّر في التوجيه (الوضع/الواجهات) — لا نُعيد بناء شجرة الواجهة
-    // كاملةً كل 45ث عند تحديث الملف الشخصي الدوري (كان يسبب وميض ظهور/اختفاء
-    // السجلات وإعادة تحميلها). التوجيه لا يتغيّر عند تحديث الإشعارات فقط.
+    // Watch only what affects routing (state/interfaces) — don't rebuild the UI tree
+    // entirely every 45s on the periodic profile refresh (it was causing flicker of appearing/disappearing
+    // lists and reloading them). Routing doesn't change when only the notifications update.
     context.select<AuthProvider, String>((a) =>
         '${a.appMode}|${a.defaultMode}|${a.interfaces == null ? '' : (a.interfaces!.keys.toList()..sort()).join(',')}');
     final auth = context.read<AuthProvider>();

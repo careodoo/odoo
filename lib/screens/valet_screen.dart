@@ -20,7 +20,7 @@ const _stateColors = {
   'cancelled': Color(0xFF94A3B8),
 };
 
-/// خدمة صف السيارات — the attendant's kerbside console: take a car in, park it
+/// Valet parking service - the attendant's kerbside console: take a car in, park it
 /// in a numbered bay, answer retrieval requests against the SLA clock, hand it
 /// back with the charge, and close the shift with its takings.
 class ValetScreen extends StatefulWidget {

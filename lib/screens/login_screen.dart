@@ -37,7 +37,7 @@ class _LoginScreenState extends State<LoginScreen> {
       if (saved != null && saved.isNotEmpty && mounted) {
         setState(() { _login.text = saved; _remember = true; });
       }
-    } catch (_) {/* لا يؤثّر على الدخول */}
+    } catch (_) {/* Does not affect login */}
   }
 
   Future<void> _loadBrand() async {
@@ -58,7 +58,7 @@ class _LoginScreenState extends State<LoginScreen> {
     if (_login.text.isEmpty || _pass.text.isEmpty) return;
     setState(() => _busy = true);
     final ok = await context.read<AuthProvider>().login(_login.text.trim(), _pass.text);
-    // «تذكرني»: نحفظ اسم المستخدم لملئه لاحقاً، أو نمحوه إن أُلغي الخيار
+    // «Remember me»: save the username to fill it in later, or erase it if the option is unchecked
     try {
       if (ok && _remember) {
         await _store.write(key: _kRememberLogin, value: _login.text.trim());
@@ -76,7 +76,7 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
-  /// نسيت كلمة السر — يطلب البريد ثم يرسل رابط الاستعادة.
+  /// Forgot password — asks for the email then sends the recovery link.
   Future<void> _forgotPassword() async {
     final ctrl = TextEditingController(text: _login.text.trim());
     final email = await showDialog<String>(
@@ -196,7 +196,7 @@ class _LoginScreenState extends State<LoginScreen> {
         );
       } catch (_) {}
     }
-    // الشعار الرسمي الجديد (CARE 2 CARE) من أصول التطبيق
+    // The new official logo (CARE 2 CARE) from the app assets
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 18),
       constraints: const BoxConstraints(maxWidth: 240),
@@ -239,7 +239,7 @@ class _LoginScreenState extends State<LoginScreen> {
               onPressed: () => setState(() => _obscure = !_obscure),
             ),
           ),
-          // «تذكرني» + «نسيت كلمة السر؟»
+          // «Remember me» + «Forgot password?»
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [

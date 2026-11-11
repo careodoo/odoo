@@ -4,7 +4,7 @@ import '../../core/auth.dart';
 import '../../core/i18n.dart';
 import 'collections_home.dart';
 
-/// ====== قائمة عملاء التحصيل وأرصدتهم ======
+/// ====== Collection clients list and their balances ======
 class CollectionsCustomers extends StatefulWidget {
   const CollectionsCustomers({super.key});
   @override
@@ -140,7 +140,7 @@ class _CollectionsCustomersState extends State<CollectionsCustomers> {
       ]);
 }
 
-/// ====== ملف العميل الغنيّ ======
+/// ====== Rich client profile ======
 class CustomerProfile extends StatefulWidget {
   const CustomerProfile({super.key, required this.partnerId});
   final int partnerId;
@@ -283,7 +283,7 @@ class _CustomerProfileState extends State<CustomerProfile> {
   }
 
   Widget _aging() {
-    // الشرائح السبع تأتي كقائمة بالألوان والمسمّيات من الخادم
+    // The seven chips come as a list with colors and labels from the server
     final list = (_d['aging'] as List?) ?? const [];
     final items = list.map((e) {
       final m = e as Map;

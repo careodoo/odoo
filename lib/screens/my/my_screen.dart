@@ -126,7 +126,7 @@ class _MyScreenState extends State<MyScreen> {
     ]);
   }
 
-  // بطاقة الدخول لأرصدة الإجازات ومستحقاتها
+  // Entry card for leave balances and dues
   Widget _leaveBalancesEntry() => Padding(
         padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
         child: InkWell(

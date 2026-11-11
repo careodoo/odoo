@@ -8,10 +8,10 @@ import '../core/webrtc_stream.dart';
 import 'stream_chat_layer.dart';
 import 'security_broadcast_screen.dart';
 
-/// شاشة مشاهدة البثّ الحيّ للعميل والفريق (WebRTC/WHEP داخل التطبيق).
-/// تعرض الفيديو الحيّ + شارة مباشر + عدّاد المشاهدين + بطاقة بيانات كاملة
-/// (اسم الحارس، الموقع، رقم البلاغ، وقت البدء). [isClient] تحدّد نقطة النهاية
-/// المقيّدة بنطاق العميل.
+/// Live stream viewing screen for the client and team (WebRTC/WHEP inside the app).
+/// Shows the live video + live badge + viewer count + a full data card
+/// (guard name, location, report number, start time). [isClient] determines the endpoint
+/// restricted to the client's scope.
 class StreamViewScreen extends StatefulWidget {
   final int incidentId;
   final bool isClient;
@@ -82,7 +82,7 @@ class _StreamViewScreenState extends State<StreamViewScreen> {
     } catch (_) {}
   }
 
-  /// يجلب المشاركين (co-hosts) ويعرض أوّلهم كصورة سفلية (PiP).
+  /// Fetches the participants (co-hosts) and shows the first as a bottom picture (PiP).
   Future<void> _refreshCohosts() async {
     if (widget.isClient) return; // العميل يشاهد فقط الرئيسي حالياً
     try {
@@ -110,7 +110,7 @@ class _StreamViewScreenState extends State<StreamViewScreen> {
     if (mounted) Navigator.pop(context);
   }
 
-  /// عضو الفريق يشارك في البثّ (co-host) — يفتح شاشة بثّ بوضع المشاركة.
+  /// A team member joins the stream (co-host) - opens the streaming screen in join mode.
   Future<void> _joinAsCohost() async {
     Navigator.push(context, MaterialPageRoute(
         builder: (_) => SecurityBroadcastScreen(incidentId: widget.incidentId, providerId: -1, cohost: true)));
@@ -162,7 +162,7 @@ class _StreamViewScreenState extends State<StreamViewScreen> {
           gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter,
               colors: [Colors.black.withValues(alpha: .55), Colors.transparent, Colors.transparent, Colors.black.withValues(alpha: .82)],
               stops: const [0, .16, .5, 1]))))),
-      // شريط علوي
+      // Top bar
       Positioned(top: 12, left: 12, right: 12, child: Row(children: [
         Container(padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
             decoration: BoxDecoration(color: _red, borderRadius: BorderRadius.circular(20)),
@@ -183,12 +183,12 @@ class _StreamViewScreenState extends State<StreamViewScreen> {
               icon: const Icon(Icons.video_call_rounded, color: _green)),
         IconButton(onPressed: _leave, icon: const Icon(Icons.close_rounded, color: Colors.white)),
       ])),
-      // بطاقة بيانات مصغّرة أعلى
+      // Compact data card at the top
       Positioned(top: 56, left: 12, right: 12, child: _headerCard(s)),
-      // صورة المشارك السفلية (PiP)
+      // Bottom participant picture (PiP)
       if (_pip != null)
         Positioned(right: 12, top: 118, child: _pipView()),
-      // الأسفل: الدردشة الحيّة (ترتفع مع الكيبورد)
+      // Bottom: live chat (rises with the keyboard)
       Positioned(left: 12, right: 12, bottom: 14 + kbd,
           child: StreamChatLayer(incidentId: widget.incidentId, isClient: widget.isClient)),
     ]);

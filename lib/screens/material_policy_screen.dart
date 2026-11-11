@@ -7,7 +7,7 @@ import '../core/widgets.dart';
 const _navy = Color(0xFF0E3A5F);
 const _accent = Color(0xFF0E7490);
 
-/// سياسة صرف المواد — the client's (or admin's) control over what the crew may
+/// Material disbursement policy — the client's (or admin's) control over what the crew may
 /// draw from each store: which items are self-issuable, for which services, and
 /// the per-issue cap. Stores can also be closed to direct issue entirely.
 class MaterialPolicyScreen extends StatefulWidget {

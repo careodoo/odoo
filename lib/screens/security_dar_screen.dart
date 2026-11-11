@@ -3,9 +3,9 @@ import 'package:provider/provider.dart';
 import '../core/auth.dart';
 import '../core/i18n.dart';
 
-/// «تقرير النشاط اليومي» (DAR) — معيار حراسة مهني: عند نهاية الوردية يرى الحارس
-/// نشاط يومه مُجمَّعاً تلقائياً (دوريات/بلاغات/مهام/زوّار) ثم يكتب سرداً
-/// (ملخّص الوردية + أبرز الأحداث + توصيات) ويرسله. مع أرشيف تقاريره السابقة.
+/// «Daily Activity Report» (DAR) — a professional guarding standard: at the end of the shift the guard sees
+/// their day's activity auto-aggregated (patrols/reports/tasks/visitors) then writes a narrative
+/// (shift summary + key events + recommendations) and sends it. With an archive of their previous reports.
 class SecurityDarScreen extends StatefulWidget {
   const SecurityDarScreen({super.key});
   @override
@@ -89,7 +89,7 @@ class _SecurityDarScreenState extends State<SecurityDarScreen> {
           : RefreshIndicator(
               onRefresh: _load,
               child: ListView(padding: const EdgeInsets.fromLTRB(12, 12, 12, 32), children: [
-                // ترويسة اليوم + الموقع
+                // Day header + location
                 Row(children: [
                   const Icon(Icons.today_rounded, color: _blue, size: 20),
                   const SizedBox(width: 8),
@@ -107,7 +107,7 @@ class _SecurityDarScreenState extends State<SecurityDarScreen> {
                 Text(tr('نشاطك اليوم — مُجمَّع تلقائياً', 'Your activity today — auto-aggregated'),
                     style: const TextStyle(color: _muted, fontSize: 12)),
                 const SizedBox(height: 12),
-                // بطاقات الأعداد
+                // Count cards
                 GridView.count(
                   crossAxisCount: 2, shrinkWrap: true, physics: const NeverScrollableScrollPhysics(),
                   mainAxisSpacing: 10, crossAxisSpacing: 10, childAspectRatio: 2.3,
@@ -140,7 +140,7 @@ class _SecurityDarScreenState extends State<SecurityDarScreen> {
                         style: const TextStyle(fontWeight: FontWeight.w800)),
                   ),
                 ),
-                // الأرشيف
+                // Archive
                 if (_archive.isNotEmpty) ...[
                   const SizedBox(height: 22),
                   Text(tr('تقاريري السابقة', 'My previous reports'),

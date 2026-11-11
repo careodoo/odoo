@@ -58,13 +58,13 @@ class Profile {
   final bool isQuality;
   /// named on a care.cafm.project manager_ids → gets the PM dashboard
   final bool isProjectManager;
-  /// مدير مشروع أمن (أو مشرف أمن) → أيقونة «المشرف» في لوحته
+  /// Security project manager (or security supervisor) → «Supervisor» icon on their board
   final bool isSecuritySupervisor;
-  /// مدير مشروع أمن (أو مدير أمن) → أيقونة «إدارة الأمن» في لوحته
+  /// Security project manager (or security manager) → «Security management» icon on their board
   final bool isSecurityManager;
   final bool isAdmin;
   final bool canAddWorkers;
-  /// أدوار طلبات الفواتير
+  /// Invoice-request roles
   final bool riCreator;
   final bool riManager;
   final bool riFinance;

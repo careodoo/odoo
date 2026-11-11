@@ -3,8 +3,8 @@ import 'package:provider/provider.dart';
 import '../core/auth.dart';
 import '../core/i18n.dart';
 
-/// «مهام الأمن» — الحارس يرى مهامه هو فقط. ترويسة إحصائيات + أرشيف شهري + فلترة
-/// بالحالة + أزرار قبول/بدء/إنجاز مباشرة، وتفاصيل غنية لكل مهمة.
+/// «Security Tasks» — the guard sees only their own tasks. Stats header + monthly archive + filter
+/// by status + direct accept/start/complete buttons, and rich details for each task.
 class SecurityTasksScreen extends StatefulWidget {
   const SecurityTasksScreen({super.key});
   @override
@@ -244,7 +244,7 @@ class _SecurityTasksScreenState extends State<SecurityTasksScreen> {
   }
 }
 
-// ============ ورقة تفاصيل المهمة ============
+// ============ Task details sheet ============
 class _TaskSheet extends StatefulWidget {
   final int id;
   final Future<void> Function(int id, String action) onAction;

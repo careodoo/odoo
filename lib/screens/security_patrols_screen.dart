@@ -4,8 +4,8 @@ import '../core/auth.dart';
 import '../core/i18n.dart';
 import 'scan_screen.dart';
 
-/// دوريات الحارس: قائمة الدوريات المجدولة/الجارية، وفتح الدورية لعرض نقاط
-/// التفتيش ومسحها (QR/NFC) لإثبات الحضور، مع بدء/إنهاء الدورية ونسبة الإكمال.
+/// Guard patrols: a list of scheduled/ongoing patrols, and opening a patrol to view the inspection
+/// points and scan them (QR/NFC) to prove attendance, with starting/ending the patrol and the completion ratio.
 class SecurityPatrolsScreen extends StatefulWidget {
   const SecurityPatrolsScreen({super.key});
   @override
@@ -175,7 +175,7 @@ class _PatrolSheetState extends State<_PatrolSheet> {
                   Text('${p['points_done'] ?? 0} / ${p['points_total'] ?? 0} ${tr('نقطة مُسحت', 'points scanned')}',
                       style: const TextStyle(color: _muted, fontSize: 12)),
                   const SizedBox(height: 14),
-                  // أزرار التحكّم
+                  // Control buttons
                   Row(children: [
                     if (st == 'scheduled')
                       Expanded(child: FilledButton.icon(onPressed: _busy ? null : () => _action('start'),
@@ -219,7 +219,7 @@ class _PatrolSheetState extends State<_PatrolSheet> {
   }
 }
 
-/// مُشغِّل عام لفتح ورقة تفاصيل الدورية من أي شاشة (سجل الجولات مثلاً).
+/// A global launcher to open the patrol details sheet from any screen (the rounds log, for example).
 class PatrolSheetLauncher {
   static Future<void> open(BuildContext context, int id) => showModalBottomSheet(
         context: context, isScrollControlled: true, backgroundColor: Colors.transparent,

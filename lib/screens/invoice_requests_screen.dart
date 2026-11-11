@@ -3,8 +3,8 @@ import 'package:provider/provider.dart';
 import '../core/auth.dart';
 import '../core/i18n.dart';
 
-/// طلبات الفواتير: رفعها (مدير المشروع)، اعتماد المدير، ثم اعتماد الإدارة المالية
-/// وتوليد الفاتورة — مرآةً لمسار الباك ايند.
+/// Invoice requests: submitting them (project manager), manager approval, then finance department approval
+/// and generating the invoice — mirroring the backend flow.
 class InvoiceRequestsScreen extends StatefulWidget {
   const InvoiceRequestsScreen({super.key});
   @override

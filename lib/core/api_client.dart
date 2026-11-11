@@ -121,7 +121,7 @@ class ApiClient {
     return Map<String, dynamic>.from(body['data'] as Map);
   }
 
-  /// نسيت كلمة السر — يطلب من الخادم إرسال رابط استعادة لبريد الحساب.
+  /// Forgot password — asks the server to send a recovery link to the account's email.
   Future<String> forgotPassword(String login) async {
     login = login.trim().replaceAll(' ', '');
     if (login.contains('@')) login = login.toLowerCase();
@@ -172,7 +172,7 @@ class ApiClient {
       _handle(await _net.post(_u('/workorders/$id/reject'),
           headers: await _headers(), body: jsonEncode({'reason': reason})));
 
-  // ---- كشوف الدوام (Timesheet) --------------------------------------------
+  // ---- Timesheets (Timesheet) --------------------------------------------
   Future<List<dynamic>> tsProjects() async => List<dynamic>.from((await _handle(
       await _net.get(_u('/timesheet/projects'), headers: await _headers())))['data'] as List);
 
@@ -567,7 +567,7 @@ class ApiClient {
     return Map<String, dynamic>.from(res['data'] as Map);
   }
 
-  /// البثوث الحيّة على مواقع العميل (لبانر هيدر تطبيق العميل).
+  /// Live streams at the client's sites (for the client app's header banner).
   Future<List<dynamic>> clientSecurityStreamActive() async {
     final res = await _handle(await _net.get(_u('/client/security/stream/active'), headers: await _headers()));
     return List<dynamic>.from((res['data'] as Map)['items'] as List);
@@ -580,47 +580,47 @@ class ApiClient {
       Map<String, dynamic>.from((await _handle(await _net.get(
               _u('/security/stream/watch/$incidentId'), headers: await _headers())))['data'] as Map);
 
-  /// مشاهد يغادر البثّ (لتحديث عدّاد الحارس).
+  /// A viewer leaves the stream (to update the guard's counter).
   Future<void> securityStreamLeave(int incidentId) async =>
       _handle(await _net.post(_u('/security/stream/leave/$incidentId'), headers: await _headers(), body: '{}'));
 
-  /// قائمة المشاهدين الحاليين + العدّاد (يستدعيها الحارس دورياً).
+  /// Current viewers list + counter (polled by the guard periodically).
   Future<Map<String, dynamic>> securityStreamViewers(int incidentId) async =>
       Map<String, dynamic>.from((await _handle(await _net.get(
               _u('/security/stream/viewers/$incidentId'), headers: await _headers())))['data'] as Map);
 
-  /// بيانات البثّ الكاملة لبلاغٍ (للحالة/الأيقونة).
+  /// Full stream data for a report (for status/icon).
   Future<Map<String, dynamic>> securityStreamInfo(int incidentId) async =>
       Map<String, dynamic>.from((await _handle(await _net.get(
               _u('/security/stream/info/$incidentId'), headers: await _headers())))['data'] as Map);
 
-  /// العميل يشاهد بثّ بلاغٍ في موقعه (مقيّد بنطاق مواقعه).
+  /// The client watches a report's stream at their site (scoped to their sites).
   Future<Map<String, dynamic>> clientSecurityWatchStream(int incidentId) async =>
       Map<String, dynamic>.from((await _handle(await _net.get(
               _u('/client/security/incident/$incidentId/watch'), headers: await _headers())))['data'] as Map);
 
-  // ---- البثوث الحيّة + الدردشة + المشاركة ---------------------------------
-  /// البثوث الحيّة الحالية (لبانر الرئيسية).
+  // ---- Live streams + chat + sharing ---------------------------------
+  /// Current live streams (for the home banner).
   Future<List<dynamic>> securityStreamActive() async {
     final res = await _handle(await _net.get(_u('/security/stream/active'), headers: await _headers()));
     return List<dynamic>.from((res['data'] as Map)['items'] as List);
   }
 
-  /// رسائل دردشة البثّ (after=<id> لجلب الجديد فقط).
+  /// Stream chat messages (after=<id> to fetch only the new ones).
   Future<Map<String, dynamic>> securityStreamMessages(int incidentId, {int after = 0, bool isClient = false}) async {
     final path = isClient ? '/client/security/incident/$incidentId/messages?after=$after'
                           : '/security/stream/$incidentId/messages?after=$after';
     return Map<String, dynamic>.from((await _handle(await _net.get(_u(path), headers: await _headers())))['data'] as Map);
   }
 
-  /// إرسال رسالة على البثّ.
+  /// Send a message on the stream.
   Future<void> securityStreamPostMessage(int incidentId, String body, {bool isClient = false}) async {
     final path = isClient ? '/client/security/incident/$incidentId/message'
                           : '/security/stream/$incidentId/message';
     await _handle(await _net.post(_u(path), headers: await _headers(), body: jsonEncode({'body': body})));
   }
 
-  /// عضو فريق يشارك في البثّ (co-host) — يرجع رابط النشر الخاص به.
+  /// A team member joins the stream (co-host) — returns their own publish URL.
   Future<Map<String, dynamic>> securityStreamCohostStart(int incidentId, {double? latitude, double? longitude}) async =>
       Map<String, dynamic>.from((await _handle(await _net.post(
               _u('/security/stream/$incidentId/cohost/start'), headers: await _headers(),
@@ -629,21 +629,21 @@ class ApiClient {
   Future<void> securityStreamCohostStop(int incidentId) async =>
       _handle(await _net.post(_u('/security/stream/$incidentId/cohost/stop'), headers: await _headers(), body: '{}'));
 
-  /// المشاركون الأحياء في البثّ (لعرض PiP).
+  /// Live participants in the stream (for the PiP view).
   Future<List<dynamic>> securityStreamCohosts(int incidentId) async {
     final res = await _handle(await _net.get(_u('/security/stream/$incidentId/cohosts'), headers: await _headers()));
     return List<dynamic>.from((res['data'] as Map)['cohosts'] as List);
   }
 
-  /// رفع لقطة البثّ (JPEG) لتكون الصورة المصغّرة — يُتجاهَل الفشل بصمت.
+  /// Upload the stream snapshot (JPEG) to serve as the thumbnail — failure is ignored silently.
   Future<void> securityStreamUploadSnapshot(int sid, Uint8List jpeg) async {
     try {
       await _handle(await _net.post(_u('/security/stream/$sid/snapshot'),
           headers: await _headers(), body: jsonEncode({'image': base64Encode(jpeg)})));
-    } catch (_) {/* اللقطة تحسين تجميلي — لا تُفشل البثّ */}
+    } catch (_) {/* The snapshot is a cosmetic enhancement — don't let it fail the stream */}
   }
 
-  /// رفع تسجيل البثّ (mp4) المُلتقَط على الجهاز عبر multipart.
+  /// Upload the stream recording (mp4) captured on the device via multipart.
   Future<void> securityStreamUploadRecording(int sid, String filePath, {int? durationSec}) async {
     final t = await token;
     final req = http.MultipartRequest('POST', _u('/security/stream/$sid/recording'));
@@ -657,27 +657,27 @@ class ApiClient {
     }
   }
 
-  /// سجل البثوث المؤرشفة + تسجيلاتها (فريق أو عميل).
+  /// Archived streams log + their recordings (team or client).
   Future<List<dynamic>> securityStreamArchive({bool isClient = false}) async {
     final path = isClient ? '/client/security/stream/archive' : '/security/stream/archive';
     final res = await _handle(await _net.get(_u(path), headers: await _headers()));
     return List<dynamic>.from((res['data'] as Map)['items'] as List);
   }
 
-  /// تفاصيل بثّ مؤرشف (رابط التسجيل + الدردشة + المشاهدون) — فريق أو عميل.
+  /// Archived stream details (recording URL + chat + viewers) — team or client.
   Future<Map<String, dynamic>> securityStreamArchiveDetail(int sid, {bool isClient = false}) async {
     final path = isClient ? '/client/security/stream/archive/$sid' : '/security/stream/archive/$sid';
     return Map<String, dynamic>.from(
         (await _handle(await _net.get(_u(path), headers: await _headers())))['data'] as Map);
   }
 
-  /// إشعار عميل الموقع بالبلاغ (للبلاغات الحرجة).
+  /// Notify the site's client of the report (for critical reports).
   Future<Map<String, dynamic>> securityNotifyClient(int incidentId) async {
     final res = await _handle(await _net.post(_u('/security/incident/$incidentId/notify_client'), headers: await _headers()));
     return Map<String, dynamic>.from(res['data'] as Map);
   }
 
-  // ---- دوريات الحارس --------------------------------------------------------
+  // ---- Guard patrols --------------------------------------------------------
   Future<Map<String, dynamic>> securityMyPatrols() async =>
       Map<String, dynamic>.from((await _handle(await _net.get(
               _u('/security/my_patrols'), headers: await _headers())))['data'] as Map);
@@ -686,7 +686,7 @@ class ApiClient {
       Map<String, dynamic>.from((await _handle(await _net.get(
               _u('/security/patrol/$id'), headers: await _headers())))['data'] as Map);
 
-  /// سجل الجولات لكامل مواقع الفريق (مع مواعيد الإنجاز الفعلية) — فلتر بالحالة اختياري.
+  /// Patrol log for all team sites (with actual completion times) — optional status filter.
   Future<Map<String, dynamic>> securityPatrolLog({String? status}) async {
     final q = status != null ? '?status=$status' : '';
     return Map<String, dynamic>.from((await _handle(await _net.get(
@@ -793,7 +793,7 @@ class ApiClient {
       Map<String, dynamic>.from((await _handle(await _net.get(
               _u('/security/my_team'), headers: await _headers())))['data'] as Map);
 
-  /// تسليم/استلام الوردية (Handover).
+  /// Shift handover/takeover (Handover).
   Future<Map<String, dynamic>> securityHandovers() async =>
       Map<String, dynamic>.from((await _handle(await _net.get(
               _u('/security/handovers'), headers: await _headers())))['data'] as Map);
@@ -807,7 +807,7 @@ class ApiClient {
       Map<String, dynamic>.from((await _handle(await _net.post(
               _u('/security/handover/$id/ack'), headers: await _headers())))['data'] as Map);
 
-  /// الأوامر الدائمة / تعليمات الموقع (Post Orders) للحارس.
+  /// Standing orders / site instructions (Post Orders) for the guard.
   Future<Map<String, dynamic>> securityPostOrders({String? category}) async {
     final q = (category != null && category != 'all') ? '?category=$category' : '';
     return Map<String, dynamic>.from((await _handle(await _net.get(
@@ -818,7 +818,7 @@ class ApiClient {
       Map<String, dynamic>.from((await _handle(await _net.post(
               _u('/security/post_order/$id/ack'), headers: await _headers())))['data'] as Map);
 
-  /// تقرير النشاط اليومي (DAR): نشاط اليوم مُجمَّعاً + مسودّة/تقرير اليوم + الأرشيف.
+  /// Daily Activity Report (DAR): today's activity aggregated + today's draft/report + the archive.
   Future<Map<String, dynamic>> securityDarToday() async =>
       Map<String, dynamic>.from((await _handle(await _net.get(
               _u('/security/dar/today'), headers: await _headers())))['data'] as Map);
@@ -829,12 +829,12 @@ class ApiClient {
       Map<String, dynamic>.from((await _handle(await _net.get(
               _u('/security/dars'), headers: await _headers())))['data'] as Map);
 
-  /// نظرة عامة شخصية للحارس (مؤشّرات يومه في مكان واحد للترويسة).
+  /// Personal overview for the guard (their day's metrics in one place for the header).
   Future<Map<String, dynamic>> securityMyOverview() async =>
       Map<String, dynamic>.from((await _handle(await _net.get(
               _u('/security/my/overview'), headers: await _headers())))['data'] as Map);
 
-  /// سجل البوابة (زوّار ومركبات): تسجيل دخول/خروج سريع عند البوابة.
+  /// Gate log (visitors and vehicles): quick check-in/check-out at the gate.
   Future<Map<String, dynamic>> securityGateMeta() async =>
       Map<String, dynamic>.from((await _handle(await _net.get(
               _u('/security/gate/meta'), headers: await _headers())))['data'] as Map);
@@ -848,7 +848,7 @@ class ApiClient {
       Map<String, dynamic>.from((await _handle(await _net.post(
               _u('/security/gate/$id/exit'), headers: await _headers())))['data'] as Map);
 
-  /// جدول ورديّات الحارس (روستر) + حضور/انصراف.
+  /// Guard shift schedule (roster) + check-in/check-out.
   Future<Map<String, dynamic>> securityMySchedule() async =>
       Map<String, dynamic>.from((await _handle(await _net.get(
               _u('/security/my/schedule'), headers: await _headers())))['data'] as Map);
@@ -857,12 +857,12 @@ class ApiClient {
       Map<String, dynamic>.from((await _handle(await _net.post(
               _u('/security/shift_assignment/$id/$action'), headers: await _headers())))['data'] as Map);
 
-  /// الملف المهني للحارس (هوية + إحصائيات + شهادات/رخص + مهارات + معدّات).
+  /// Guard's professional profile (identity + stats + certificates/licenses + skills + equipment).
   Future<Map<String, dynamic>> securityMyProfile() async =>
       Map<String, dynamic>.from((await _handle(await _net.get(
               _u('/security/my/profile'), headers: await _headers())))['data'] as Map);
 
-  /// مهامي أنا فقط + أرشيف شهري + إحصائيات ترويسة.
+  /// My tasks only + monthly archive + header stats.
   Future<Map<String, dynamic>> securityMyTasks({int? year, int? month, String? state}) async {
     final q = <String>[
       if (year != null) 'year=$year', if (month != null) 'month=$month',
@@ -876,22 +876,22 @@ class ApiClient {
       Map<String, dynamic>.from((await _handle(await _net.get(
               _u('/security/task/$id'), headers: await _headers())))['data'] as Map);
 
-  /// إجراء على مهمة: accept | start | complete.
+  /// Action on a task: accept | start | complete.
   Future<Map<String, dynamic>> securityTaskAction(int id, String action) async =>
       Map<String, dynamic>.from((await _handle(await _net.post(_u('/security/task/$id/action'),
               headers: await _headers(), body: jsonEncode({'action': action}))))['data'] as Map);
 
-  /// نقاط الدوريات مجمّعة حسب المرفق + إحصائيات + تصنيفات.
+  /// Patrol points grouped by facility + stats + classifications.
   Future<Map<String, dynamic>> securityPatrolPointsByFacility() async =>
       Map<String, dynamic>.from((await _handle(await _net.get(
               _u('/security/patrol_points/by_facility'), headers: await _headers())))['data'] as Map);
 
-  /// إشعار تجريبي للمستخدم الحالي (لتأكيد وصول الإشعارات لكل نوع).
+  /// Test notification for the current user (to confirm notifications arrive for each type).
   Future<Map<String, dynamic>> securityNotifyTest(String type) async =>
       Map<String, dynamic>.from((await _handle(await _net.post(_u('/notify/test'),
               headers: await _headers(), body: jsonEncode({'type': type}))))['data'] as Map);
 
-  // ============ التصاريح (Permits / Gate passes) ============
+  // ============ Permits (Permits / Gate passes) ============
   Future<Map<String, dynamic>> permitsOptions() async =>
       Map<String, dynamic>.from((await _handle(await _net.get(
               _u('/permits/options'), headers: await _headers())))['data'] as Map);
@@ -915,13 +915,13 @@ class ApiClient {
               _u('/permits/$id/${direction == 'in' ? 'entry' : 'exit'}'),
               headers: await _headers(), body: jsonEncode(body))))['data'] as Map);
 
-  // ============ التراخيص والاشتراكات (Licenses & Subscriptions) ============
-  /// لوحة تحكم التراخيص (مؤشّرات + دائرة + أعمدة + خط زمني) — مُنطاقة للمستخدم.
+  // ============ Licenses and subscriptions (Licenses & Subscriptions) ============
+  /// Licenses dashboard (metrics + pie + bars + timeline) — scoped to the user.
   Future<Map<String, dynamic>> licensesDashboard() async =>
       Map<String, dynamic>.from((await _handle(await _net.get(
               _u('/licenses/dashboard'), headers: await _headers())))['data'] as Map);
 
-  /// تراخيصي (قائمة مُنطاقة). status: valid|expiring|expired|action | q: بحث.
+  /// My licenses (scoped list). status: valid|expiring|expired|action | q: search.
   Future<Map<String, dynamic>> licensesMine({String? status, String? q}) async {
     final p = <String>[
       if (status != null && status != 'all') 'status=$status',
@@ -948,7 +948,7 @@ class ApiClient {
       Map<String, dynamic>.from((await _handle(await _net.post(_u('/licenses/create'),
               headers: await _headers(), body: jsonEncode(body))))['data'] as Map);
 
-  // ---- أدوات مشرف الأمن (إنشاء/إسناد/إشعار/حالة الفريق) ------------------
+  // ---- Security supervisor tools (create/assign/notify/team status) ------------------
   Future<Map<String, dynamic>> securitySupOptions() async =>
       Map<String, dynamic>.from((await _handle(await _net.get(
               _u('/security/sup/options'), headers: await _headers())))['data'] as Map);
@@ -964,17 +964,17 @@ class ApiClient {
   Future<Map<String, dynamic>> securitySupNotify(String message, {String? title, List<int>? guardIds}) =>
       _supPost('/security/sup/notify', {'message': message, if (title != null) 'title': title, if (guardIds != null) 'guard_ids': guardIds});
 
-  /// حالة نشاط أعضاء الفريق (للوحة المشرف).
+  /// Team members' activity status (for the supervisor board).
   Future<Map<String, dynamic>> securitySupPresence() async =>
       Map<String, dynamic>.from((await _handle(await _net.get(
               _u('/security/sup/presence'), headers: await _headers())))['data'] as Map);
 
-  /// بروفايل حارس (عند الضغط عليه في بلوك حالة الفريق).
+  /// Guard profile (when tapped in the team-status block).
   Future<Map<String, dynamic>> securitySupGuard(int gid) async =>
       Map<String, dynamic>.from((await _handle(await _net.get(
               _u('/security/sup/guard/$gid'), headers: await _headers())))['data'] as Map);
 
-  /// نبضة حالة الحارس (حركة/نبض قلب/سكون) — تُرسَل دورياً.
+  /// Guard status heartbeat (movement/heartbeat/stillness) — sent periodically.
   Future<void> securityGuardHeartbeat({bool? moving, int? heartRate, bool? still, int? battery,
       double? lat, double? lng}) async =>
       _handle(await _net.post(_u('/security/guard/heartbeat'), headers: await _headers(), body: jsonEncode({
@@ -1679,7 +1679,7 @@ class ApiClient {
       Map<String, dynamic>.from((await _handle(await _net.post(
               _u('/client/security/gatepass/create'), headers: await _headers(), body: jsonEncode(body))))['data'] as Map);
 
-  /// العميل يطلب بثاً مباشراً لبلاغ في موقعه → يُشعَر الحارس المعني.
+  /// The client requests a live stream for a report at their site → the relevant guard is notified.
   Future<Map<String, dynamic>> clientSecurityRequestStream(int incidentId, {String? note}) async =>
       Map<String, dynamic>.from((await _handle(await _net.post(
               _u('/client/security/incident/$incidentId/request_stream'),
@@ -1849,7 +1849,7 @@ class ApiClient {
       List<dynamic>.from((await _handle(await _net.get(
               _u('/waste/receiver/orders${all ? '?all=1' : ''}'), headers: await _headers())))['data'] as List);
 
-  /// كتالوج أصناف النفايات (id/name/unit_weight) ليضيفها المستلم ويُحتسب الإجمالي.
+  /// Waste items catalog (id/name/unit_weight) for the receiver to add and the total is computed.
   Future<List<dynamic>> wasteReceiverItems() async =>
       List<dynamic>.from((await _handle(await _net.get(
               _u('/waste/receiver/items'), headers: await _headers())))['data'] as List);
@@ -2126,7 +2126,7 @@ class ApiClient {
         _u('/pms/project/$projectId/attendance/records$suffix'), headers: await _headers())))['data'] as Map);
   }
 
-  /// سجلات العمال المجمّعة عبر مشاريع المدير + فلتر فترة + إحصائيات لكل نوع.
+  /// Worker records aggregated across the manager's projects + period filter + stats per type.
   Future<Map<String, dynamic>> pmsWorkerRecords({String? dateFrom, String? dateTo}) async {
     final qs = <String>[];
     if (dateFrom != null && dateFrom.isNotEmpty) qs.add('date_from=$dateFrom');
@@ -2171,7 +2171,7 @@ class ApiClient {
   String pmsLeaveReportPath(int id) => '/pms/leave/$id/report';
 
   /// Generic record report: renders any whitelisted QWeb report for a record
-  /// the caller may read (e.g. نموذج طلب الاستقالة بعد إنشائه).
+  /// the caller may read (e.g. the resignation request form after creating it).
   String pmsRecordReportPath(String model, int id, String report) =>
       '/pms/record/report?model=${Uri.encodeQueryComponent(model)}'
       '&id=$id&report=${Uri.encodeQueryComponent(report)}';
@@ -2226,7 +2226,7 @@ class ApiClient {
           _u('/pms/project/$id/$action/create'), headers: await _headers(),
           body: jsonEncode(vals))))['data'] as Map);
 
-  // ---- Incoming extra work (العمل الإضافي الوارد) ----
+  // ---- Incoming extra work (Incoming extra work) ----
   Future<Map<String, dynamic>> pmsExtraWork(int projectId) async =>
       Map<String, dynamic>.from((await _handle(await _net.get(
           _u('/pms/project/$projectId/extra-work'), headers: await _headers())))['data'] as Map);
@@ -2239,7 +2239,7 @@ class ApiClient {
   /// PDF URL for the extra-work form (opened in the in-app viewer / browser).
   String pmsExtraWorkPrintUrl(int rid) => _u('/pms/extra-work/$rid/print').toString();
 
-  // ---- Work suspension (طلب الإيقاف عن العمل) ----
+  // ---- Work suspension (Work suspension request) ----
   Future<Map<String, dynamic>> pmsSuspension(int id) async =>
       Map<String, dynamic>.from((await _handle(await _net.get(
           _u('/pms/suspension/$id'), headers: await _headers())))['data'] as Map);
@@ -2255,7 +2255,7 @@ class ApiClient {
 
   String pmsSuspensionReportPath(int id) => '/pms/suspension/$id/report';
 
-  // ---- Penalties / Bonuses (الجزاءات والمكافآت) ----
+  // ---- Penalties / Bonuses (Penalties and bonuses) ----
   Future<Map<String, dynamic>> pmsPenalties() async =>
       Map<String, dynamic>.from((await _handle(await _net.get(
           _u('/pms/penalties'), headers: await _headers())))['data'] as Map);
@@ -2286,7 +2286,7 @@ class ApiClient {
 
   String pmsBonusReportPath(int id) => '/pms/bonus/$id/report';
 
-  // ---- Vehicle Services + Petrol Station (صيانة المركبات + بترول) ----
+  // ---- Vehicle Services + Petrol Station (vehicle maintenance + petrol) ----
   Future<Map<String, dynamic>> pmsVehicles() async =>
       Map<String, dynamic>.from((await _handle(await _net.get(
           _u('/pms/vehicles'), headers: await _headers())))['data'] as Map);
@@ -2316,7 +2316,7 @@ class ApiClient {
 
   String pmsPetrolTankReportPath(int id) => '/pms/petrol/tank/$id/report';
 
-  // ---- Resume Work (مباشرة العمل بعد توقف) ----
+  // ---- Resume Work (resuming work after a stoppage) ----
   Future<Map<String, dynamic>> pmsResume(int id) async =>
       Map<String, dynamic>.from((await _handle(await _net.get(
           _u('/pms/resume/$id'), headers: await _headers())))['data'] as Map);
@@ -2332,7 +2332,7 @@ class ApiClient {
 
   String pmsResumeReportPath(int id) => '/pms/resume/$id/report';
 
-  // ---- Request Items (طلب الأصناف) ----
+  // ---- Request Items (item request) ----
   Future<Map<String, dynamic>> pmsItemRequest(int id) async =>
       Map<String, dynamic>.from((await _handle(await _net.get(
           _u('/pms/item-request/$id'), headers: await _headers())))['data'] as Map);
@@ -2349,12 +2349,12 @@ class ApiClient {
 
   String pmsItemRequestReportPath(int id) => '/pms/item-request/$id/report';
 
-  /// ميزانية الطلبات الشهرية للمشروع (كارت المتجر: مركز التكلفة + متبقّي الشهر).
+  /// Project monthly request budget (store card: cost center + remaining for the month).
   Future<Map<String, dynamic>> pmsProjectBudget(int projectId) async =>
       Map<String, dynamic>.from((await _handle(await _net.get(
           _u('/pms/project/$projectId/budget'), headers: await _headers())))['data'] as Map);
 
-  // ---- Manpower Requisition (طلب قوى عاملة) ----
+  // ---- Manpower Requisition (manpower request) ----
   Future<Map<String, dynamic>> pmsManpower(int id) async =>
       Map<String, dynamic>.from((await _handle(await _net.get(
           _u('/pms/manpower/$id'), headers: await _headers())))['data'] as Map);
@@ -2370,7 +2370,7 @@ class ApiClient {
 
   String pmsManpowerReportPath(int id) => '/pms/manpower/$id/report';
 
-  // ---- Project Permits (التصاريح) ----
+  // ---- Project Permits (permits) ----
   Future<Map<String, dynamic>> pmsPermit(int id) async =>
       Map<String, dynamic>.from((await _handle(await _net.get(
           _u('/pms/permit/$id'), headers: await _headers())))['data'] as Map);
@@ -2386,7 +2386,7 @@ class ApiClient {
 
   String pmsPermitReportPath(int id) => '/pms/permit/$id/report';
 
-  // ---- Workshops (أوامر الورش) ----
+  // ---- Workshops (workshop orders) ----
   Future<Map<String, dynamic>> pmsWorkshop(int id) async =>
       Map<String, dynamic>.from((await _handle(await _net.get(
           _u('/pms/workshop/$id'), headers: await _headers())))['data'] as Map);
@@ -2530,7 +2530,7 @@ class ApiClient {
       Map<String, dynamic>.from((await _handle(await _net.get(
               _u('/pms/timesheet/$id'), headers: await _headers())))['data'] as Map);
 
-  /// Edit a line: the adjusted (معدّل) days + optional note/document.
+  /// Edit a line: the adjusted (adjusted) days + optional note/document.
   Future<Map<String, dynamic>> pmsTimesheetLineWrite(int lineId, Map<String, dynamic> body) async =>
       Map<String, dynamic>.from((await _handle(await _net.post(
               _u('/pms/timesheet/line/$lineId'), headers: await _headers(),
@@ -2651,13 +2651,13 @@ class ApiClient {
       Map<String, dynamic>.from((await _handle(await _net.get(
               _u('/management/proposals/$id/edit-data'), headers: await _headers())))['data'] as Map);
 
-  // ---- collections (التحصيل) ----------------------------------------------
-  /// لوحة إحصائيات المحصّل (متأخرات/محصّل الشهر/حسب الحالة/المتوقّع).
+  // ---- collections (collection) ----------------------------------------------
+  /// Collector stats board (overdue/collected this month/by status/expected).
   Future<Map<String, dynamic>> collectionsHome() async =>
       Map<String, dynamic>.from((await _handle(await _net.get(
               _u('/collections/home'), headers: await _headers())))['data'] as Map);
 
-  /// قائمة فواتير التحصيل المسندة (مع فلتر وبحث). تُعيد {data, total}.
+  /// List of assigned collection invoices (with filter and search). Returns {data, total}.
   Future<Map<String, dynamic>> collectionsInvoices(
       {String f = '', String q = '', int limit = 80, int offset = 0}) async {
     final params = <String, String>{
@@ -2691,7 +2691,7 @@ class ApiClient {
               _u('/collections/payment/$paymentId/delete'),
               headers: await _headers(), body: jsonEncode({}))))['data'] as Map);
 
-  /// أهداف التحصيل (التارجت) + العمولات — يُرجع {active, history, commission_due_total}.
+  /// Collection targets + commissions — returns {active, history, commission_due_total}.
   Future<Map<String, dynamic>> collectionsTargets() async =>
       Map<String, dynamic>.from((await _handle(await _net.get(
               _u('/collections/targets'), headers: await _headers())))['data'] as Map);
@@ -2720,17 +2720,17 @@ class ApiClient {
               _u('/collections/reminders/send'),
               headers: await _headers(), body: jsonEncode({}))))['data'] as Map);
 
-  /// تسليم الفاتورة للعميل (يدوي/إيميل/مندوب) مع مرفق اختياري (base64).
+  /// Deliver the invoice to the client (manual/email/courier) with an optional attachment (base64).
   Future<Map<String, dynamic>> collectionsDeliver(int id, Map<String, dynamic> body) async =>
       Map<String, dynamic>.from((await _handle(await _net.post(
               _u('/collections/invoice/$id/deliver'),
               headers: await _headers(), body: jsonEncode(body))))['data'] as Map);
 
-  /// رابط PDF الفاتورة (موثّق بالتوكن) لعرضه في عارض الـ PDF.
+  /// Invoice PDF link (token-authenticated) to display in the PDF viewer.
   Future<String> collectionsPdfUrl(int id) async =>
       '$baseUrl/collections/invoice/$id/pdf?token=${Uri.encodeQueryComponent(await token ?? '')}';
 
-  /// إحصائيات التحصيل الكاملة (نفس الباك-إند) مع الفلاتر.
+  /// Full collection stats (same back-end) with the filters.
   Future<Map<String, dynamic>> collectionsStats({Map<String, String>? filters}) async {
     final qs = (filters ?? {}).entries
         .map((e) => '${e.key}=${Uri.encodeQueryComponent(e.value)}').join('&');
@@ -2742,22 +2742,22 @@ class ApiClient {
       Map<String, dynamic>.from((await _handle(await _net.get(
               _u('/collections/filter-options'), headers: await _headers())))['data'] as Map);
 
-  /// رابط صورة إثبات التسليم (موثّق بالتوكن).
+  /// Proof-of-delivery image link (token-authenticated).
   Future<String> collectionsDeliveryImageUrl(int id) async =>
       '$baseUrl/collections/invoice/$id/delivery-image?token=${Uri.encodeQueryComponent(await token ?? '')}';
 
-  /// قائمة العملاء وأرصدتهم (للمحصّل).
+  /// List of clients and their balances (for the collector).
   Future<Map<String, dynamic>> collectionsCustomers({String q = ''}) async =>
       Map<String, dynamic>.from((await _handle(await _net.get(
               _u('/collections/customers${q.isEmpty ? '' : '?q=${Uri.encodeQueryComponent(q)}'}'),
               headers: await _headers())))['data'] as Map);
 
-  /// ملف العميل الغنيّ.
+  /// The rich client profile.
   Future<Map<String, dynamic>> collectionsCustomer(int pid) async =>
       Map<String, dynamic>.from((await _handle(await _net.get(
               _u('/collections/customer/$pid'), headers: await _headers())))['data'] as Map);
 
-  /// ضبط حالة تحصيل العميل (تتعاقب على فواتيره).
+  /// Set the client's collection status (cascades over their invoices).
   Future<Map<String, dynamic>> collectionsSetCustomerState(int pid, String state) async =>
       Map<String, dynamic>.from((await _handle(await _net.post(
               _u('/collections/customer/$pid/state'), headers: await _headers(),
@@ -2838,9 +2838,10 @@ class ApiClient {
               headers: await _headers(), body: jsonEncode(vals))))['data'] as Map);
 
   // ---- Employee sub-module quick-create --------------------------------
-  Future<Map<String, dynamic>> managementEmpSubMeta(String model) async =>
+  Future<Map<String, dynamic>> managementEmpSubMeta(String model, {int? employeeId}) async =>
       Map<String, dynamic>.from((await _handle(await _net.get(
-              _u('/management/emp-sub/create-meta?model=${Uri.encodeQueryComponent(model)}'),
+              _u('/management/emp-sub/create-meta?model=${Uri.encodeQueryComponent(model)}'
+                  '${employeeId != null ? '&employee_id=$employeeId' : ''}'),
               headers: await _headers())))['data'] as Map);
 
   Future<Map<String, dynamic>> managementEmpSubCreate(String model, int employeeId, Map<String, dynamic> vals) async =>
@@ -2849,14 +2850,14 @@ class ApiClient {
               headers: await _headers(),
               body: jsonEncode({'model': model, 'employee_id': employeeId, ...vals}))))['data'] as Map);
 
-  /// تعديل سجل عامل مسودة (نفس حقول الإنشاء) — يفشل إن كان مُقدَّماً.
+  /// Edit a draft worker record (same fields as create) — fails if it has been submitted.
   Future<Map<String, dynamic>> managementEmpSubEdit(String model, int id, Map<String, dynamic> vals) async =>
       Map<String, dynamic>.from((await _handle(await _net.post(
               _u('/management/emp-sub/edit'),
               headers: await _headers(),
               body: jsonEncode({'model': model, 'id': id, ...vals}))))['data'] as Map);
 
-  /// إلغاء/حذف سجل عامل مسودة — يفشل إن كان مُقدَّماً.
+  /// Cancel/delete a draft worker record — fails if it has been submitted.
   Future<Map<String, dynamic>> managementEmpSubCancel(String model, int id) async =>
       Map<String, dynamic>.from((await _handle(await _net.post(
               _u('/management/emp-sub/cancel'),
@@ -2901,7 +2902,7 @@ class ApiClient {
               _u('/management/emp_modules'), headers: await _headers())))['data'] as Map);
 
   /// Approvals inbox — records awaiting the current user's action, grouped by
-  /// source system (the featured «الاعتمادات» tile).
+  /// source system (the featured «Approvals» tile).
   Future<Map<String, dynamic>> managementInbox() async =>
       Map<String, dynamic>.from((await _handle(await _net.get(
               _u('/management/inbox'), headers: await _headers())))['data'] as Map);
@@ -2924,7 +2925,7 @@ class ApiClient {
       Map<String, dynamic>.from((await _handle(await _net.get(
               _u('/management/analytics?period=$period'), headers: await _headers())))['data'] as Map);
 
-  // ---- Housing «السكن» hub ---------------------------------------------
+  // ---- Housing «Housing» hub ---------------------------------------------
   Future<Map<String, dynamic>> managementHousingHub() async =>
       Map<String, dynamic>.from((await _handle(await _net.get(
               _u('/management/housing/hub'), headers: await _headers())))['data'] as Map);
@@ -2998,7 +2999,7 @@ class ApiClient {
   Future<void> myDelete(String source, int id) async =>
       _handle(await _net.post(_u('/my/$source/$id/delete'), headers: await _headers()));
 
-  /// أرصدة إجازات الموظف الحالي ومستحقاتها.
+  /// Current employee's leave balances and dues.
   Future<Map<String, dynamic>> myLeaveBalances() async =>
       Map<String, dynamic>.from((await _handle(await _net.get(
               _u('/my/leave-balances'), headers: await _headers())))['data'] as Map);
@@ -3035,12 +3036,12 @@ class ApiClient {
             _u('/waste/ops/orders?${p.join('&')}'), headers: await _headers())))['data'] as List);
   }
 
-  /// اعتماد المدير للطلب الوارد (مسودّة → مجدوَل).
+  /// Manager's approval of the incoming request (draft → scheduled).
   Future<Map<String, dynamic>> wasteOpsApprove(int orderId) async =>
       Map<String, dynamic>.from((await _handle(await _net.post(
               _u('/waste/ops/order/$orderId/approve'), headers: await _headers())))['data'] as Map);
 
-  /// سجل رحلات مشاريع المدير (أرشيف + حالي). filter: all|current|archive
+  /// Trip log for the manager's projects (archive + current). filter: all|current|archive
   Future<List<dynamic>> wasteOpsTrips({String filter = 'all', String? q, String? month}) async {
     final p = <String>['filter=$filter'];
     if (q != null && q.isNotEmpty) p.add('q=${Uri.encodeComponent(q)}');
@@ -3049,7 +3050,7 @@ class ApiClient {
             _u('/waste/ops/trips?${p.join('&')}'), headers: await _headers())))['data'] as List);
   }
 
-  /// سجلات الاستلام لمشاريع المدير.
+  /// Receiving records for the manager's projects.
   Future<List<dynamic>> wasteOpsReceipts({String? q, String? month}) async {
     final p = <String>[];
     if (q != null && q.isNotEmpty) p.add('q=${Uri.encodeComponent(q)}');
@@ -3072,8 +3073,8 @@ class ApiClient {
               _u('/waste/ops/order/$orderId/assign'),
               headers: await _headers(), body: jsonEncode({'driver_id': driverId}))))['data'] as Map);
 
-  // ===== طلبات الفواتير (رفع + اعتماد مدير + مالية) =====
-  /// قائمة طلبات الفواتير — تُعيد الاستجابة كاملة (data + counts).
+  // ===== Invoice requests (submit + manager approval + finance) =====
+  /// List of invoice requests — returns the full response (data + counts).
   Future<Map<String, dynamic>> invoiceRequests({String filter = 'all', String? q}) async {
     final qp = <String>['filter=$filter'];
     if (q != null && q.isNotEmpty) qp.add('q=${Uri.encodeQueryComponent(q)}');
@@ -3171,7 +3172,7 @@ class ApiClient {
       Map<String, dynamic>.from((await _handle(await _net.post(_u('/c2c/staff/available'),
               headers: await _headers(), body: jsonEncode({'available': available}))))['data'] as Map);
 
-  // ---- موديول البترول/خزّانات الوقود (care_petrol) ------------------------
+  // ---- Petrol/fuel-tanks module (care_petrol) ------------------------
   Future<Map<String, dynamic>> petrolOverview() async =>
       Map<String, dynamic>.from((await _handle(
               await _net.get(_u('/petrol/overview'), headers: await _headers())))['data'] as Map);
@@ -3233,7 +3234,7 @@ class ApiClient {
       Map<String, dynamic>.from((await _handle(await _net.post(
               _u('/petrol/transfer/$id/confirm'), headers: await _headers())))['data'] as Map);
 
-  // ---- موديول التدريب (training_management) -------------------------------
+  // ---- Training module (training_management) -------------------------------
   Future<Map<String, dynamic>> trainingOverview() async =>
       Map<String, dynamic>.from((await _handle(
               await _net.get(_u('/training/overview'), headers: await _headers())))['data'] as Map);
@@ -3268,7 +3269,7 @@ class ApiClient {
       Map<String, dynamic>.from((await _handle(await _net.post(
               _u('/training/application/$id/create_tasks'), headers: await _headers())))['data'] as Map);
 
-  // ---- مراكز التكلفة (cost.center) ----------------------------------------
+  // ---- Cost centers (cost.center) ----------------------------------------
   Future<Map<String, dynamic>> costCenterOverview() async =>
       Map<String, dynamic>.from((await _handle(
               await _net.get(_u('/costcenter/overview'), headers: await _headers())))['data'] as Map);

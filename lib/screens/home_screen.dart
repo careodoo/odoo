@@ -34,7 +34,7 @@ class HomeScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final profile = context.watch<AuthProvider>().profile!;
     if (profile.isAdmin) return const AdminHome();
-    // مدير المشروع: لوحة تجمع إدارة الخدمات/المتابعة + معظم أيقونات العميل + بنر البث
+    // Project manager: a dashboard combining service management/follow-up + most client icons + stream banner
     if (profile.isProjectManager) return const ProjectManagerHome();
     if (profile.role == 'client') return const ClientHome();
     // a supervisor opens straight onto their board — stats, executive actions,

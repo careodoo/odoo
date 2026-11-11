@@ -5,7 +5,7 @@ import '../core/auth.dart';
 import '../core/i18n.dart';
 import 'scan_screen.dart';
 
-/// «تصاريح البوابة» — visitor gate passes by state, with scan-to-find, approve/
+/// "Gate Passes" - visitor gate passes by state, with scan-to-find, approve/
 /// reject, and check-in / check-out at the gate.
 class SecurityGatePassesScreen extends StatefulWidget {
   const SecurityGatePassesScreen({super.key});

@@ -1,6 +1,6 @@
-// شاشة «العمل الإضافي الوارد» — أيقونة داخلية للمشروع: عمّال من مشاريع أخرى
-// يعملون إضافياً على مشروع المدير، مع طلب إيقاف/إنهاء (باعتماد الموارد البشرية)
-// وطباعة النموذج. نظير /my/pm/p/<id>/extra-work في البوابة تماماً.
+// «Incoming extra work» screen — a project-internal icon: workers from other projects
+// working extra on the manager's project, with a stop/end request (approved by HR)
+// and form printing. Exactly the counterpart of /my/pm/p/<id>/extra-work in the portal.
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../core/auth.dart';
@@ -46,7 +46,7 @@ class _ExtraWorkScreenState extends State<ExtraWorkScreen> {
     }
   }
 
-  // طلب إيقاف/إنهاء مع سبب اختياري ثم اعتماد الموارد البشرية
+  // Stop/end request with an optional reason, then HR approval
   Future<void> _stop(Map r, String kind) async {
     final reasonCtl = TextEditingController();
     final isPause = kind == 'pause';

@@ -3,8 +3,8 @@ import 'package:provider/provider.dart';
 import '../core/auth.dart';
 import '../core/i18n.dart';
 
-/// «تسليم الوردية» — عند تغيّر الوردية يسلّم الحارس المنصرف تقريراً للمستلِم:
-/// الوضع العام + المهام المعلّقة + العهدة/المفاتيح + الملاحظات، ويُقرّ المستلِم.
+/// «Shift Handover» — when the shift changes the departing guard hands a report to the receiver:
+/// general status + pending tasks + custody/keys + notes, and the receiver acknowledges.
 class SecurityHandoverScreen extends StatefulWidget {
   const SecurityHandoverScreen({super.key});
   @override

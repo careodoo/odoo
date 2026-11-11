@@ -5,9 +5,9 @@ import '../core/api_client.dart';
 import '../core/i18n.dart';
 import 'excel_export.dart';
 
-/// موديول التدريب بالكامل: طلبات التدريب (training.application) مع سطورها
-/// (الدورات/المواضيع/المراكز/القاعات) والمهام والمراحل — هيدر إحصائيات + فلاتر
-/// + بطاقات ملوّنة بالمرحلة + تفاصيل + نموذج إضافة مطابق للباك ايند.
+/// The full training module: training requests (training.application) with their lines
+/// (courses/topics/centers/halls), tasks and stages — stats header + filters
+/// + stage-colored cards + details + an add form matching the backend.
 class TrainingScreen extends StatefulWidget {
   const TrainingScreen({super.key});
   @override
@@ -242,7 +242,7 @@ class _TrainingScreenState extends State<TrainingScreen> {
       Text(k, style: const TextStyle(color: _grey, fontSize: 11.5)), const SizedBox(height: 3),
       Text(v, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: _ink, fontWeight: FontWeight.w900, fontSize: 15))]));
 
-  // ---- نموذج إنشاء طلب تدريب (حقول مطابقة) ----
+  // ---- Training request creation form (matching fields) ----
   void _createForm() {
     final appName = TextEditingController(); final trName = TextEditingController(); final desc = TextEditingController();
     int? emp, resp, project, stage; DateTime? start, end;

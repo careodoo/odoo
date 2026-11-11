@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 import '../core/auth.dart';
 import '../core/i18n.dart';
 
-/// «التفتيشات» — inspections by state (kanban-style tabs), each opening a
+/// "Inspections" - inspections by state (kanban-style tabs), each opening a
 /// detail with checklist/issues, workflow actions, assign-to-person, and
 /// «convert to work order» routed to any service supervisor.
 class SecurityInspectionsScreen extends StatefulWidget {

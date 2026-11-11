@@ -12,10 +12,10 @@ import '../core/webrtc_stream.dart';
 import '../core/live_broadcast.dart';
 import 'stream_chat_layer.dart';
 
-/// شاشة بثّ الحارس الاحترافية: معاينة الكاميرا الحيّة داخل التطبيق (WebRTC/WHIP)،
-/// شارة مباشر + مؤقّت، عدّاد وقائمة المشاهدين لحظياً، وبطاقة بيانات كاملة
-/// (اسم الحارس، الموقع، رقم البلاغ، المزوّد). إن كان المزوّد لا يدعم WebRTC،
-/// تتحوّل تلقائياً لوضع رابط RTMP (Larix) دون أن يفشل شيء.
+/// Professional guard streaming screen: in-app live camera preview (WebRTC/WHIP),
+/// live badge + timer, real-time viewer count and list, and a full data card
+/// (guard name, location, report number, provider). If the provider doesn't support WebRTC,
+/// it automatically falls back to RTMP link mode (Larix) without anything failing.
 class SecurityBroadcastScreen extends StatefulWidget {
   final int? incidentId;
   final int providerId;
@@ -36,7 +36,7 @@ class _SecurityBroadcastScreenState extends State<SecurityBroadcastScreen> {
   static const _green = Color(0xFF37C98A);
   static const _muteGrey = Color(0xFF9CB2CD);
 
-  // الناشر يعيش في الخدمة العامّة ليستمرّ عند التصغير
+  // The publisher lives in the global service so it persists when minimized
   WhipBroadcaster? get _bc => LiveBroadcast.instance.bc;
   Map<String, dynamic>? _session;
   Timer? _elapsed, _pollViewers;
@@ -56,7 +56,7 @@ class _SecurityBroadcastScreenState extends State<SecurityBroadcastScreen> {
 
   Future<void> _begin() async {
     try {
-      // استئناف بثّ مصغّر قائم لنفس البلاغ (بدل بدء جديد)
+      // Resume an existing minimized stream for the same report (instead of starting a new one)
       final svc = LiveBroadcast.instance;
       if (svc.isLive && svc.incidentId == (widget.incidentId ?? 0)) {
         _session = svc.session;
@@ -66,15 +66,15 @@ class _SecurityBroadcastScreenState extends State<SecurityBroadcastScreen> {
         if (mounted) setState(() => _starting = false);
         return;
       }
-      // 1) الأذونات
+      // 1) Permissions
       final cam = await Permission.camera.request();
       final mic = await Permission.microphone.request();
       if (!cam.isGranted || !mic.isGranted) {
         setState(() { _starting = false; _error = tr('يجب السماح بالكاميرا والميكروفون للبثّ', 'Camera & microphone permission required'); });
         return;
       }
-      // 2) الموقع: نطلب الإذن ثم نلتقط الموقع الفعلي (وإلا يتراجع الخادم لإحداثيات
-      //    مرفق الحارس بدل 0.0)
+      // 2) Location: request permission then capture the actual location (otherwise the server falls back to coordinates
+      //    of the guard's facility instead of 0.0)
       double? lat, lng;
       try {
         var perm = await Geolocator.checkPermission();
@@ -92,7 +92,7 @@ class _SecurityBroadcastScreenState extends State<SecurityBroadcastScreen> {
         try { final last = await Geolocator.getLastKnownPosition();
           if (last != null) { lat = last.latitude; lng = last.longitude; } } catch (_) {}
       }
-      // 3) إنشاء الجلسة في الباك ايند (بثّ رئيسي أو مشاركة co-host)
+      // 3) Create the session in the backend (main stream or co-host join)
       final api = context.read<AuthProvider>().api;
       final s = widget.cohost
           ? await api.securityStreamCohostStart(widget.incidentId ?? 0, latitude: lat, longitude: lng)
@@ -103,13 +103,13 @@ class _SecurityBroadcastScreenState extends State<SecurityBroadcastScreen> {
       _session = s;
       final whip = '${s['whip_url'] ?? ''}';
       if (whip.isNotEmpty) {
-        // 4) بثّ WebRTC حقيقي داخل التطبيق
+        // 4) Real WebRTC stream inside the app
         _webrtc = true;
         final bc = WhipBroadcaster();
         await bc.start(whip);
         LiveBroadcast.instance.begin(bc, s, _iid, widget.cohost);
         _startTimers();
-        // لقطة مصغّرة للبثّ (Cloudflare لا يسجّل WebRTC) — تُرفَع في الخلفية
+        // Stream thumbnail (Cloudflare doesn't record WebRTC) - uploaded in the background
         final sid = s['session_id'] as int?;
         if (sid != null) {
           bc.captureFrame().then((png) {
@@ -117,7 +117,7 @@ class _SecurityBroadcastScreenState extends State<SecurityBroadcastScreen> {
           });
         }
       } else {
-        // رجوع لوضع RTMP (Larix)
+        // Fall back to RTMP mode (Larix)
         _webrtc = false;
         _ingestUrl = '${s['ingest_url'] ?? ''}';
         _startTimers(pollOnly: true);
@@ -172,7 +172,7 @@ class _SecurityBroadcastScreenState extends State<SecurityBroadcastScreen> {
     final iid = _iid;
     final api = context.read<AuthProvider>().api;
     _elapsed?.cancel(); _pollViewers?.cancel();
-    // end(api:) يرفع تسجيل الجهاز للخادم في الخلفية
+    // end(api:) uploads the device recording to the server in the background
     try { await LiveBroadcast.instance.end(api: api); } catch (_) {}
     try {
       if (widget.cohost) { await api.securityStreamCohostStop(iid); }
@@ -181,7 +181,7 @@ class _SecurityBroadcastScreenState extends State<SecurityBroadcastScreen> {
     if (mounted) Navigator.pop(context);
   }
 
-  /// تصغير: نغلق الشاشة ويستمرّ البثّ في الخدمة (يظهر المؤشّر العائم).
+  /// Minimize: close the screen while the stream continues in the service (the floating indicator appears).
   void _minimize() {
     _elapsed?.cancel(); _pollViewers?.cancel();
     Navigator.pop(context);
@@ -209,7 +209,7 @@ class _SecurityBroadcastScreenState extends State<SecurityBroadcastScreen> {
       ])));
   }
 
-  /// دردشة البثّ للحارس (لوحة سفلية فوق المعاينة).
+  /// Stream chat for the guard (bottom panel over the preview).
   void _showChat() {
     showModalBottomSheet(context: context, isScrollControlled: true, backgroundColor: const Color(0xFF0B1220),
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
@@ -228,7 +228,7 @@ class _SecurityBroadcastScreenState extends State<SecurityBroadcastScreen> {
 
   @override
   void dispose() {
-    // لا نوقف الناشر هنا — الخدمة تملكه ليستمرّ البثّ عند التصغير
+    // Don't stop the publisher here - the service owns it so the stream persists when minimized
     _elapsed?.cancel(); _pollViewers?.cancel();
     super.dispose();
   }
@@ -264,19 +264,19 @@ class _SecurityBroadcastScreenState extends State<SecurityBroadcastScreen> {
         ]),
       ));
 
-  // ---- عرض البثّ الحيّ (WebRTC) ----
+  // ---- Live stream view (WebRTC) ----
   Widget _liveView() {
     final s = _session ?? const {};
     return Stack(children: [
-      // الفيديو ملء الشاشة
+      // Full-screen video
       Positioned.fill(child: RTCVideoView(_bc!.renderer,
           objectFit: RTCVideoViewObjectFit.RTCVideoViewObjectFitCover, mirror: _bc!.isFront)),
-      // تدرّج علوي/سفلي لقراءة النصوص
+      // Top/bottom gradient for text readability
       Positioned.fill(child: IgnorePointer(child: DecoratedBox(decoration: BoxDecoration(
           gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter,
               colors: [Colors.black.withValues(alpha: .55), Colors.transparent, Colors.transparent, Colors.black.withValues(alpha: .75)],
               stops: const [0, .2, .6, 1]))))),
-      // الشريط العلوي: مباشر + مؤقّت + مشاهدون
+      // Top bar: live + timer + viewers
       Positioned(top: 12, left: 12, right: 12, child: Row(children: [
         Container(padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
             decoration: BoxDecoration(color: _red, borderRadius: BorderRadius.circular(20)),
@@ -308,9 +308,9 @@ class _SecurityBroadcastScreenState extends State<SecurityBroadcastScreen> {
                   Text('$_viewers', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 13)),
                 ]))),
       ])),
-      // بطاقة البيانات السفلية
+      // Bottom data card
       Positioned(left: 12, right: 12, bottom: 92, child: _infoCard(s)),
-      // أزرار التحكّم
+      // Control buttons
       Positioned(left: 0, right: 0, bottom: 18, child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
         _ctrl(Icons.cameraswitch_rounded, tr('تبديل', 'Flip'), _blue, () async { await _bc?.switchCamera(); if (mounted) setState(() {}); }),
         const SizedBox(width: 22),
@@ -354,7 +354,7 @@ class _SecurityBroadcastScreenState extends State<SecurityBroadcastScreen> {
         Text(label, style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700)),
       ]);
 
-  // ---- رجوع لوضع RTMP (Larix) عندما لا يدعم المزوّد WebRTC ----
+  // ---- Fall back to RTMP mode (Larix) when the provider doesn't support WebRTC ----
   Widget _rtmpFallback() {
     final s = _session ?? const {};
     final ingest = _ingestUrl ?? '';
@@ -388,7 +388,7 @@ class _SecurityBroadcastScreenState extends State<SecurityBroadcastScreen> {
   }
 }
 
-/// نقطة نابضة حمراء لشارة «مباشر».
+/// Pulsing red dot for the "live" badge.
 class _Pulse extends StatefulWidget {
   const _Pulse();
   @override

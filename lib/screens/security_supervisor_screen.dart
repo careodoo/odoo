@@ -3,8 +3,8 @@ import 'package:provider/provider.dart';
 import '../core/auth.dart';
 import '../core/i18n.dart';
 
-/// أدوات مشرف الأمن: لوحة حالة الفريق لحظياً (نشط/سكون/نائم) + إنشاء وإسناد
-/// المهام والدوريات والتصاريح وسجلات التفتيش + إشعار الفريق. بثيم الأمن الداكن.
+/// Security supervisor tools: real-time team status board (active/idle/asleep) + create and assign
+/// tasks, patrols, permits, and inspection logs + notify the team. In the dark security theme.
 class SecuritySupervisorScreen extends StatefulWidget {
   const SecuritySupervisorScreen({super.key});
   @override
@@ -55,7 +55,7 @@ class _SecuritySupervisorScreenState extends State<SecuritySupervisorScreen> {
     }
   }
 
-  /// فتح بروفايل الحارس عند الضغط عليه في بلوك حالة الفريق.
+  /// Open the guard's profile when tapped in the team status block.
   void _openGuard(int? gid, String name) {
     if (gid == null) return;
     showModalBottomSheet(
@@ -137,7 +137,7 @@ class _SecuritySupervisorScreenState extends State<SecuritySupervisorScreen> {
   List<Map> get _teams => ((_opts?['teams'] as List?) ?? const []).cast<Map>();
   List<Map> get _premises => ((_opts?['premises'] as List?) ?? const []).cast<Map>();
   List<Map> get _categories => ((_opts?['task_categories'] as List?) ?? const []).cast<Map>();
-  // القوائم [value,label] من الخادم
+  // The [value,label] lists from the server
   List<List> get _inspTypes => ((_opts?['inspection_types'] as List?) ?? const []).map((e) => (e as List)).toList();
   List<List> get _severities => ((_opts?['severities'] as List?) ?? const []).map((e) => (e as List)).toList();
   List<List> get _passTypes => ((_opts?['pass_types'] as List?) ?? const []).map((e) => (e as List)).toList();
@@ -168,7 +168,7 @@ class _SecuritySupervisorScreenState extends State<SecuritySupervisorScreen> {
     );
   }
 
-  // ---- لوحة حالة الفريق ----
+  // ---- Team status board ----
   Widget _presenceCard() {
     final members = ((_presence?['members'] as List?) ?? const []).cast<Map>();
     final counts = (_presence?['counts'] as Map?) ?? const {};
@@ -245,7 +245,7 @@ class _SecuritySupervisorScreenState extends State<SecuritySupervisorScreen> {
         )),
       );
 
-  // ---- نماذج الإنشاء ----
+  // ---- Creation forms ----
   void _sheet(String title, List<Widget> Function(StateSetter set) fields, Future<void> Function() onSubmit) {
     showModalBottomSheet(context: context, isScrollControlled: true, backgroundColor: _bg,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
@@ -282,7 +282,7 @@ class _SecuritySupervisorScreenState extends State<SecuritySupervisorScreen> {
             items: items, onChanged: onCh)),
       );
 
-  // منتقي تاريخ (اختياري وقت) — يعرض القيمة المختارة ويستدعي onPick بنص ISO
+  // Date picker (optional time) - displays the selected value and calls onPick with an ISO string
   Widget _dateTf(String label, DateTime? value, bool withTime, ValueChanged<DateTime> onPick) => Padding(
         padding: const EdgeInsets.only(bottom: 10),
         child: InkWell(

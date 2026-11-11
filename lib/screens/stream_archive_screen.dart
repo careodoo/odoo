@@ -4,8 +4,8 @@ import 'package:webview_flutter/webview_flutter.dart';
 import '../core/auth.dart';
 import '../core/i18n.dart';
 
-/// سجل كل عمليات البثّ المؤرشفة بتفاصيلها + إعادة تشغيل التسجيلات داخل التطبيق
-/// (مشغّل Cloudflare عبر WebView). يعمل للفريق والعميل (isClient يقيّده بمواقعه).
+/// Log of all archived streams with their details + replaying the recordings inside the app
+/// (Cloudflare player via WebView). Works for the team and the client (isClient restricts it to their sites).
 class StreamArchiveScreen extends StatefulWidget {
   final bool isClient;
   const StreamArchiveScreen({super.key, this.isClient = false});
@@ -72,7 +72,7 @@ class _StreamArchiveScreenState extends State<StreamArchiveScreen> {
         Text(tr('لا بثوث مؤرشفة بعد', 'No archived broadcasts yet'), style: const TextStyle(color: _grey, fontWeight: FontWeight.w700)),
       ]));
 
-  // يحوّل الرابط النسبي (تسجيل ذاتيّ الاستضافة) إلى مطلق بإضافة أصل الخادم
+  // Converts the relative URL (self-hosted recording) to absolute by prepending the server origin
   String _abs(String u) {
     if (u.isEmpty) return u;
     if (u.startsWith('/')) return context.read<AuthProvider>().api.origin + u;
@@ -90,7 +90,7 @@ class _StreamArchiveScreenState extends State<StreamArchiveScreen> {
       child: InkWell(
         onTap: () => _open(b),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          // الصورة المصغّرة + شارة التسجيل/المدة
+          // Thumbnail + recording/duration badge
           Stack(children: [
             AspectRatio(aspectRatio: 16 / 8, child: thumb.isNotEmpty
                 ? Image.network(thumb, fit: BoxFit.cover, errorBuilder: (_, __, ___) => _thumbPlaceholder())
@@ -137,13 +137,13 @@ class _StreamArchiveScreenState extends State<StreamArchiveScreen> {
       );
 
   void _open(Map b) {
-    // فتح شاشة التفاصيل الكاملة (تسجيل + معلومات + دردشة + مشاهدون)
+    // Open the full details screen (recording + info + chat + viewers)
     Navigator.push(context, MaterialPageRoute(
         builder: (_) => _DetailScreen(sid: (b['session_id'] as num).toInt(), isClient: widget.isClient, brief: b)));
   }
 }
 
-/// يحوّل رابط التسجيل إلى رابط تشغيل صالح: Cloudflare→iframe، وذاتيّ الاستضافة→مطلق.
+/// Converts the recording URL to a valid playback URL: Cloudflare→iframe, and self-hosted→absolute.
 String _resolvePlayUrl(BuildContext context, String rec) {
   var u = rec;
   if (u.contains('cloudflarestream')) {
@@ -153,7 +153,7 @@ String _resolvePlayUrl(BuildContext context, String rec) {
   return u;
 }
 
-/// تفاصيل بثّ مؤرشف: مشغّل التسجيل + بطاقة معلومات + دردشة البثّ + قائمة المشاهدين.
+/// Archived stream details: recording player + info card + stream chat + viewers list.
 class _DetailScreen extends StatefulWidget {
   final int sid;
   final bool isClient;
@@ -199,7 +199,7 @@ class _DetailScreenState extends State<_DetailScreen> {
       appBar: AppBar(backgroundColor: const Color(0xFF1E3A5F), foregroundColor: Colors.white,
           title: Text(tr('تفاصيل البثّ', 'Broadcast details'))),
       body: ListView(padding: const EdgeInsets.all(12), children: [
-        // المشغّل أو لوحة «بلا تسجيل»
+        // The player or a «No recording» panel
         ClipRRect(borderRadius: BorderRadius.circular(16),
           child: AspectRatio(aspectRatio: 16 / 9, child: rec
               ? _PlayerInline(url: _resolvePlayUrl(context, '${_d['recording_url']}'))
@@ -208,7 +208,7 @@ class _DetailScreenState extends State<_DetailScreen> {
                   Text(tr('لا يتوفّر تسجيل لهذا البثّ', 'No recording for this broadcast'), style: const TextStyle(color: _grey)),
                 ]))))),
         const SizedBox(height: 14),
-        // بطاقة المعلومات
+        // Info card
         Container(padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(color: _card, borderRadius: BorderRadius.circular(16),
               border: Border.all(color: Colors.white.withValues(alpha: .06))),
@@ -225,12 +225,12 @@ class _DetailScreenState extends State<_DetailScreen> {
                 _d['audience'] == 'client' ? tr('العميل فقط', 'Client only') : tr('الفريق والعميل', 'Team & client')),
           ])),
         const SizedBox(height: 14),
-        // دردشة البثّ (إعادة عرض)
+        // Stream chat (replay)
         _section(Icons.chat_rounded, tr('دردشة البثّ', 'Broadcast chat'), msgs.length),
         if (msgs.isEmpty) _muted(tr('لا رسائل في هذا البثّ', 'No messages in this broadcast'))
         else ...msgs.map((m) => _msg(m as Map)),
         const SizedBox(height: 14),
-        // المشاهدون
+        // Viewers
         _section(Icons.people_rounded, tr('المشاهدون', 'Viewers'), viewers.length),
         if (viewers.isEmpty) _muted(tr('لا مشاهدين مسجّلين', 'No recorded viewers'))
         else ...viewers.map((v) => _viewer(v as Map)),
@@ -287,7 +287,7 @@ class _DetailScreenState extends State<_DetailScreen> {
       ]));
 }
 
-/// مشغّل مضمّن (WebView) داخل بطاقة التفاصيل.
+/// Embedded player (WebView) inside the details card.
 class _PlayerInline extends StatefulWidget {
   final String url;
   const _PlayerInline({required this.url});

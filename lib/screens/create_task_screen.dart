@@ -5,7 +5,7 @@ import '../core/i18n.dart';
 import 'searchable_picker.dart';
 
 /// Full-page task creation for supervisors — opens as its own screen (not an
-/// inline list row). Captures the assignee, "المطلوب تنفيذه", and the proof
+/// inline list row). Captures the assignee, "what needs to be done", and the proof
 /// the worker must submit before the result can be approved.
 class CreateTaskScreen extends StatefulWidget {
   const CreateTaskScreen({super.key, this.presetEmployeeId, this.presetEmployeeName});

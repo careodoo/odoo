@@ -27,8 +27,8 @@ class Push {
     importance: Importance.high,
   );
 
-  // قناة الاستغاثة: أقصى أهمية + نغمة إنذار مميّزة (sos_alert في res/raw).
-  // تُستخدم لإشعارات النوع alert (نداء استغاثة/بث مباشر) فقط.
+  // SOS channel: maximum importance + a distinctive alarm tone (sos_alert in res/raw).
+  // Used for alert-type notifications (SOS call/live stream) only.
   static const _sosChannel = AndroidNotificationChannel(
     'care_sos', 'نداءات الاستغاثة',
     description: 'تنبيهات الطوارئ العاجلة',
@@ -96,7 +96,7 @@ class Push {
     final title = n?.title ?? m.data['title'] as String?;
     final body = n?.body ?? m.data['body'] as String?;
     if (title == null && body == null) return;
-    // إشعارات الطوارئ (alert) تُعرض على قناة الاستغاثة بالنغمة المميّزة.
+    // Emergency notifications (alert) are shown on the SOS channel with the distinctive tone.
     final isSos = '${m.data['ntype'] ?? ''}' == 'alert';
     final ch = isSos ? _sosChannel : _channel;
     try {
@@ -113,8 +113,8 @@ class Push {
             sound: isSos ? const RawResourceAndroidNotificationSound('sos_alert') : null,
             fullScreenIntent: isSos, // تنبيه بارز على الشاشة عند الطوارئ
           ),
-          // iOS: الصوت المميّز يحتاج ملف .caf مُضمّن (غير متوفّر بعد) — نُبقي
-          // الصوت الافتراضي هنا؛ نغمة الاستغاثة المخصّصة تعمل على أندرويد.
+          // iOS: the distinctive sound needs an embedded .caf file (not available yet) — we keep
+          // the default sound here; the custom SOS tone works on Android.
           iOS: const DarwinNotificationDetails(presentSound: true),
         ),
         payload: m.data['action_url'] as String?,

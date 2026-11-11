@@ -8,7 +8,7 @@ import 'pdf_report_screen.dart';
 import 'employee_profile_screen.dart';
 import 'excel_export.dart';
 
-/// الحضور والانصراف — who is expected on each shift, who actually turned up,
+/// Check-in and check-out - who is expected on each shift, who actually turned up,
 /// who is missing, and every punch behind those numbers. Printable.
 class AttendanceScreen extends StatefulWidget {
   /// When set, the screen is locked to this employee's own records (used from

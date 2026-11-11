@@ -7,9 +7,9 @@ import '../core/live_broadcast.dart';
 import '../main.dart' show navigatorKey;
 import 'security_broadcast_screen.dart';
 
-/// مؤشّر عائم يظهر فوق كل شاشات التطبيق طالما هناك بثّ نشط مُصغّر — يذكّر الحارس
-/// أنه «على الهواء» (نبضة حمراء + مؤقّت)، يعيد فتح شاشة البثّ عند الضغط، ويتيح
-/// الإيقاف السريع. يحقّق «البثّ بسرية»: الحارس يكمل عمله والبثّ مستمرّ.
+/// A floating indicator shown over all app screens while there's an active minimized stream - it reminds the guard
+/// that he is "on air" (red pulse + timer), reopens the streaming screen when tapped, and allows
+/// quick stop. Achieves "discreet streaming": the guard continues his work while the stream keeps running.
 class LiveBroadcastPill extends StatelessWidget {
   const LiveBroadcastPill({super.key});
 
@@ -52,8 +52,8 @@ class _PillState extends State<_Pill> with SingleTickerProviderStateMixin {
   }
 
   void _open() {
-    // المؤشّر يعلو الـ Navigator في الشجرة، فنستخدم المفتاح العام للعودة لشاشة
-    // البثّ الكاملة (تستأنف نفس الجلسة الحيّة).
+    // The indicator sits above the Navigator in the tree, so we use the global key to return to the full
+    // streaming screen (it resumes the same live session).
     final svc = LiveBroadcast.instance;
     navigatorKey.currentState?.push(MaterialPageRoute(builder: (_) => SecurityBroadcastScreen(
         incidentId: svc.incidentId, providerId: -1, cohost: svc.cohost)));

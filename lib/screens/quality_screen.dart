@@ -5,7 +5,7 @@ import '../core/i18n.dart';
 import 'observation_create.dart';
 import 'observation_detail.dart';
 
-/// Quality rounds / observations (الجولات والجودة): log an observation, track
+/// Quality rounds / observations: log an observation, track
 /// its severity/state, and convert it into a corrective work order.
 class QualityScreen extends StatefulWidget {
   const QualityScreen({super.key});

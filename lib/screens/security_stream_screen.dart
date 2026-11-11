@@ -6,13 +6,13 @@ import '../core/live_broadcast.dart';
 import 'security_broadcast_screen.dart';
 import 'stream_view_screen.dart';
 
-/// البث المباشر عبر مزوّد خارجي. المدير يُعدّ عدة خدمات في الباك ايند
-/// (RTMP/HLS)، والحارس يختار مزوّداً فيولّد الخادم رابط إدخال (يبثّ إليه عبر
-/// أداة RTMP مثل Larix) ورابط مشاهدة (HLS) يُشعَر به الفريق. لا يعتمد على أي
-/// SDK داخل التطبيق (تفادياً لمشكلة Agora مع AGP 9).
+/// Live streaming via an external provider. The admin configures several services in the backend
+/// (RTMP/HLS), and the guard picks a provider so the server generates an ingest link (streamed to via
+/// an RTMP tool like Larix) and a viewing link (HLS) the team is notified of. It doesn't rely on any
+/// SDK inside the app (to avoid the Agora issue with AGP 9).
 class Stream {
   static Future<void> goLive(BuildContext context, {int? incidentId, String? title}) async {
-    // منع بثّين معاً: إن كان هناك بثّ نشط، نطلب العودة إليه أو إيقافه أولاً
+    // Prevent two streams at once: if there's an active stream, ask to return to it or stop it first
     if (LiveBroadcast.instance.isLive) {
       final c = await _activeStreamDialog(context);
       if (c == 'resume') {
@@ -26,7 +26,7 @@ class Stream {
         final iid = LiveBroadcast.instance.incidentId, co = LiveBroadcast.instance.cohost;
         await LiveBroadcast.instance.end();
         try { if (co) { await api2.securityStreamCohostStop(iid); } else { await api2.securityStreamStop(iid); } } catch (_) {}
-        // ثم نكمل لبدء بثّ جديد
+        // then proceed to start a new stream
       } else {
         return; // إلغاء
       }
@@ -44,7 +44,7 @@ class Stream {
       if (context.mounted) _err(context, tr('لا توجد خدمة بث مُعدّة في الباك ايند بعد.', 'No streaming provider configured yet.'));
       return;
     }
-    // اختيار المزوّد إن تعدّد
+    // Select the provider if there are several
     Map? provider = provs.first as Map;
     if (provs.length > 1 && context.mounted) {
       provider = await showModalBottomSheet<Map>(context: context, backgroundColor: const Color(0xFF152238),
@@ -59,26 +59,26 @@ class Stream {
         ]));
       if (provider == null) return;
     }
-    // اختيار الجمهور: الكل (فريق + عميل) / العميل فقط / الفريق فقط
+    // Select the audience: all (team + client) / client only / team only
     String? audience;
     if (context.mounted) {
       audience = await _pickAudience(context);
       if (audience == null) return; // ألغى
     }
-    // لو «الفريق فقط»: نتيح اختيار أعضاء محدّدين
+    // If "team only": allow selecting specific members
     List<int>? viewerIds;
     if (audience == 'team' && context.mounted) {
       viewerIds = await _pickViewers(context);
       if (viewerIds == null) return;
     }
     if (!context.mounted) return;
-    // شاشة البثّ الاحترافية تتولّى إنشاء الجلسة والنشر (WebRTC) والمشاهدين والدردشة
+    // The professional streaming screen handles session creation, publishing (WebRTC), viewers, and chat
     Navigator.push(context, MaterialPageRoute(builder: (_) => SecurityBroadcastScreen(
         incidentId: incidentId, providerId: provider!['id'] as int, audience: audience,
         viewerIds: (viewerIds != null && viewerIds.isNotEmpty) ? viewerIds : null)));
   }
 
-  /// اختيار جمهور البثّ. يعيد 'all' | 'client' | 'team' أو null إن ألغى.
+  /// Select the stream audience. Returns 'all' | 'client' | 'team' or null if cancelled.
   static Future<String?> _pickAudience(BuildContext context) async {
     return showModalBottomSheet<String>(context: context, backgroundColor: const Color(0xFF152238),
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
@@ -100,10 +100,10 @@ class Stream {
       ])));
   }
 
-  /// اختيار مشاهدي البث: يعيد قائمة user_ids المحدّدة، أو [] للفريق كامل،
-  /// أو null إن ألغى المستخدم.
+  /// Select stream viewers: returns the list of selected user_ids, or [] for the whole team,
+  /// or null if the user cancelled.
   static Future<List<int>?> _pickViewers(BuildContext context) async {
-    // «الفريق كامل» سريعاً، أو فتح قائمة الأعضاء للاختيار
+    // "Whole team" quickly, or open the member list to choose
     final choice = await showModalBottomSheet<String>(context: context, backgroundColor: const Color(0xFF152238),
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
       builder: (_) => SafeArea(child: Column(mainAxisSize: MainAxisSize.min, children: [
@@ -118,7 +118,7 @@ class Stream {
       ])));
     if (choice == null) return null;
     if (choice == 'all') return const [];
-    // جلب أعضاء الفريق واختيار من له user_id
+    // Fetch team members and pick those who have a user_id
     final teamData = await context.read<AuthProvider>().api.securityMyTeam();
     final members = <Map>[];
     for (final t in ((teamData['teams'] as List?) ?? const []).cast<Map>()) {
@@ -150,14 +150,14 @@ class Stream {
     return selected.toList();
   }
 
-  /// فتح شاشة مشاهدة البثّ الحيّ داخل التطبيق (WebRTC). [isClient] تستخدم نقطة
-  /// نهاية العميل المقيّدة بنطاقه.
+  /// Open the in-app live stream viewing screen (WebRTC). [isClient] uses the client's
+  /// scope-restricted endpoint.
   static void watch(BuildContext context, int incidentId, {String? title, bool isClient = false}) {
     Navigator.push(context, MaterialPageRoute(
         builder: (_) => StreamViewScreen(incidentId: incidentId, isClient: isClient)));
   }
 
-  /// حوار عند وجود بثّ نشط: العودة إليه / إيقافه وبدء جديد / إلغاء.
+  /// Dialog when an active stream exists: return to it / stop it and start a new one / cancel.
   static Future<String?> _activeStreamDialog(BuildContext context) {
     return showModalBottomSheet<String>(context: context, backgroundColor: const Color(0xFF152238),
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),

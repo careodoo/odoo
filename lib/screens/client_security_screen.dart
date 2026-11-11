@@ -23,7 +23,7 @@ class ClientSecurityScreen extends StatefulWidget {
 }
 
 class _ClientSecurityScreenState extends State<ClientSecurityScreen> {
-  // ستايل داكن احترافي بدل الأحمر (navy عميق)
+  // Professional dark style instead of red (deep navy)
   static const _c = Color(0xFF1E3A5F);
   static const _kindColors = {
     'incidents': Color(0xFFE5484D), 'patrols': Color(0xFF2563EB),
@@ -180,7 +180,7 @@ class _ClientSecurityScreenState extends State<ClientSecurityScreen> {
     );
   }
 
-  /// صف أدوات الأمن تحت الهيدر (نُقلت من أيقونات الـ AppBar).
+  /// Row of security tools under the header (moved from the AppBar icons).
   Widget _toolsRow() => SizedBox(
         height: 78,
         child: ListView(scrollDirection: Axis.horizontal, padding: const EdgeInsets.symmetric(horizontal: 2), children: [
@@ -418,8 +418,8 @@ class _ClientSecurityScreenState extends State<ClientSecurityScreen> {
                 ]),
               ),
             ),
-            // بثّ البلاغ: زر «مشاهدة البثّ المباشر» (يفتح المشغّل داخل التطبيق؛
-            // يتعامل مع حالة عدم وجود بثّ)، وزر «طلب بثّ» للحرجة غير المغلقة.
+            // Report stream: a "Watch live stream" button (opens the player inside the app;
+            // handles the no-stream case), and a "Request stream" button for critical, unclosed ones.
             if (_kind == 'incidents') ...[
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
@@ -472,11 +472,11 @@ class _ClientSecurityScreenState extends State<ClientSecurityScreen> {
     return s.contains('closed') || s.contains('resolved') || s.contains('cancel');
   }
 
-  /// العميل يطلب بثاً مباشراً لبلاغ في موقعه → يُشعَر الحارس المعني ليفتح البث.
+  /// The client requests a live stream for a report at his site -> the relevant guard is notified to open the stream.
   Future<void> _requestStream(Map r) async {
     final id = r['id'];
     if (id == null) return;
-    // ملاحظة اختيارية من العميل
+    // Optional note from the client
     final noteCtl = TextEditingController();
     final go = await showDialog<bool>(
       context: context,

@@ -5,7 +5,7 @@ import '../../core/i18n.dart';
 import 'management_home.dart' show Mgmt;
 import 'management_list.dart' show openManagementRecord;
 
-/// «الاعتمادات» — the unified approvals inbox: every record awaiting THIS
+/// «Approvals» — the unified approvals inbox: every record awaiting THIS
 /// user's action, grouped by the workflow (system) it came from. Tapping a
 /// record opens its detail sheet where the user takes the action.
 class ManagementInboxScreen extends StatefulWidget {

@@ -6,7 +6,7 @@ import '../core/theme.dart';
 import '../core/widgets.dart';
 import 'employee_attendance_screen.dart';
 
-/// "ملفي" — the worker's complete personal file: photo & identity, where they
+/// "My File" — the worker's complete personal file: photo & identity, where they
 /// are assigned (project / client / facility / team / supervisor), residency and
 /// permit dates, accommodation, and their attendance summary. Document and
 /// attendance blocks appear only when enabled in the app settings.

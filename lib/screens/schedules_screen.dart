@@ -5,7 +5,7 @@ import '../core/i18n.dart';
 import '../core/widgets.dart';
 import 'schedule_create.dart';
 
-/// جدولة الأعمال — recurring task schedules with compliance. Each card opens a
+/// Work scheduling - recurring task schedules with compliance. Each card opens a
 /// professional detail sheet (its occurrence history), and the client can add
 /// new schedules.
 class SchedulesScreen extends StatefulWidget {

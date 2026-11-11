@@ -137,7 +137,7 @@ class NotifBell extends StatelessWidget {
           onPressed: () => Navigator.push(context,
               MaterialPageRoute(builder: (_) => const NotificationsScreen())),
         ),
-        // الشارة فوق الأيقونة — IgnorePointer حتى لا تبتلع الضغطة (كانت تمنع الفتح)
+        // The badge over the icon — IgnorePointer so it doesn't swallow the tap (it used to block opening)
         if (unread > 0)
           Positioned(
             top: 8, right: 6,
@@ -188,7 +188,7 @@ class StatCard extends StatelessWidget {
                 style: TextStyle(color: color, fontSize: 22, fontWeight: FontWeight.w900, height: 1)),
           ),
           const SizedBox(height: 2),
-          // Labels like "بالموقع الآن" must wrap/ellipsis, never spill out.
+          // Labels like "On site now" must wrap/ellipsis, never spill out.
           Text(label,
               textAlign: TextAlign.center, maxLines: 2, overflow: TextOverflow.ellipsis,
               style: TextStyle(fontSize: 10.5, height: 1.15, fontWeight: FontWeight.w600, color: Colors.grey.shade700)),

@@ -43,12 +43,12 @@ class _WasteOpsShellState extends State<WasteOpsShell> {
 
     final tabs = <_OpsTab>[
       if (isOps) _OpsTab(Icons.assignment_rounded, tr('الطلبات', 'Orders'), const WasteOpsInbox()),
-      // المدير: سجل رحلات المشروع (أرشيف + حالي)؛ السائق: رحلاته فقط.
+      // Manager: the project's trip log (archive + current); driver: their own trips only.
       if (isOps)
         _OpsTab(Icons.local_shipping_rounded, tr('رحلاتي', 'My trips'), const WasteOpsTripsScreen())
       else if (isDriver)
         _OpsTab(Icons.local_shipping_rounded, tr('الرحلات', 'Trips'), const DriverWasteTripsScreen()),
-      // المدير: سجلات الاستلام لكل المشروع؛ المستلِم: استلامه فقط.
+      // Manager: receipt records for the whole project; receiver: their own receipts only.
       if (isOps)
         _OpsTab(Icons.factory_rounded, tr('الاستلام', 'Intake'), const WasteOpsReceiptsScreen())
       else if (isReceiver)
@@ -173,8 +173,8 @@ class _WasteOpsInboxState extends State<WasteOpsInbox> {
           FutureBuilder<List<dynamic>>(
             future: _f,
             builder: (_, snap) {
-              // نعرض التحميل طوال فترة الانتظار — وإلا احتفظ FutureBuilder ببيانات
-              // التبويب السابق (قائمة فارغة) فظهرت رسالة «لا طلبات» أثناء التحميل.
+              // Show the loading indicator throughout the wait — otherwise FutureBuilder keeps the data
+              // of the previous tab (empty list) so a «No requests» message appeared while loading.
               if (snap.connectionState == ConnectionState.waiting) {
                 return const SliverFillRemaining(child: Center(child: CircularProgressIndicator(color: WOps.green)));
               }
@@ -292,7 +292,7 @@ class _WasteOpsInboxState extends State<WasteOpsInbox> {
               _kv(Icons.schedule_rounded, '${o['pickup_at']}'.replaceRange(16, null, '')),
             const SizedBox(height: 10),
             if (o['can_approve'] == true)
-              // طلب وارد من العميل بانتظار اعتماد المدير
+              // Incoming request from the client awaiting the manager's approval
               SizedBox(width: double.infinity, height: 42, child: ElevatedButton.icon(
                 style: ElevatedButton.styleFrom(backgroundColor: WOps.amber, foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),

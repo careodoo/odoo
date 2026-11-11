@@ -2,9 +2,9 @@ import 'package:flutter/foundation.dart';
 import 'webrtc_stream.dart';
 import 'foreground_stream.dart';
 
-/// خدمة بثّ عامّة (singleton) تحمل الناشر الحيّ خارج الشاشة، فيستمرّ البثّ عند
-/// «تصغير» شاشة البثّ والعودة لباقي التطبيق. مؤشّر عائم يظهر في كل الشاشات
-/// طالما [live] صحيحة، ويعيد فتح شاشة البثّ عند الضغط.
+/// A global streaming service (singleton) that holds the live publisher off-screen, so the stream continues when
+/// «minimizing» the stream screen and returning to the rest of the app. A floating indicator appears on all screens
+/// as long as [live] is true, and reopens the stream screen when tapped.
 class LiveBroadcast {
   LiveBroadcast._();
   static final LiveBroadcast instance = LiveBroadcast._();
@@ -15,12 +15,12 @@ class LiveBroadcast {
   bool cohost = false;
   int startEpochMs = 0;
 
-  /// إشعار تفاعلي لظهور/اختفاء المؤشّر العائم.
+  /// Reactive notifier for the floating indicator's show/hide.
   final ValueNotifier<bool> live = ValueNotifier<bool>(false);
 
   bool get isLive => bc != null;
 
-  /// ثوانٍ منذ بدء البثّ (للمؤقّت في المؤشّر والشاشة).
+  /// Seconds since the stream started (for the timer in the indicator and the screen).
   int get elapsedSeconds =>
       startEpochMs == 0 ? 0 : ((DateTime.now().millisecondsSinceEpoch - startEpochMs) ~/ 1000);
 
@@ -31,11 +31,11 @@ class LiveBroadcast {
     cohost = co;
     startEpochMs = DateTime.now().millisecondsSinceEpoch;
     live.value = true;
-    // خدمة أمامية: يستمرّ البثّ حتى بعد قفل الشاشة/الخروج من التطبيق
+    // Foreground service: the stream continues even after screen lock / leaving the app
     StreamForeground.start(iid);
   }
 
-  /// إيقاف البثّ نهائياً وتحرير الموارد. مرّر [api] لرفع التسجيل الذاتيّ للخادم.
+  /// Stop the stream permanently and release resources. Pass [api] to upload the self-recording to the server.
   Future<void> end({dynamic api}) async {
     final sid = session?['session_id'] as int?;
     final dur = elapsedSeconds;
@@ -50,7 +50,7 @@ class LiveBroadcast {
     incidentId = 0;
     startEpochMs = 0;
     live.value = false;
-    // رفع تسجيل الجهاز في الخلفية (لا يعطّل إغلاق الشاشة)
+    // Upload the device recording in the background (doesn't block closing the screen)
     if (api != null && sid != null && recPath != null) {
       // ignore: avoid_dynamic_calls
       api.securityStreamUploadRecording(sid, recPath, durationSec: dur).catchError((_) {});

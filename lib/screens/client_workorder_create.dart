@@ -81,12 +81,12 @@ class _ClientWorkorderCreateSheetState extends State<ClientWorkorderCreateSheet>
       setState(() {
         _opts = o;
         final projects = (o['projects'] as List?) ?? const [];
-        // مدير المشروع: نختار أول مشروع تلقائياً ثم نفلتر الباقي عليه
+        // Project manager: auto-select the first project then filter the rest by it
         if (projects.isNotEmpty) {
           _projectId ??= projects.first['id'] as int?;
         }
         final facs = _facilitiesForProject(o);
-        // أعد ضبط المرفق إن لم يعد ضمن المشروع المختار
+        // Reset the facility if it is no longer within the selected project
         if (_facilityId == null || !facs.any((f) => f['id'] == _facilityId)) {
           _facilityId = facs.isNotEmpty ? facs.first['id'] as int? : null;
           _locationId = null; _teamId = null;
@@ -104,7 +104,7 @@ class _ClientWorkorderCreateSheetState extends State<ClientWorkorderCreateSheet>
 
   List<Map> get _projects => (_opts?['projects'] as List?)?.cast<Map>() ?? const [];
 
-  /// المرافق ضمن المشروع المختار (أو كلها إن لم يكن مدير مشروع).
+  /// Facilities within the selected project (or all of them if not a project manager).
   List<Map> _facilitiesForProject(Map o) {
     final facs = (o['facilities'] as List?)?.cast<Map>() ?? const [];
     if (_projectId == null) return facs;
@@ -126,7 +126,7 @@ class _ClientWorkorderCreateSheetState extends State<ClientWorkorderCreateSheet>
     return teams.where((t) => _facilityId == null || t['facility_id'] == _facilityId).toList();
   }
 
-  /// العمّال + حرّاس الأمن ضمن المرفق المختار (لإسناد الأمر مباشرةً).
+  /// Workers + security guards within the selected facility (to assign the order directly).
   List<Map> get _assignees {
     final workers = (_opts?['workers'] as List?)?.cast<Map>() ?? const [];
     final guards = (_opts?['guards'] as List?)?.cast<Map>() ?? const [];
@@ -134,7 +134,7 @@ class _ClientWorkorderCreateSheetState extends State<ClientWorkorderCreateSheet>
     final scoped = _facilityId == null
         ? all
         : all.where((w) => w['facility_id'] == null || w['facility_id'] == _facilityId).toList();
-    // إزالة التكرار بالمعرّف
+    // Remove duplicates by ID
     final seen = <dynamic>{};
     return scoped.where((w) => seen.add(w['id'])).toList();
   }
@@ -300,7 +300,7 @@ class _ClientWorkorderCreateSheetState extends State<ClientWorkorderCreateSheet>
   List<Widget> _form() {
     final services = (_opts!['services'] as List?)?.cast<Map>() ?? const [];
     return [
-      // مدير المشروع لديه أكثر من مشروع → يجب اختيار المشروع أولاً لفلترة الكل
+      // The project manager has more than one project → the project must be selected first to filter everything
       if (_projects.isNotEmpty) ...[
         _label(Icons.workspaces_rounded, tr('المشروع', 'Project')),
         const SizedBox(height: 8),
@@ -431,7 +431,7 @@ class _ClientWorkorderCreateSheetState extends State<ClientWorkorderCreateSheet>
     );
   }
 
-  /// حقل اختيار التاريخ والوقت لأمر العمل.
+  /// Date and time picker field for the work order.
   Widget _dateTimeField() {
     String two(int n) => n.toString().padLeft(2, '0');
     final label = _requestDt == null

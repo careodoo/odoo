@@ -3,9 +3,9 @@ import 'package:provider/provider.dart';
 import '../core/auth.dart';
 import '../core/i18n.dart';
 
-/// «سجل البوابة» (زوّار ومركبات) — تسجيل سريع للحارس لأي زائر/مركبة/توصيل/مقاول
-/// عند البوابة: دخول فوري ثم خروج بضغطة. ترويسة إحصائيات (بالداخل الآن/دخول
-/// اليوم/خروج اليوم) + تبويبات + قائمة + زر تسجيل خروج لكل مَن بالداخل.
+/// "Gate Log" (visitors and vehicles) - quick logging by the guard for any visitor/vehicle/delivery/contractor
+/// at the gate: instant entry then exit with one tap. A stats header (currently inside/entries
+/// today/exits today) + tabs + list + a check-out button for everyone inside.
 class SecurityGateLogScreen extends StatefulWidget {
   const SecurityGateLogScreen({super.key});
   @override
@@ -74,7 +74,7 @@ class _SecurityGateLogScreenState extends State<SecurityGateLogScreen> {
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : Column(children: [
-              // ترويسة الإحصائيات
+              // Stats header
               Padding(
                 padding: const EdgeInsets.fromLTRB(12, 12, 12, 6),
                 child: Row(children: [
@@ -85,7 +85,7 @@ class _SecurityGateLogScreenState extends State<SecurityGateLogScreen> {
                   _stat(tr('خروج اليوم', 'Out today'), st['out_today'], _blue),
                 ]),
               ),
-              // تبويبات
+              // Tabs
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 12),
                 child: Row(children: [
@@ -220,7 +220,7 @@ class _SecurityGateLogScreenState extends State<SecurityGateLogScreen> {
   }
 }
 
-/// نموذج تسجيل دخول جديد.
+/// New entry registration form.
 class _GateEntrySheet extends StatefulWidget {
   const _GateEntrySheet();
   @override
@@ -301,7 +301,7 @@ class _GateEntrySheetState extends State<_GateEntrySheet> {
           Text(tr('تسجيل دخول عند البوابة', 'Log gate entry'),
               style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 16)),
           const SizedBox(height: 12),
-          // نوع الدخول
+          // Entry type
           Row(children: _types.map((t) {
             final on = _type == t[0];
             return Expanded(child: Padding(

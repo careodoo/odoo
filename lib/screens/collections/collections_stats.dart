@@ -4,7 +4,7 @@ import '../../core/auth.dart';
 import '../../core/i18n.dart';
 import 'collections_home.dart' show Coll, money;
 
-/// شاشة إحصائيات التحصيل الكاملة داخل التطبيق — بمثيل إحصائيات الباك-إند.
+/// Full collection statistics screen inside the app — matching the backend statistics.
 class CollectionsStats extends StatefulWidget {
   const CollectionsStats({super.key});
   @override
@@ -213,7 +213,7 @@ class _CollectionsStatsState extends State<CollectionsStats> {
               '${numOf(k['overdue_count']).toInt()} · ${tr('م.', 'avg')} ${numOf(k['avg_days']).toInt()}${tr('ي', 'd')}'),
         ]),
       const SizedBox(height: 10),
-      // نسبة + مؤشرات
+      // Percentage + indicators
       Row(children: [
         Expanded(child: _rateCard(numOf(k['rate']).toDouble())),
         const SizedBox(width: 10),
@@ -263,7 +263,7 @@ class _CollectionsStatsState extends State<CollectionsStats> {
         const SizedBox(height: 12), child,
       ]));
 
-  // الأيقونة فوق الرقم؛ الرقم داخل FittedBox يتقلّص ليظهر كاملاً مهما كبر (ملايين).
+  // Icon above the number; the number inside FittedBox shrinks to show fully no matter how big (millions).
   Widget _kpi(String ic, String l, String v, Color c, String sub) => Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14),

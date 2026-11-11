@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 import '../core/auth.dart';
 import '../core/i18n.dart';
 import 'live_stream_banner.dart';
-// إدارة وخدمات ومتابعة (يُعاد استخدام شاشات المشرف/العميل القائمة)
+// Management, services and follow-up (reuses the existing supervisor/client screens)
 import 'create_task_screen.dart';
 import 'workorders_screen.dart';
 import 'client_team_screen.dart';
@@ -18,7 +18,7 @@ import 'client_analytics_screen.dart';
 import 'notify_send_screen.dart';
 import 'chat_screen.dart';
 import 'scan_screen.dart';
-// أدوات العميل والمكان
+// Client and venue tools
 import 'contracts_screen.dart';
 import 'invoices_screen.dart';
 import 'shop_screen.dart';
@@ -32,15 +32,15 @@ import 'client_assets_screen.dart';
 import 'occupancy_screen.dart';
 import 'permits_screen.dart';
 import 'licenses_screen.dart';
-// أدوات الأمن لمدير مشروع الأمن (أيقونتان منفصلتان)
+// Security tools for the security project manager (two separate icons)
 import 'security_supervisor_screen.dart';
 import 'security_home.dart';
 
 const _navy = Color(0xFF0E3A5F);
 const _teal = Color(0xFF0D9488);
 
-/// لوحة مدير المشروع: تجمع إدارة الخدمات والمتابعة (أدوات المشرف) + معظم أدوات
-/// العميل (العقود/الفواتير/المتجر/المباني/الأصول) + بنر البثّ الأمني الحيّ.
+/// Project manager dashboard: combines service management and follow-up (supervisor tools) + most of the
+/// client tools (contracts/invoices/store/buildings/assets) + the live security stream banner.
 class ProjectManagerHome extends StatefulWidget {
   const ProjectManagerHome({super.key});
   @override
@@ -108,8 +108,8 @@ class _ProjectManagerHomeState extends State<ProjectManagerHome> {
       (Icons.meeting_room_rounded, tr('الإشغال', 'Occupancy'), const Color(0xFF9333EA), () => go(const OccupancyScreen())),
     ];
 
-    // أيقونات الأمن — تظهر فقط لمدير مشروع الأمن (أو مشرف/مدير أمن).
-    // كل أيقونة منفصلة: «المشرف» (أدوات المشرف الأمني) و«إدارة الأمن» (لوحة الأمن).
+    // Security icons — shown only to the security project manager (or security supervisor/manager).
+    // Each icon separate: «Supervisor» (security supervisor tools) and «Security Management» (security dashboard).
     final security = <(IconData, String, Color, VoidCallback)>[
       if (p.isSecuritySupervisor)
         (Icons.shield_moon_rounded, tr('المشرف', 'Supervisor'), const Color(0xFF0D9488),

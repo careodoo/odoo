@@ -3,10 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../core/auth.dart';
 
-/// مُرسِل نبضات حالة الحارس: يبعث نبضة دورية للخادم فتُحدَّث حالته (نشط/سكون).
-/// عنصر غير مرئي يُوضع في رئيسية الأمن. القيم الفيزيائية الدقيقة (نبض القلب،
-/// الحركة، النوم) ستأتي من نسخة الساعة الذكية لاحقاً — هنا نرسل الحركة المنطقية:
-/// التطبيق في المقدّمة = نشاط، وفي الخلفية طويلاً = سكون.
+/// Guard status heartbeat sender: emits a periodic heartbeat to the server so their status is updated (active/idle).
+/// An invisible widget placed on the security home. The precise physical values (heart rate,
+/// movement, sleep) will come from the smartwatch version later — here we send the logical activity:
+/// app in the foreground = active, long in the background = idle.
 class HeartbeatPinger extends StatefulWidget {
   const HeartbeatPinger({super.key});
   @override

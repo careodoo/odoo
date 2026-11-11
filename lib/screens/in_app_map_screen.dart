@@ -131,7 +131,7 @@ class _InAppMapScreenState extends State<InAppMapScreen> {
               ]),
             ),
           ),
-        // زر «موقعي»
+        // «My Location» button
         Positioned(
           right: 14, bottom: 82,
           child: SafeArea(child: FloatingActionButton.small(

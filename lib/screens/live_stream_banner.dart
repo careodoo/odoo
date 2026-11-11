@@ -9,11 +9,11 @@ import '../core/live_broadcast.dart';
 import 'stream_view_screen.dart';
 import 'security_broadcast_screen.dart';
 
-/// بانر البثوث الحيّة في رئيسية تطبيق حارس الأمن: يظهر تلقائياً عند وجود بثّ،
-/// بأيقونة حمراء نابضة + اسم وصورة الباثّ + الموقع + عدّاد المشاهدين، مع
-/// «مشاهدة» و«مشاركة». يستطلع الحالة دورياً ويختفي عند انتهاء كل البثوث.
+/// Live streams banner on the security guard app home: appears automatically when a stream exists,
+/// with a pulsing red icon + the broadcaster's name and photo + location + viewer counter, with
+/// «Watch» and «Share». It polls the status periodically and disappears when all streams end.
 class LiveStreamBanner extends StatefulWidget {
-  /// isClient: بانر هيدر تطبيق العميل (بثوث مواقعه، مشاهدة فقط بلا «مشاركة»).
+  /// isClient: client app header banner (streams of their sites, watch only without «Share»).
   final bool isClient;
   const LiveStreamBanner({super.key, this.isClient = false});
   @override
@@ -32,9 +32,9 @@ class _LiveStreamBannerState extends State<LiveStreamBanner> with WidgetsBinding
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _tick();
-    // استطلاع سريع (شبه فوري) — يظهر البثّ خلال ثوانٍ دون رفرش يدوي
+    // Fast polling (near-instant) — the stream appears within seconds without a manual refresh
     _poll = Timer.periodic(const Duration(seconds: 4), (_) => _tick());
-    // ظهور فوري عند وصول إشعار البثّ (push)
+    // Instant appearance when the stream notification (push) arrives
     _fcmSub = FirebaseMessaging.onMessage.listen((_) => _tick());
   }
 
@@ -47,7 +47,7 @@ class _LiveStreamBannerState extends State<LiveStreamBanner> with WidgetsBinding
     try {
       final api = context.read<AuthProvider>().api;
       final items = widget.isClient ? await api.clientSecurityStreamActive() : await api.securityStreamActive();
-      // لا نمسح البانر عند خطأ شبكة عابر — فقط عند استجابة ناجحة فارغة
+      // Don't clear the banner on a transient network error — only on a successful empty response
       if (mounted) setState(() => _items = items.cast<Map>());
     } catch (_) {}
   }
@@ -79,7 +79,7 @@ class _LiveStreamBannerState extends State<LiveStreamBanner> with WidgetsBinding
         border: Border.all(color: _red.withValues(alpha: .5)),
       ),
       child: Row(children: [
-        // صورة الباثّ + نبض
+        // Broadcaster's photo + pulse
         Stack(clipBehavior: Clip.none, children: [
           CircleAvatar(radius: 24, backgroundColor: const Color(0xFF152238),
               backgroundImage: photo,
@@ -110,7 +110,7 @@ class _LiveStreamBannerState extends State<LiveStreamBanner> with WidgetsBinding
             Text('${s['premise']}', maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Color(0xFFCBA6A8), fontSize: 11)),
         ])),
         const SizedBox(width: 8),
-        // أزرار: الباثّ نفسه (عودة/إيقاف)، وإلا مشاهدة (+ مشاركة للفريق)
+        // Buttons: the broadcaster themselves (return/stop), otherwise watch (+ share for the team)
         Column(mainAxisSize: MainAxisSize.min, children: [
           if (mine && !widget.isClient) ...[
             _btn(Icons.videocam_rounded, tr('العودة للبثّ', 'Resume'), _red, () => _resume(s)),
@@ -142,13 +142,13 @@ class _LiveStreamBannerState extends State<LiveStreamBanner> with WidgetsBinding
         ),
       );
 
-  /// الباثّ يعود لشاشة بثّه الكاملة (تستأنف الجلسة الحيّة).
+  /// The broadcaster returns to their full stream screen (resumes the live session).
   void _resume(Map s) {
     Navigator.push(context, MaterialPageRoute(builder: (_) =>
         SecurityBroadcastScreen(incidentId: s['incident_id'] as int, providerId: -1)));
   }
 
-  /// الباثّ يوقف بثّه من البانر مباشرة.
+  /// The broadcaster stops their stream directly from the banner.
   Future<void> _stopMine(Map s) async {
     final iid = s['incident_id'] as int;
     final api = context.read<AuthProvider>().api;

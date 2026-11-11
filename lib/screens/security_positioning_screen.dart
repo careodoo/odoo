@@ -120,7 +120,7 @@ class _SecurityPositioningScreenState extends State<SecurityPositioningScreen> {
                   Positioned(top: 10, right: 10, child: _Chip(text: tr('تحديد المواقع…', 'Locating…'))),
                 // coverage legend
                 Positioned(left: 10, bottom: 10, child: _legend()),
-                // زر «موقعي»: يمركز الخريطة على موقع المستخدم
+                // "My location" button: centers the map on the user's location
                 Positioned(right: 10, bottom: 10, child: FloatingActionButton.small(
                   heroTag: 'pos_myloc', backgroundColor: Colors.white, foregroundColor: const Color(0xFF1A73E8),
                   onPressed: () async {

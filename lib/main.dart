@@ -93,7 +93,7 @@ class CareApp extends StatelessWidget {
       theme: buildTheme(theme),
       builder: (ctx, child) => Directionality(
         textDirection: gIsRtl ? TextDirection.rtl : TextDirection.ltr,
-        // المؤشّر العائم للبثّ يعلو كل الشاشات عند وجود بثّ مُصغّر
+        // The floating stream indicator sits above all screens when a minimized stream exists
         child: Stack(children: [child!, const LiveBroadcastPill()]),
       ),
       home: auth.loading

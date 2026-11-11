@@ -18,7 +18,7 @@ const _stateColors = {
   'rejected': Color(0xFFE11D48), 'cancelled': Color(0xFF94A3B8),
 };
 
-/// خدمة الضيافة — order a drink the way you actually take it, watch it being
+/// Hospitality service — order a drink the way you actually take it, watch it being
 /// made, and (if you run a station) work the queue. Three tabs because these
 /// are three different jobs, not three views of one.
 class HospitalityScreen extends StatefulWidget {

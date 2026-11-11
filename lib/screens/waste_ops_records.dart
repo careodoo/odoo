@@ -7,10 +7,10 @@ import 'waste_ops_shell.dart';
 import 'pdf_report_screen.dart';
 
 // ============================================================================
-// شاشات مدير العمليات: سجل الرحلات + سجلات الاستلام (أرشيف + حالي) بالوسائط.
+// Operations manager screens: trip log + receipt records (archive + current) with media.
 // ============================================================================
 
-/// شبكة وسائط (صور/فيديو) قابلة للفتح.
+/// An openable media grid (photos/video).
 class WasteMediaGrid extends StatelessWidget {
   const WasteMediaGrid({super.key, required this.media, this.proof});
   final List media;
@@ -76,7 +76,7 @@ class WasteMediaGrid extends StatelessWidget {
   }
 }
 
-/// شريط بحث + فلتر شهر مشترك.
+/// Shared search bar + month filter.
 class WasteRecordsHeader extends StatelessWidget {
   const WasteRecordsHeader({super.key, required this.onSearch, required this.onMonth,
       required this.q, required this.month, this.tabs, this.tab, this.onTab, required this.onMonthlyReport});
@@ -155,7 +155,7 @@ class WasteRecordsHeader extends StatelessWidget {
 }
 
 // ---------------------------------------------------------------------------
-// سجل الرحلات (المدير)
+// Trip log (manager)
 // ---------------------------------------------------------------------------
 class WasteOpsTripsScreen extends StatefulWidget {
   const WasteOpsTripsScreen({super.key});
@@ -267,7 +267,7 @@ class _WasteOpsTripsScreenState extends State<WasteOpsTripsScreen> {
 }
 
 // ---------------------------------------------------------------------------
-// سجلات الاستلام (المدير)
+// Receipt records (manager)
 // ---------------------------------------------------------------------------
 class WasteOpsReceiptsScreen extends StatefulWidget {
   const WasteOpsReceiptsScreen({super.key});
@@ -370,7 +370,7 @@ class _WasteOpsReceiptsScreenState extends State<WasteOpsReceiptsScreen> {
 }
 
 // ---------------------------------------------------------------------------
-// تفاصيل السجل (رحلة/استلام) — أصناف + وسائط + تقرير
+// Record details (trip/receipt) — items + media + report
 // ---------------------------------------------------------------------------
 class _RecordDetailSheet extends StatelessWidget {
   const _RecordDetailSheet({required this.record, required this.isTrip});
@@ -404,7 +404,7 @@ class _RecordDetailSheet extends StatelessWidget {
             ]),
           ),
           Expanded(child: ListView(controller: sc, padding: const EdgeInsets.all(16), children: [
-            // ملخّص
+            // Summary
             Container(padding: const EdgeInsets.all(12), decoration: BoxDecoration(
                 color: Colors.white, borderRadius: BorderRadius.circular(14)),
               child: Row(mainAxisAlignment: MainAxisAlignment.spaceAround, children: [
@@ -418,7 +418,7 @@ class _RecordDetailSheet extends StatelessWidget {
                   color: const Color(0xFFFFF7ED), borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFFFED7AA))),
                 child: Text('📝 ${record['final_note']}', style: const TextStyle(color: Color(0xFF9A3412), fontSize: 13))),
             ],
-            // ---- كامل التفاصيل ----
+            // ---- Full details ----
             const SizedBox(height: 14),
             Text(tr('التفاصيل', 'Details'), style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14, color: WOps.deep)),
             const SizedBox(height: 8),
@@ -439,7 +439,7 @@ class _RecordDetailSheet extends StatelessWidget {
                 _detail(Icons.schedule_rounded, tr('موعد الرفع', 'Pickup time'), record['pickup_at']),
               ]),
             ),
-            // الأصناف
+            // Items
             if (items.isNotEmpty) ...[
               const SizedBox(height: 14),
               Text(tr('الأصناف', 'Items'), style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14, color: WOps.deep)),
@@ -456,11 +456,11 @@ class _RecordDetailSheet extends StatelessWidget {
                 ]),
               ),
             ],
-            // الوسائط
+            // Media
             const SizedBox(height: 14),
             WasteMediaGrid(media: media, proof: record['proof'] as String?),
             const SizedBox(height: 18),
-            // التقرير
+            // Report
             if (record['report_path'] != null) SizedBox(width: double.infinity, height: 50,
               child: FilledButton.icon(
                 style: FilledButton.styleFrom(backgroundColor: WOps.green),
@@ -484,7 +484,7 @@ class _RecordDetailSheet extends StatelessWidget {
         Text(l, style: const TextStyle(color: WOps.slate, fontSize: 11)),
       ]);
 
-  /// صف تفصيلي — يُعرض فقط إن كانت القيمة موجودة.
+  /// Detail row — shown only if the value exists.
   Widget _detail(IconData ic, String k, dynamic v) {
     final val = (v ?? '').toString().trim();
     if (val.isEmpty) return const SizedBox.shrink();

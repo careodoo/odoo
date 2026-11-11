@@ -216,8 +216,8 @@ class SecurityHome extends StatelessWidget {
             builder: (_) => SecuritySectionScreen(kind: kind, title: label))),
       );
 
-  /// ورقة اختبار الإشعارات: يرسل الخادم إشعاراً تجريبياً لكل نوع ليتأكد الحارس من
-  /// وصولها (يشمل تنبيهاً إن كان الجهاز غير مسجّل — أي إذن الإشعارات مرفوض).
+  /// Notification test sheet: the server sends a test notification of each type so the guard can confirm
+  /// they arrive (includes an alert if the device is unregistered - i.e. notification permission is denied).
   void _testNotifSheet(BuildContext c) {
     final types = [
       ('info', '🔔', tr('إشعار عام', 'General alert')),
@@ -284,8 +284,8 @@ class SecurityHome extends StatelessWidget {
 
 }
 
-/// ترويسة «نظرتي اليومية» — تجمع مؤشّرات كل ميزات الحارس (مهام/دوريات/أوامر/
-/// تسليم/بوابة/تقرير اليوم) في شريط واحد قابل للمسح السريع مع تنبيهات ملوّنة.
+/// "My Daily Overview" header - gathers indicators for all the guard's features (tasks/patrols/orders/
+/// handover/gate/today's report) in a single quick-scan bar with colored alerts.
 class _MyOverviewHeader extends StatefulWidget {
   const _MyOverviewHeader();
   @override

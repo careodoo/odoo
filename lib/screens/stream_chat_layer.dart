@@ -4,8 +4,8 @@ import 'package:provider/provider.dart';
 import '../core/auth.dart';
 import '../core/i18n.dart';
 
-/// طبقة الدردشة الحيّة على البثّ: تعرض الرسائل المنسابة أسفل البثّ وحقل إدخال،
-/// وتستطلع الرسائل الجديدة دورياً. تُستخدم في شاشتي الحارس والعميل معاً.
+/// Live chat layer on the stream: shows the flowing messages below the stream and an input field,
+/// and polls for new messages periodically. Used in both the guard and client screens.
 class StreamChatLayer extends StatefulWidget {
   final int incidentId;
   final bool isClient;
@@ -84,7 +84,7 @@ class _StreamChatLayerState extends State<StreamChatLayer> {
   Widget build(BuildContext context) {
     final h = widget.compact ? 130.0 : 210.0;
     return Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-      // الرسائل المنسابة
+      // The flowing messages
       SizedBox(height: h, child: ShaderMask(
         shaderCallback: (r) => const LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter,
             colors: [Colors.transparent, Colors.white, Colors.white], stops: [0, .18, 1]).createShader(r),
@@ -95,7 +95,7 @@ class _StreamChatLayerState extends State<StreamChatLayer> {
           itemBuilder: (_, i) => _bubble(_msgs[i]),
         ),
       )),
-      // حقل الإدخال
+      // Input field
       Row(children: [
         Expanded(child: Container(
           decoration: BoxDecoration(color: Colors.black.withValues(alpha: .5), borderRadius: BorderRadius.circular(24),

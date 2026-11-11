@@ -4,7 +4,7 @@ import '../core/auth.dart';
 import '../core/i18n.dart';
 import 'searchable_picker.dart';
 
-/// Service Requests (طلبات الخدمة): a client submits a request and follows it
+/// Service Requests: a client submits a request and follows it
 /// until it becomes a work order — the mockup's "request → closure" path.
 class RequestsScreen extends StatefulWidget {
   const RequestsScreen({super.key});

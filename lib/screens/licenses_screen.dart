@@ -4,16 +4,16 @@ import 'package:provider/provider.dart';
 import '../core/auth.dart';
 import '../core/i18n.dart';
 
-/// «التراخيص والاشتراكات» — مطابق للموكاب المرجعي:
-/// تبويبان: لوحة التحكم (KPIs + دائرة الحالة + إجراء مطلوب + حسب النوع) وتراخيصي
-/// (فلترة بالحالة + بحث + بطاقات). كل مستخدم يرى تراخيصه فقط (النطاق من الخادم).
+/// "Licenses and Subscriptions" - matching the reference mockup:
+/// Two tabs: the dashboard (KPIs + status ring + action required + by type) and My Licenses
+/// (status filter + search + cards). Each user sees only their own licenses (scope from the server).
 class LicensesScreen extends StatefulWidget {
   const LicensesScreen({super.key});
   @override
   State<LicensesScreen> createState() => _LicensesScreenState();
 }
 
-// هوية CARE
+// CARE identity
 const _navy = Color(0xFF0F2B5B);
 const _navy2 = Color(0xFF1C4FA0);
 const _gold = Color(0xFFB8922F);
@@ -39,7 +39,7 @@ IconData _typeIcon(String? t) {
 String _money(dynamic v) {
   final n = (v is num) ? v : num.tryParse('$v') ?? 0;
   final s = n.toStringAsFixed(n == n.roundToDouble() ? 0 : 3);
-  // فاصلة آلاف
+  // Thousands separator
   final parts = s.split('.');
   final b = parts[0].replaceAllMapped(RegExp(r'(\d)(?=(\d{3})+$)'), (m) => '${m[1]},');
   return parts.length > 1 ? '$b.${parts[1]}' : b;
@@ -71,7 +71,7 @@ class _LicensesScreenState extends State<LicensesScreen> with SingleTickerProvid
   }
 }
 
-// ============================ لوحة التحكم ============================
+// ============================ Dashboard ============================
 class _DashboardTab extends StatefulWidget {
   const _DashboardTab();
   @override
@@ -120,7 +120,7 @@ class _DashboardTabState extends State<_DashboardTab> with AutomaticKeepAliveCli
     return RefreshIndicator(
       onRefresh: _load,
       child: ListView(padding: const EdgeInsets.fromLTRB(12, 12, 12, 30), children: [
-        // شارة النطاق
+        // Scope badge
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           decoration: BoxDecoration(color: _navy.withValues(alpha: .06), borderRadius: BorderRadius.circular(10)),
@@ -134,7 +134,7 @@ class _DashboardTabState extends State<_DashboardTab> with AutomaticKeepAliveCli
           ]),
         ),
         const SizedBox(height: 12),
-        // مربّعات KPI
+        // KPI tiles
         GridView.count(
           crossAxisCount: 2, shrinkWrap: true, physics: const NeverScrollableScrollPhysics(),
           mainAxisSpacing: 10, crossAxisSpacing: 10, childAspectRatio: 1.55,
@@ -152,7 +152,7 @@ class _DashboardTabState extends State<_DashboardTab> with AutomaticKeepAliveCli
           ],
         ),
         const SizedBox(height: 16),
-        // دائرة الحالة
+        // Status ring
         _panel(tr('حالة السجلات', 'Records status'), Icons.pie_chart_rounded,
           child: Row(children: [
             _StatusDonut(rows: byStatus),
@@ -163,7 +163,7 @@ class _DashboardTabState extends State<_DashboardTab> with AutomaticKeepAliveCli
           ]),
         ),
         const SizedBox(height: 12),
-        // إجراء مطلوب
+        // Action required
         _panel(tr('الأقرب انتهاءً — إجراء مطلوب', 'Action needed'), Icons.warning_amber_rounded,
           child: action.isEmpty
             ? Padding(padding: const EdgeInsets.all(14), child: Text(tr('لا شيء قريب الانتهاء 🎉', 'Nothing due 🎉'),
@@ -171,12 +171,12 @@ class _DashboardTabState extends State<_DashboardTab> with AutomaticKeepAliveCli
             : Column(children: [for (final a in action) _actionRow(a, cur)]),
         ),
         const SizedBox(height: 12),
-        // حسب النوع
+        // By type
         _panel(tr('حسب النوع', 'By type'), Icons.category_rounded,
           child: Column(children: [for (final t in byType) _typeBar(t, byType)]),
         ),
         const SizedBox(height: 12),
-        // الخط الزمني
+        // Timeline
         _panel(tr('انتهاءات الأشهر القادمة', 'Upcoming expiries'), Icons.calendar_month_rounded,
           child: _Timeline(rows: timeline)),
       ]),
@@ -266,7 +266,7 @@ class _DashboardTabState extends State<_DashboardTab> with AutomaticKeepAliveCli
   }
 }
 
-// دائرة الحالة (رسم يدوي)
+// Status ring (hand-drawn)
 class _StatusDonut extends StatelessWidget {
   const _StatusDonut({required this.rows});
   final List<Map> rows;
@@ -307,7 +307,7 @@ class _DonutPainter extends CustomPainter {
   bool shouldRepaint(covariant _DonutPainter old) => true;
 }
 
-// الخط الزمني (أعمدة)
+// Timeline (bars)
 class _Timeline extends StatelessWidget {
   const _Timeline({required this.rows});
   final List<Map> rows;
@@ -333,7 +333,7 @@ class _Timeline extends StatelessWidget {
   }
 }
 
-// ============================ تراخيصي (قائمة) ============================
+// ============================ My Licenses (list) ============================
 class _ListTab extends StatefulWidget {
   const _ListTab();
   @override
@@ -368,7 +368,7 @@ class _ListTabState extends State<_ListTab> with AutomaticKeepAliveClientMixin {
         backgroundColor: _gold, onPressed: _openCreate,
         icon: const Icon(Icons.add), label: Text(tr('جديد', 'New'))),
       body: Column(children: [
-        // بحث
+        // Search
         Padding(padding: const EdgeInsets.fromLTRB(12, 12, 12, 6),
           child: TextField(
             decoration: InputDecoration(
@@ -376,7 +376,7 @@ class _ListTabState extends State<_ListTab> with AutomaticKeepAliveClientMixin {
               prefixIcon: const Icon(Icons.search_rounded), isDense: true, filled: true, fillColor: Colors.white,
               border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none)),
             onSubmitted: (v) { _q = v; _load(); })),
-        // فلترة الحالة
+        // Status filter
         SizedBox(height: 44, child: ListView(scrollDirection: Axis.horizontal, padding: const EdgeInsets.symmetric(horizontal: 10), children: [
           for (final s in const [('all', 'الكل', 'All'), ('action', 'إجراء مطلوب', 'Action'),
               ('valid', 'سارية', 'Valid'), ('expiring', 'قريبة', 'Expiring'), ('expired', 'منتهية', 'Expired')])
@@ -451,7 +451,7 @@ class _ListTabState extends State<_ListTab> with AutomaticKeepAliveClientMixin {
   }
 }
 
-// ============================ التفاصيل ============================
+// ============================ Details ============================
 class LicenseDetailScreen extends StatefulWidget {
   const LicenseDetailScreen({super.key, required this.id});
   final int id;
@@ -486,7 +486,7 @@ class _LicenseDetailScreenState extends State<LicenseDetailScreen> {
       body: _loading ? const Center(child: CircularProgressIndicator())
         : d == null ? Center(child: Text(tr('تعذّر التحميل', 'Failed to load')))
         : ListView(padding: const EdgeInsets.fromLTRB(12, 12, 12, 90), children: [
-          // رأس
+          // Header
           Container(padding: const EdgeInsets.all(15),
             decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14),
               boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: .04), blurRadius: 8, offset: const Offset(0, 2))]),
@@ -507,14 +507,14 @@ class _LicenseDetailScreenState extends State<LicenseDetailScreen> {
                 child: Text('${d['status_label']}', style: TextStyle(color: c, fontWeight: FontWeight.w800, fontSize: 12))),
             ])),
           const SizedBox(height: 12),
-          // صورة الترخيص
+          // License image
           if ('${d['image_url']}'.isNotEmpty) ...[
             _sect(tr('صورة الترخيص', 'License image'), Icons.image_rounded,
               child: ClipRRect(borderRadius: BorderRadius.circular(10),
                 child: _AuthImage(url: '${d['image_url']}'))),
             const SizedBox(height: 12),
           ],
-          // الحقول
+          // Fields
           _sect(tr('البيانات', 'Details'), Icons.info_outline_rounded, child: Column(children: [
             _row(tr('الجهة / المزوّد', 'Authority / Provider'), '${d['authority'] ?? '—'}'),
             _row(tr('رقم الترخيص', 'License No.'), '${d['number'] ?? '—'}'),
@@ -532,7 +532,7 @@ class _LicenseDetailScreenState extends State<LicenseDetailScreen> {
               child: Text('${d['note']}', style: const TextStyle(fontSize: 13, color: Color(0xFF334155)))),
           ],
           const SizedBox(height: 12),
-          // السجل التاريخي
+          // History log
           _sect(tr('السجل التاريخي', 'History'), Icons.history_rounded, child: Column(children: [
             for (final h in ((d['history'] as List?) ?? const []).cast<Map>()) _histRow(h, '${d['currency']}'),
             if (((d['history'] as List?) ?? const []).isEmpty)
@@ -589,7 +589,7 @@ class _LicenseDetailScreenState extends State<LicenseDetailScreen> {
   }
 }
 
-// صورة تحتاج توكن (Bearer) — نجلبها عبر ApiClient origin مع الهيدر.
+// An image needing a token (Bearer) - we fetch it via the ApiClient origin with the header.
 class _AuthImage extends StatelessWidget {
   const _AuthImage({required this.url});
   final String url;
@@ -607,7 +607,7 @@ class _AuthImage extends StatelessWidget {
   }
 }
 
-// ============================ تجديد (Sheet) ============================
+// ============================ Renewal (Sheet) ============================
 class _RenewSheet extends StatefulWidget {
   const _RenewSheet({required this.id, required this.currentExpiry, this.fees});
   final int id;
@@ -677,7 +677,7 @@ class _RenewSheetState extends State<_RenewSheet> {
   }
 }
 
-// ============================ إنشاء (Sheet) ============================
+// ============================ Create (Sheet) ============================
 class _CreateLicenseSheet extends StatefulWidget {
   const _CreateLicenseSheet();
   @override

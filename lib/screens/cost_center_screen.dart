@@ -4,8 +4,8 @@ import '../core/auth.dart';
 import '../core/api_client.dart';
 import '../core/i18n.dart';
 
-/// مراقبة مراكز التكلفة على الجوال: إحصائيات الميزانيات + بطاقات المراكز بنِسَب
-/// الاستهلاك (أشرطة ملوّنة) + تفصيل شهري لكل مركز. للقراءة (مرآة لباك ايند).
+/// Cost-center monitoring on mobile: budget statistics + center cards with consumption
+/// ratios (colored bars) + a monthly breakdown per center. Read-only (mirror of the backend).
 class CostCenterScreen extends StatefulWidget {
   const CostCenterScreen({super.key});
   @override

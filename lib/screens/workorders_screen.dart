@@ -8,7 +8,7 @@ import 'work_order_detail_screen.dart';
 import 'client_workorder_create.dart';
 
 const _navy = Color(0xFF0E3A5F);
-// ثيم داكن متّسق مع تطبيق الأمن
+// Dark theme consistent with the security app
 const _dbg = Color(0xFF0B1220);
 const _dcard = Color(0xFF152238);
 const _dtext = Color(0xFFEAF1FB);
@@ -95,7 +95,7 @@ class _WorkOrdersScreenState extends State<WorkOrdersScreen> {
         backgroundColor: const Color(0xFF1E3A5F), foregroundColor: Colors.white,
         title: Text(tr('أوامر العمل', 'Work orders'), style: const TextStyle(fontWeight: FontWeight.w900)),
       ),
-      // مدير المشروع يُنشئ أمر عمل جديد (المشروع → المرفق/الحرّاس/الوقت مفلترة)
+      // Project manager creates a new work order (project -> facility/guards/time filtered)
       floatingActionButton: isPM
           ? FloatingActionButton.extended(
               backgroundColor: const Color(0xFFC0392B),

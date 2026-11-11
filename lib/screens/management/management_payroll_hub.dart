@@ -5,7 +5,7 @@ import '../../core/i18n.dart';
 import 'management_home.dart' show Mgmt;
 import 'management_list.dart';
 
-/// «الرواتب» — a parent hub grouping the payroll sub-systems (payslips, payroll
+/// «Payroll» — a parent hub grouping the payroll sub-systems (payslips, payroll
 /// batches) each opening its full professional list with workflow + reports.
 class ManagementPayrollHub extends StatefulWidget {
   const ManagementPayrollHub({super.key, this.accent = const Color(0xFF7C3AED)});

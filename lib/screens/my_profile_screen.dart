@@ -11,7 +11,7 @@ import 'attendance_screen.dart';
 import 'employee_attendance_screen.dart';
 import 'worker_file_screen.dart';
 
-/// "إنجازاتي" — the worker's own professional dashboard: a performance score
+/// "My Achievements" - the worker's own professional dashboard: a performance score
 /// ring, period filters, KPI cards (tasks / on-time / attendance hours /
 /// materials / rounds), earned badges, and quick links to their files. Replaces
 /// the plain notifications tab for every worker.

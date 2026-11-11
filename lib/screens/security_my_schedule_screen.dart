@@ -3,8 +3,8 @@ import 'package:provider/provider.dart';
 import '../core/auth.dart';
 import '../core/i18n.dart';
 
-/// «جدولي / ورديّاتي» — روستر الحارس: الورديات القادمة والسابقة، بأوقاتها وموقعها
-/// وحالتها، مع تسجيل حضور/انصراف مباشر على الوردية.
+/// "My Schedule / My Shifts" - the guard's roster: upcoming and past shifts, with their times, location
+/// and status, with direct check-in/check-out on the shift.
 class SecurityMyScheduleScreen extends StatefulWidget {
   const SecurityMyScheduleScreen({super.key});
   @override

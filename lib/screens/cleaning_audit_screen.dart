@@ -11,7 +11,7 @@ Color _scoreColor(num s) => s >= 85
     ? const Color(0xFF16A34A)
     : (s >= 70 ? const Color(0xFF0891B2) : (s >= 60 ? const Color(0xFFF59E0B) : const Color(0xFFE5484D)));
 
-/// تدقيق النظافة — a proper audit register: average score, pass/fail counts,
+/// Cleaning audit - a proper audit register: average score, pass/fail counts,
 /// filters and search, and every audit opening its full checklist item by item
 /// with the note behind each failure and the client's acknowledgement.
 class CleaningAuditScreen extends StatefulWidget {

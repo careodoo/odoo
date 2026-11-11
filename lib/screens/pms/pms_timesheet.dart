@@ -1,11 +1,11 @@
-// شاشة كشوف الدوام في تطبيق مدير المشروع — تماثل بوابة /my/pm.
-// مشاريع → كشوف المشروع → الشبكة اليومية التفاعلية (نقر الخلية يبدّل الحالة).
+// Timesheets screen in the project-manager app — mirrors the /my/pm portal.
+// Projects → project timesheets → interactive daily grid (clicking a cell toggles the status).
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../core/auth.dart';
 import '../../core/i18n.dart';
 
-// ألوان الحالات (نفس مفتاح البوابة)
+// Status colors (same key as the portal)
 const Map<String, Color> kStatusColor = {
   'P': Color(0xFF16A34A), 'O': Color(0xFF64748B), 'A': Color(0xFFDC2626),
   'L': Color(0xFF7C3AED), 'H': Color(0xFF0E9488), 'S': Color(0xFFD97706),
@@ -14,7 +14,7 @@ const Map<String, Color> kStatusColor = {
 const _navy = Color(0xFF17315A);
 const _violet = Color(0xFF6D33D6);
 
-// ============ شاشة 1: المشاريع ============
+// ============ Screen 1: Projects ============
 class TimesheetScreen extends StatefulWidget {
   const TimesheetScreen({super.key});
   @override
@@ -59,7 +59,7 @@ class _TimesheetScreenState extends State<TimesheetScreen> {
   }
 }
 
-// ============ شاشة 2: كشوف مشروع ============
+// ============ Screen 2: Project timesheets ============
 class SheetsScreen extends StatefulWidget {
   final int projectId;
   final String projectName;
@@ -155,7 +155,7 @@ class _SheetsScreenState extends State<SheetsScreen> {
   }
 }
 
-// ============ شاشة 3: الشبكة اليومية التفاعلية ============
+// ============ Screen 3: Interactive daily grid ============
 class GridScreen extends StatefulWidget {
   final int tid;
   const GridScreen({super.key, required this.tid});
@@ -220,7 +220,7 @@ class _GridScreenState extends State<GridScreen> {
           : d == null
               ? Center(child: Text(tr('تعذّر التحميل', 'Load failed')))
               : Column(children: [
-                  // بطاقة المجاميع + الأزرار
+                  // Totals card + buttons
                   Container(
                     width: double.infinity,
                     padding: const EdgeInsets.all(12),
@@ -245,7 +245,7 @@ class _GridScreenState extends State<GridScreen> {
                       ]),
                     ]),
                   ),
-                  // الشبكة
+                  // The grid
                   Expanded(child: _grid(d)),
                   _legend(),
                 ]),
@@ -271,14 +271,14 @@ class _GridScreenState extends State<GridScreen> {
       scrollDirection: Axis.horizontal,
       child: SingleChildScrollView(
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          // ترويسة الأيام
+          // Days header
           Row(children: [
             _hcell(tr('الاسم', 'Name'), 130, bold: true),
             for (final n in dayNums) SizedBox(width: cell, child: Center(child: Text('$n', style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w700)))),
             _hcell(tr('ح', 'P'), 34, bold: true),
             _hcell(tr('غ', 'A'), 34, bold: true),
           ]),
-          // صفوف العمال
+          // Worker rows
           for (int li = 0; li < lines.length; li++)
             Row(children: [
               _hcell(lines[li]['name'] ?? '', 130),

@@ -504,7 +504,7 @@ class _IncidentDetailSheetState extends State<_IncidentDetailSheet> {
                           _wfBtn(f.$2, f.$3, f.$4, () => (f.$1 == 'resolve' || f.$1 == 'close') ? _resolveWithNotes(f.$1) : _runAction(f.$1)),
                         if (d['police_notified'] != true)
                           _wfBtn('إبلاغ الشرطة', 'Notify police', const Color(0xFF7C3AED), _notifyPolice),
-                        // للبلاغات الحرجة: زر إشعار عميل الموقع
+                        // For critical reports: button to notify the site client
                         if ('${d['severity'] ?? ''}' == 'critical')
                           _wfBtn('إشعار العميل', 'Notify client', const Color(0xFF0EA5E9), _notifyClient),
                       ]),

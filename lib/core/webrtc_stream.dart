@@ -6,11 +6,11 @@ import 'package:http/http.dart' as http;
 import 'i18n.dart';
 import 'package:path_provider/path_provider.dart';
 
-/// عميل WHIP/WHEP للبثّ المباشر داخل التطبيق عبر WebRTC (يتوافق مع Cloudflare
-/// Stream وغيره). لا يعتمد على أي SDK خاص — مجرد تبادل SDP عبر HTTP:
-///   • WHIP: الحارس ينشر الكاميرا/الميكروفون (POST offer → answer).
-///   • WHEP: العميل/الفريق يستقبل الفيديو (POST offer recvonly → answer).
-/// مبنيّ على المعيار المفتوح، فيبقى الكود ثابتاً مهما تغيّر المزوّد.
+/// WHIP/WHEP client for in-app live streaming via WebRTC (compatible with Cloudflare
+/// Stream and others). Depends on no proprietary SDK — just SDP exchange over HTTP:
+///   • WHIP: the guard publishes the camera/microphone (POST offer → answer).
+///   • WHEP: the client/team receives the video (POST offer recvonly → answer).
+/// Built on the open standard, so the code stays unchanged whatever the provider.
 
 const Map<String, dynamic> _kIce = {
   'iceServers': [
@@ -20,7 +20,7 @@ const Map<String, dynamic> _kIce = {
   'sdpSemantics': 'unified-plan',
 };
 
-/// ناشر WHIP — يفتح الكاميرا والميكروفون ويبثّهما إلى رابط النشر.
+/// WHIP publisher — opens the camera and microphone and streams them to the publish URL.
 class WhipBroadcaster {
   RTCPeerConnection? _pc;
   MediaStream? _local;
@@ -30,12 +30,12 @@ class WhipBroadcaster {
   bool _frontCamera = true;
   bool get isFront => _frontCamera;
 
-  // تسجيل ذاتيّ على الجهاز (Cloudflare لا يسجّل بثّ WebRTC) → يُرفَع بعد التوقّف
+  // Self-recording on the device (Cloudflare does not record WebRTC streams) → uploaded after stopping
   MediaRecorder? _recorder;
   String? recordedPath;
   bool get hasRecording => recordedPath != null && File(recordedPath!).existsSync();
 
-  /// التقاط لقطة (JPEG) من الكاميرا لتكون الصورة المصغّرة للبثّ.
+  /// Capture a snapshot (JPEG) from the camera to serve as the stream thumbnail.
   Future<Uint8List?> captureFrame() async {
     try {
       final track = _local?.getVideoTracks().firstOrNull;
@@ -47,10 +47,10 @@ class WhipBroadcaster {
     }
   }
 
-  /// يهيّئ العرض المحلي ويبدأ النشر إلى [whipUrl]. يرمي استثناءً عند الفشل.
+  /// Initializes the local view and starts publishing to [whipUrl]. Throws an exception on failure.
   Future<void> start(String whipUrl) async {
     await renderer.initialize();
-    // 1) الوسائط المحلية (كاميرا أمامية + صوت)
+    // 1) Local media (front camera + audio)
     _local = await navigator.mediaDevices.getUserMedia({
       'audio': true,
       'video': {
@@ -62,18 +62,18 @@ class WhipBroadcaster {
     });
     renderer.srcObject = _local;
 
-    // 2) اتصال الأقران، أضف المسارات للإرسال
+    // 2) Peer connection, add the tracks for sending
     _pc = await createPeerConnection(_kIce);
     for (final track in _local!.getTracks()) {
       await _pc!.addTrack(track, _local!);
     }
 
-    // 3) عرض → وصف محلي
+    // 3) Offer → local description
     final offer = await _pc!.createOffer();
     await _pc!.setLocalDescription(offer);
     await _waitIce(_pc!);
 
-    // 4) POST الـ SDP إلى رابط WHIP، استقبل الإجابة
+    // 4) POST the SDP to the WHIP URL, receive the answer
     final local = await _pc!.getLocalDescription();
     final res = await http.post(
       Uri.parse(whipUrl),
@@ -86,7 +86,7 @@ class WhipBroadcaster {
     _resourceUrl = res.headers['location'];
     await _pc!.setRemoteDescription(RTCSessionDescription(res.body, 'answer'));
 
-    // 5) بدء التسجيل الذاتيّ على الجهاز (يُتجاهَل الفشل حتى لا يُعطّل البثّ)
+    // 5) Start self-recording on the device (failure is ignored so it won't disrupt the stream)
     await _startRecording();
   }
 
@@ -114,7 +114,7 @@ class WhipBroadcaster {
     }
   }
 
-  /// تبديل الكاميرا الأمامية/الخلفية أثناء البثّ.
+  /// Switch the front/rear camera during the stream.
   Future<void> switchCamera() async {
     final track = _local?.getVideoTracks().firstOrNull;
     if (track != null) {
@@ -123,7 +123,7 @@ class WhipBroadcaster {
     }
   }
 
-  /// كتم/إلغاء كتم الميكروفون.
+  /// Mute/unmute the microphone.
   void setMuted(bool muted) {
     for (final t in _local?.getAudioTracks() ?? const <MediaStreamTrack>[]) {
       t.enabled = !muted;
@@ -131,7 +131,7 @@ class WhipBroadcaster {
   }
 
   Future<void> stop() async {
-    // نوقف التسجيل أولاً (قبل إيقاف المسارات) حتى يُغلَق ملف mp4 سليماً
+    // Stop the recording first (before stopping the tracks) so the mp4 file is closed intact
     await _stopRecording();
     try {
       if (_resourceUrl != null && _resourceUrl!.startsWith('http')) {
@@ -157,7 +157,7 @@ class WhipBroadcaster {
   }
 }
 
-/// مشاهد WHEP — يستقبل الفيديو الحيّ من رابط المشاهدة ويعرضه.
+/// WHEP viewer — receives the live video from the view URL and displays it.
 class WhepViewer {
   RTCPeerConnection? _pc;
   MediaStream? _remote; // stream مُجمّع (صوت + فيديو) نضمن به عرض الفيديو
@@ -171,12 +171,12 @@ class WhepViewer {
     await renderer.initialize();
     _pc = await createPeerConnection(_kIce);
 
-    // نجمع كل المسارات الواردة في stream واحد ونعرضه — لتفادي «صوت بلا صورة»
-    // الناتج عن ضبط srcObject على مسار الصوت قبل وصول الفيديو.
+    // Collect all incoming tracks into one stream and display it — to avoid «audio with no video»
+    // caused by setting srcObject to the audio track before the video arrives.
     _remote = await createLocalMediaStream('whep_remote');
     renderer.srcObject = _remote;
 
-    // مستقبِل فقط (فيديو + صوت)
+    // Receive-only (video + audio)
     await _pc!.addTransceiver(
         kind: RTCRtpMediaType.RTCRtpMediaTypeVideo,
         init: RTCRtpTransceiverInit(direction: TransceiverDirection.RecvOnly));
@@ -188,7 +188,7 @@ class WhepViewer {
       try {
         await _remote?.addTrack(e.track);
       } catch (_) {}
-      // نُعيد ربط العرض عند وصول الفيديو (يجبر إعادة الرسم)
+      // Rebind the view when the video arrives (forces a redraw)
       if (e.track.kind == 'video') {
         renderer.srcObject = _remote;
         onTrack?.call();
@@ -230,8 +230,8 @@ class WhepViewer {
   }
 }
 
-/// ينتظر تجميع مرشّحات ICE (حتى الاكتمال أو مهلة قصيرة) قبل إرسال العرض —
-/// يجعل الاتصال أسرع وأكثر موثوقية مع خوادم WHIP/WHEP.
+/// Waits for ICE candidate gathering (until complete or a short timeout) before sending the offer —
+/// makes the connection faster and more reliable with WHIP/WHEP servers.
 Future<void> _waitIce(RTCPeerConnection pc) async {
   final done = Completer<void>();
   Timer? t;

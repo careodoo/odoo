@@ -4,9 +4,9 @@ import '../core/auth.dart';
 import '../core/i18n.dart';
 import 'pdf_report_screen.dart';
 
-/// «التصاريح» — شاشة تكيّفية: المُصدِر (عميل/مدير مشروع/مشرف) يُنشئ تصاريح (فردية
-/// أو متعددة الدخول) ويتابعها؛ والحارس يُدخل/يُخرج الأشخاص على كل تصريح. ترويسة
-/// إحصائيات (إجمالي/سارية/بالداخل الآن) + فلترة بالحالة.
+/// «Permits» — adaptive screen: the issuer (client/project manager/supervisor) creates permits (single
+/// or multi-entry) and tracks them; the guard checks people in/out on each permit. A stats
+/// header (total/active/inside now) + filter by status.
 class PermitsScreen extends StatefulWidget {
   const PermitsScreen({super.key});
   @override
@@ -139,7 +139,7 @@ class _PermitsScreenState extends State<PermitsScreen> {
           Text(s, style: TextStyle(color: c, fontSize: 10, fontWeight: FontWeight.w800))]),
       );
 
-  // ============ إنشاء تصريح ============
+  // ============ Create permit ============
   void _openCreate() async {
     final created = await showModalBottomSheet<bool>(
       context: context, isScrollControlled: true, backgroundColor: Colors.transparent,
@@ -147,7 +147,7 @@ class _PermitsScreenState extends State<PermitsScreen> {
     if (created == true) _load();
   }
 
-  // ============ تفاصيل + دخول/خروج ============
+  // ============ Details + check-in/out ============
   void _openDetail(int id) {
     showModalBottomSheet(
       context: context, isScrollControlled: true, backgroundColor: Colors.white,
@@ -156,7 +156,7 @@ class _PermitsScreenState extends State<PermitsScreen> {
   }
 }
 
-// ================= ورقة إنشاء التصريح =================
+// ================= Permit creation sheet =================
 class _CreatePermitSheet extends StatefulWidget {
   const _CreatePermitSheet();
   @override
@@ -279,7 +279,7 @@ class _CreatePermitSheetState extends State<_CreatePermitSheet> {
       TextField(controller: c, keyboardType: kb, decoration: _dec(l, ic));
 }
 
-// ================= ورقة تفاصيل التصريح + دخول/خروج =================
+// ================= Permit details sheet + check-in/out =================
 class _PermitDetailSheet extends StatefulWidget {
   final int id; final bool isGuard; final VoidCallback onChanged;
   const _PermitDetailSheet({required this.id, required this.isGuard, required this.onChanged});
@@ -351,7 +351,7 @@ class _PermitDetailSheetState extends State<_PermitDetailSheet> {
         _row(tr('الحالة', 'State'), d['state_label']),
         _row(tr('بالداخل الآن', 'Inside now'), '${d['current_inside'] ?? 0}'),
         _row(tr('مرّات الدخول', 'Entries'), '${d['entries_count'] ?? 0}'),
-        // أزرار الحارس: دخول/خروج
+        // Guard buttons: check-in/out
         if (active) Padding(padding: const EdgeInsets.fromLTRB(16, 14, 16, 6), child: Row(children: [
           Expanded(child: ElevatedButton.icon(onPressed: _busy ? null : () => _visit('in'),
             icon: const Icon(Icons.login_rounded), label: Text(tr('تسجيل دخول', 'Check in')),
@@ -386,7 +386,7 @@ class _PermitDetailSheetState extends State<_PermitDetailSheet> {
   }
 }
 
-// حوار إدخال اسم الشخص الداخل/الخارج
+// Dialog to enter the name of the person checking in/out
 class _PersonDialog extends StatefulWidget {
   const _PersonDialog();
   @override

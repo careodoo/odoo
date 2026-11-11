@@ -5,9 +5,9 @@ import '../core/i18n.dart';
 import 'security_patrols_screen.dart' show PatrolSheetLauncher;
 import 'excel_export.dart';
 
-/// سجل الجولات لكامل مواقع الفريق: خطّ زمني احترافي يُظهر لكل جولة موعدها المجدول
-/// مقابل البدء/الإنجاز الفعلي، ومدّتها، ونسبة إنجاز نقاطها، والحارس المنفّذ، وحالتها.
-/// أفكار مضمّنة: شريط إحصائي علوي، فلاتر حالة، مؤشّر تأخّر/التزام بالموعد، ونقاط ممسوحة.
+/// Rounds log for all the team's sites: a professional timeline showing each round's scheduled time
+/// versus the actual start/completion, its duration, its points completion ratio, the executing guard, and its status.
+/// Built-in ideas: a top stats bar, status filters, a lateness/on-time indicator, and scanned points.
 class SecurityPatrolLogScreen extends StatefulWidget {
   const SecurityPatrolLogScreen({super.key});
   @override
@@ -66,7 +66,7 @@ class _SecurityPatrolLogScreenState extends State<SecurityPatrolLogScreen> {
             IconButton(onPressed: _load, icon: const Icon(Icons.refresh_rounded)),
           ]),
       body: Column(children: [
-        // شريط الإحصاء
+        // Stats bar
         Container(
           padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
           color: const Color(0xFF0F1B2E),
@@ -77,7 +77,7 @@ class _SecurityPatrolLogScreenState extends State<SecurityPatrolLogScreen> {
             _stat('${st['completed'] ?? 0}', tr('منجَزة', 'Done'), _green),
           ]),
         ),
-        // فلاتر الحالة
+        // Status filters
         SizedBox(height: 46, child: ListView(scrollDirection: Axis.horizontal, padding: const EdgeInsets.symmetric(horizontal: 10), children: [
           _chip(null, tr('الكل', 'All')),
           _chip('scheduled', tr('مجدولة', 'Scheduled')),
@@ -134,7 +134,7 @@ class _SecurityPatrolLogScreenState extends State<SecurityPatrolLogScreen> {
       child: InkWell(
         onTap: () => PatrolSheetLauncher.open(context, p['id'] as int).then((_) => _load()),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          // شريط الحالة العلوي
+          // Top status bar
           Container(width: double.infinity, color: c.withValues(alpha: .16), padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             child: Row(children: [
               Icon(_stIcon[state] ?? Icons.circle, color: c, size: 15), const SizedBox(width: 6),
@@ -157,10 +157,10 @@ class _SecurityPatrolLogScreenState extends State<SecurityPatrolLogScreen> {
               if ((p['guard'] ?? '').toString().isNotEmpty) _meta(Icons.person_rounded, '${p['guard']}'),
             ]),
             const SizedBox(height: 10),
-            // الخطّ الزمني: مجدول → بدء فعلي → إنجاز فعلي
+            // Timeline: scheduled -> actual start -> actual completion
             _timeline(p),
             const SizedBox(height: 10),
-            // شريط إنجاز النقاط
+            // Points completion bar
             Row(children: [
               Expanded(child: ClipRRect(borderRadius: BorderRadius.circular(6),
                 child: LinearProgressIndicator(value: (comp / 100).clamp(0.0, 1.0), minHeight: 7,
@@ -209,7 +209,7 @@ class _SecurityPatrolLogScreenState extends State<SecurityPatrolLogScreen> {
     return h > 0 ? tr('$h س $m د', '${h}h ${m}m') : tr('$m د', '${m}m');
   }
 
-  // مؤشّر تأخّر: مجدولة وفات موعدها ولم تبدأ
+  // Lateness indicator: scheduled, past due, and not started
   bool _isLate(Map p) {
     if (p['state'] != 'scheduled') return false;
     final s = '${p['scheduled_start'] ?? ''}';

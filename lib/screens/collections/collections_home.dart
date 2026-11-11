@@ -13,7 +13,7 @@ import 'collections_stats.dart';
 import 'collections_customers.dart';
 import 'collections_targets.dart';
 
-/// ====== ثيم نظام التحصيل ======
+/// ====== Collections system theme ======
 class Coll {
   static const green = Color(0xFF0E7C5A); // زمرّدي أساسي (المال)
   static const greenD = Color(0xFF0A5E44);
@@ -43,7 +43,7 @@ String money(num v, [String sym = '']) {
   return '$intp.${parts[1]}${sym.isEmpty ? '' : ' $sym'}';
 }
 
-/// ====== الشاشة الرئيسية: لوحة المحصّل ======
+/// ====== Main screen: collector dashboard ======
 class CollectionsHome extends StatefulWidget {
   const CollectionsHome({super.key, this.accent = Coll.green});
   final Color accent;
@@ -179,7 +179,7 @@ class _CollectionsHomeState extends State<CollectionsHome> {
           _forecastCard('current_month', tr('خلال الشهر الحالي', 'This month'), fc, sym),
           _forecastCard('month', tr('خلال شهر', 'Within a month'), fc, sym),
           const SizedBox(height: 18),
-          // أزرار مربّعة منظّمة — 3 في السطر
+          // Organized square buttons — 3 per row
           GridView.count(
             crossAxisCount: 3, shrinkWrap: true, physics: const NeverScrollableScrollPhysics(),
             mainAxisSpacing: 10, crossAxisSpacing: 10, childAspectRatio: 1,
@@ -333,7 +333,7 @@ class _CollectionsHomeState extends State<CollectionsHome> {
     );
   }
 
-  // مربّع احترافي منظّم (أيقونة فوق + مسمّى مختصر)
+  // A professional organized square (icon on top + short label)
   Widget _sqTile(IconData ic, String t, Color c, VoidCallback onTap) => Material(
       color: Colors.white, borderRadius: BorderRadius.circular(16),
       child: InkWell(borderRadius: BorderRadius.circular(16), onTap: onTap,
@@ -352,7 +352,7 @@ class _CollectionsHomeState extends State<CollectionsHome> {
           ]))));
 }
 
-/// ====== قائمة الفواتير ======
+/// ====== Invoices list ======
 class CollectionsList extends StatefulWidget {
   const CollectionsList({super.key, this.filter = '', this.title = ''});
   final String filter;
@@ -462,7 +462,7 @@ class _CollectionsListState extends State<CollectionsList> {
       }).toList()));
   }
 
-  // شرائح إحصائية صغيرة أسفل الفلاتر (محسوبة من القائمة المعروضة)
+  // Small stat chips below the filters (computed from the displayed list)
   Widget _statStrip() {
     final customers = _rows.map((e) => (e as Map)['partner_id']).toSet().length;
     num value = 0, overdueAmt = 0;
@@ -566,7 +566,7 @@ class _CollectionsListState extends State<CollectionsList> {
       ]);
 }
 
-/// ====== تفاصيل الفاتورة + الإجراءات ======
+/// ====== Invoice details + actions ======
 class CollectionsDetail extends StatefulWidget {
   const CollectionsDetail({super.key, required this.id});
   final int id;
@@ -638,7 +638,7 @@ class _CollectionsDetailState extends State<CollectionsDetail> {
     final payments = (d['payments'] as List?) ?? [];
     final activities = (d['activities'] as List?) ?? [];
     return ListView(padding: const EdgeInsets.fromLTRB(14, 14, 14, 24), children: [
-      // بطاقة المبلغ
+      // Amount card
       Container(padding: const EdgeInsets.all(18),
         decoration: BoxDecoration(borderRadius: BorderRadius.circular(18),
           gradient: const LinearGradient(colors: [Coll.greenD, Coll.green])),
@@ -673,7 +673,7 @@ class _CollectionsDetailState extends State<CollectionsDetail> {
           ]),
         ])),
       const SizedBox(height: 12),
-      // تواريخ
+      // Dates
       _infoRow(Icons.event_rounded, tr('تاريخ الفاتورة', 'Invoice date'), '${d['invoice_date'] ?? '-'}'),
       _infoRow(Icons.event_busy_rounded, tr('تاريخ الاستحقاق', 'Due date'), '${d['date_due'] ?? '-'}',
           trailing: d['is_overdue'] == true
@@ -684,7 +684,7 @@ class _CollectionsDetailState extends State<CollectionsDetail> {
         _infoRow(Icons.schedule_rounded, tr('المتوقّع', 'Forecast'), '${d['forecast']}'),
       if ('${d['collector'] ?? ''}'.isNotEmpty)
         _infoRow(Icons.person_rounded, tr('المحصّل', 'Collector'), '${d['collector']}'),
-      // اتصال العميل
+      // Client contact
       if ('${d['partner_phone'] ?? ''}'.isNotEmpty || '${d['partner_mobile'] ?? ''}'.isNotEmpty)
         _contactRow(d),
       if ('${d['note'] ?? ''}'.isNotEmpty) ...[
@@ -696,7 +696,7 @@ class _CollectionsDetailState extends State<CollectionsDetail> {
                 style: const TextStyle(color: Coll.ink, fontSize: 13)))])),
       ],
       const SizedBox(height: 10),
-      // حالة التسليم
+      // Delivery status
       _deliveryCard(d),
       const SizedBox(height: 8),
       Row(children: [
@@ -715,12 +715,12 @@ class _CollectionsDetailState extends State<CollectionsDetail> {
               side: const BorderSide(color: Coll.green)))),
       ]),
       const SizedBox(height: 18),
-      // الدفعات
+      // Payments
       _blockTitle(tr('الدفعات', 'Payments'), '${payments.length}'),
       if (payments.isEmpty) _emptyHint(tr('لا دفعات بعد', 'No payments yet'))
       else ...payments.map((p) => _payTile(p as Map, sym)),
       const SizedBox(height: 18),
-      // الأنشطة
+      // Activities
       _blockTitle(tr('الاتصالات والزيارات', 'Calls & visits'), '${activities.length}'),
       if (activities.isEmpty) _emptyHint(tr('لا أنشطة بعد', 'No activities yet'))
       else ...activities.map((a) => _actTile(a as Map)),
@@ -761,7 +761,7 @@ class _CollectionsDetailState extends State<CollectionsDetail> {
         fileName: 'invoice-${d['name'] ?? ''}.pdf')));
   }
 
-  // عرض بيانات وصورة التسليم لفاتورة مُسلّمة (بدل فتح نموذج التسجيل من جديد)
+  // Show the delivery data and photo for a delivered invoice (instead of reopening the recording form)
   Future<void> _showDeliveryInfo(Map d) async {
     final hasImg = d['has_delivery_attachment'] == true;
     final imgUrl = hasImg ? await _ap.api.collectionsDeliveryImageUrl(widget.id) : null;
@@ -941,7 +941,7 @@ class _CollectionsDetailState extends State<CollectionsDetail> {
           Padding(padding: const EdgeInsets.only(top: 4),
             child: Text('${tr('شيك', 'Cheque')} ${p['cheque_no']} — ${p['cheque_bank'] ?? ''}',
                 style: const TextStyle(color: Coll.slate, fontSize: 11.5))),
-        // زر التراجع عن الدفعة — لمدير التحصيل فقط
+        // Undo payment button — for the collections manager only
         if (_d?['is_manager'] == true && p['id'] != null) ...[
           const Divider(height: 14),
           Align(alignment: AlignmentDirectional.centerEnd,
@@ -956,7 +956,7 @@ class _CollectionsDetailState extends State<CollectionsDetail> {
       ]));
   }
 
-  // ===== تراجع عن دفعة تحصيل (مدير التحصيل) =====
+  // ===== Undo a collection payment (collections manager) =====
   Future<void> _undoPayment(Map p) async {
     final ok = await showDialog<bool>(context: context, builder: (c) => AlertDialog(
       title: Text(tr('تراجع عن التحصيل', 'Undo payment')),
@@ -1002,7 +1002,7 @@ class _CollectionsDetailState extends State<CollectionsDetail> {
       ]));
   }
 
-  // ---- شريط الإجراءات السفلي ----
+  // ---- Bottom action bar ----
   Widget _actionBar() {
     final d = _d!;
     final canLegal = d['can_legal'] == true;
@@ -1027,7 +1027,7 @@ class _CollectionsDetailState extends State<CollectionsDetail> {
             Text(t, style: TextStyle(color: c, fontWeight: FontWeight.w700, fontSize: 11.5)),
           ]))));
 
-  // ===== تحصيل دفعة =====
+  // ===== Collect a payment =====
   Future<void> _payDialog() async {
     final amount = TextEditingController();
     final recipient = TextEditingController();
@@ -1052,7 +1052,7 @@ class _CollectionsDetailState extends State<CollectionsDetail> {
                 labelStyle: TextStyle(color: method == m[0] ? Colors.white : Coll.ink),
                 onSelected: (_) => setM(() => method = m[0]))).toList()),
             const SizedBox(height: 10),
-            // تاريخ التحصيل الفعلي (يمكن اختيار تاريخ قديم)
+            // Actual collection date (an older date can be chosen)
             InkWell(onTap: () async {
                 final d = await showDatePicker(context: ctx, initialDate: payDate,
                     firstDate: DateTime(2020), lastDate: DateTime.now());
@@ -1101,7 +1101,7 @@ class _CollectionsDetailState extends State<CollectionsDetail> {
     } catch (e) { _snack('$e'); }
   }
 
-  // ===== نشاط =====
+  // ===== Activity =====
   Future<void> _activityDialog() async {
     final comment = TextEditingController();
     String kind = 'call';
@@ -1153,7 +1153,7 @@ class _CollectionsDetailState extends State<CollectionsDetail> {
     } catch (e) { _snack('$e'); }
   }
 
-  // ===== الحالة + المتوقّع + ملاحظة =====
+  // ===== Status + expected + note =====
   Future<void> _stateDialog() async {
     final d = _d!;
     String? state = '${d['state_code'] ?? ''}'.isEmpty ? null : '${d['state_code']}';
@@ -1207,7 +1207,7 @@ class _CollectionsDetailState extends State<CollectionsDetail> {
     } catch (e) { _snack('$e'); }
   }
 
-  // ===== التحويل القانوني (مدير) =====
+  // ===== Legal transfer (manager) =====
   Future<void> _legalDialog() async {
     final reason = TextEditingController();
     final ok = await showDialog<bool>(context: context, builder: (_) => Directionality(
@@ -1251,7 +1251,7 @@ class _CollectionsDetailState extends State<CollectionsDetail> {
   }
 }
 
-/// ====== كشف حساب العميل ======
+/// ====== Client account statement ======
 class CustomerStatement extends StatefulWidget {
   const CustomerStatement({super.key, required this.partnerId});
   final int partnerId;

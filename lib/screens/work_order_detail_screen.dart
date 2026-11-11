@@ -541,7 +541,7 @@ class _WorkOrderDetailScreenState extends State<WorkOrderDetailScreen> with Widg
         ])),
       );
 
-  // النتيجة — presence status + the photos/videos/description the worker submits
+  // The result - presence status + the photos/videos/description the worker submits
   Widget _resultCard(ColorScheme cs) {
     final result = (_d!['result'] as Map?) ?? const {};
     final proof = (_d!['proof'] as Map?) ?? const {};

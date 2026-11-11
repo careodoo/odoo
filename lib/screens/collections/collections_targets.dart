@@ -4,8 +4,8 @@ import '../../core/auth.dart';
 import '../../core/i18n.dart';
 import 'collections_home.dart' show Coll, money;
 
-/// شاشة أهداف التحصيل (التارجت) + العمولات داخل التطبيق.
-/// يرى المحصّل هدفه النشط (نسبة الإنجاز + العمولة المتوقّعة) وسجلّ أهدافه.
+/// Collection targets screen + commissions inside the app.
+/// The collector sees their active target (completion percentage + expected commission) and their targets history.
 class CollectionsTargets extends StatefulWidget {
   const CollectionsTargets({super.key});
   @override
@@ -164,7 +164,7 @@ class _CollectionsTargetsState extends State<CollectionsTargets> {
           child: Text('${tr('المحصّل', 'Collector')}: ${t['collector'] ?? ''}',
               style: const TextStyle(color: Coll.slate, fontSize: 11.5))),
         const SizedBox(height: 14),
-        // حلقة الإنجاز + المبالغ
+        // Completion ring + amounts
         Row(children: [
           _ring(pct, c),
           const SizedBox(width: 16),
@@ -179,7 +179,7 @@ class _CollectionsTargetsState extends State<CollectionsTargets> {
         const SizedBox(height: 14),
         const Divider(height: 1),
         const SizedBox(height: 12),
-        // بطاقة العمولة
+        // Commission card
         _commissionBox(t, sym, paid),
       ]));
   }
@@ -227,7 +227,7 @@ class _CollectionsTargetsState extends State<CollectionsTargets> {
       ]));
   }
 
-  // وصف قاعدة العمولة المختارة كشرائح صغيرة
+  // Describe the selected commission rule as small chips
   List<Widget> _rule(Map t, String sym) {
     final type = '${t['commission_type']}';
     final out = <Widget>[];

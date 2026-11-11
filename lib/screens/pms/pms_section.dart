@@ -1038,7 +1038,7 @@ class _CreateSheetState extends State<_CreateSheet> {
           }),
         ];
       case 'petty':
-        // A professional cash-custody REQUEST (طلب عهدة نقدية); expenses and
+        // A professional cash-custody REQUEST (cash custody request); expenses and
         // settlement are handled from the custody's own detail sheet.
         final benTypes = [
           {'value': 'project', 'label': tr('مشروع', 'Project')},
@@ -1199,7 +1199,7 @@ class _PettyDetailSheetState extends State<_PettyDetailSheet> {
   }
 
   Future<void> _run(String action) async {
-    // «تقديم التسوية» opens a real settlement record to fill + attach, not a
+    // «Submit settlement» opens a real settlement record to fill + attach, not a
     // one-tap state change.
     if (action == 'settle') {
       final done = await showModalBottomSheet<bool>(
@@ -3536,7 +3536,7 @@ class _ItemRequestCreateSheetState extends State<_ItemRequestCreateSheet> {
         Padding(padding: const EdgeInsets.only(bottom: 10),
             child: Text(tr('طلب أصناف جديد', 'New item request'),
                 style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: widget.color))),
-        // بطاقة الميزانية الشهرية للمشروع (من مركز التكلفة)
+        // Project monthly budget card (from the cost center)
         if (_budget != null && (_budget!['has_budget'] == true)) _budgetCard(),
         // lines
         for (var i = 0; i < _lines.length; i++) Container(
@@ -3567,7 +3567,7 @@ class _ItemRequestCreateSheetState extends State<_ItemRequestCreateSheet> {
               Expanded(child: TextField(controller: _lines[i].price, keyboardType: const TextInputType.numberWithOptions(decimal: true),
                   decoration: InputDecoration(labelText: tr('السعر', 'Price'), isDense: true, border: const OutlineInputBorder()))),
             ]),
-            // إجمالي السطر
+            // Line total
             Builder(builder: (_) {
               final st = (double.tryParse(_lines[i].qty.text.trim()) ?? 0) * (double.tryParse(_lines[i].price.text.trim()) ?? 0);
               if (st <= 0) return const SizedBox.shrink();
@@ -3607,7 +3607,7 @@ class _ItemRequestCreateSheetState extends State<_ItemRequestCreateSheet> {
         TextField(controller: _note, maxLines: 2,
             decoration: InputDecoration(labelText: tr('سبب الطلب / ملاحظات', 'Reason / notes'), isDense: true, border: const OutlineInputBorder())),
         const SizedBox(height: 12),
-        // إجمالي تكلفة الطلب
+        // Total request cost
         if (_total > 0) Container(
           margin: const EdgeInsets.only(bottom: 10), padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
           decoration: BoxDecoration(color: widget.color.withValues(alpha: 0.08), borderRadius: BorderRadius.circular(12)),
@@ -3617,7 +3617,7 @@ class _ItemRequestCreateSheetState extends State<_ItemRequestCreateSheet> {
           ]),
         ),
         Row(children: [
-          // حفظ كمسودّة (يرجع لها لاحقاً قبل الإتمام)
+          // Save as draft (return to it later before completing)
           Expanded(child: OutlinedButton.icon(
             style: OutlinedButton.styleFrom(foregroundColor: widget.color, side: BorderSide(color: widget.color),
                 padding: const EdgeInsets.symmetric(vertical: 13)),
@@ -3799,7 +3799,7 @@ class _ItemRequestDetailSheetState extends State<_ItemRequestDetailSheet> {
                     ]),
                   ]),
                 ),
-              // ملخّص التكلفة والميزانية
+              // Cost and budget summary
               if (((d['estimated_cost'] ?? 0) as num) > 0) Container(
                 margin: const EdgeInsets.only(top: 4), padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(color: widget.color.withValues(alpha: 0.07), borderRadius: BorderRadius.circular(12)),
@@ -3838,7 +3838,7 @@ class _ItemRequestDetailSheetState extends State<_ItemRequestDetailSheet> {
                 icon: const Icon(Icons.print_rounded, size: 18),
                 label: Text(tr('طباعة / مشاركة', 'Print / share'), style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 12.5)),
               )),
-              // نسخ الطلب كمسودّة جديدة (يفتح تفاصيل النسخة)
+              // Copy the request as a new draft (opens the copy's details)
               _btn(tr('نسخ الطلب', 'Duplicate'), Icons.copy_rounded, Colors.grey.shade700, () async {
                 setState(() => _busy = true);
                 try {
@@ -4449,8 +4449,8 @@ class _PermitDetailSheetState extends State<_PermitDetailSheet> {
       );
 }
 
-// ==================== أوامر الورش (Workshops) ====================
-/// منتقي قابل للبحث (عميل/عامل/منتج) — يعالج القوائم الطويلة (2000 عامل).
+// ==================== Workshop orders (Workshops) ====================
+/// Searchable picker (client/worker/product) — handles long lists (2000 workers).
 Future<Map<String, dynamic>?> _wsPick(BuildContext context, Color color, String title,
     List<Map<String, dynamic>> items) {
   final ctrl = TextEditingController();
@@ -4765,7 +4765,7 @@ class _WorkshopCreateSheetState extends State<_WorkshopCreateSheet> {
                       style: TextStyle(color: _end == null ? Colors.grey : null))))),
         ]),
         const SizedBox(height: 14),
-        // ===== العمال =====
+        // ===== Workers =====
         Row(children: [
           Icon(Icons.groups_rounded, color: c, size: 18), const SizedBox(width: 6),
           Text(tr('العمال *', 'Workers *'), style: TextStyle(fontWeight: FontWeight.w900, color: c)),
@@ -4777,7 +4777,7 @@ class _WorkshopCreateSheetState extends State<_WorkshopCreateSheet> {
           icon: Icon(Icons.person_add_alt_1_rounded, color: c),
           label: Text(tr('إضافة عامل', 'Add worker'), style: TextStyle(color: c, fontWeight: FontWeight.w800)))),
         const SizedBox(height: 6),
-        // ===== المواد =====
+        // ===== Materials =====
         Row(children: [
           Icon(Icons.inventory_2_rounded, color: c, size: 18), const SizedBox(width: 6),
           Text(tr('المواد (اختياري)', 'Materials (optional)'), style: TextStyle(fontWeight: FontWeight.w900, color: c)),
@@ -4789,7 +4789,7 @@ class _WorkshopCreateSheetState extends State<_WorkshopCreateSheet> {
           icon: Icon(Icons.add_box_rounded, color: c),
           label: Text(tr('إضافة مادة', 'Add material'), style: TextStyle(color: c, fontWeight: FontWeight.w800)))),
         const SizedBox(height: 6),
-        // ===== المعدات =====
+        // ===== Equipment =====
         Row(children: [
           Icon(Icons.construction_rounded, color: c, size: 18), const SizedBox(width: 6),
           Text(tr('المعدات (اختياري)', 'Equipment (optional)'), style: TextStyle(fontWeight: FontWeight.w900, color: c)),
@@ -4801,7 +4801,7 @@ class _WorkshopCreateSheetState extends State<_WorkshopCreateSheet> {
           icon: Icon(Icons.add_rounded, color: c),
           label: Text(tr('إضافة معدّة', 'Add equipment'), style: TextStyle(color: c, fontWeight: FontWeight.w800)))),
         const SizedBox(height: 6),
-        // ===== المواصلات =====
+        // ===== Transport =====
         Row(children: [
           Icon(Icons.local_shipping_rounded, color: c, size: 18), const SizedBox(width: 6),
           Text(tr('المواصلات (اختياري)', 'Transport (optional)'), style: TextStyle(fontWeight: FontWeight.w900, color: c)),
@@ -4813,7 +4813,7 @@ class _WorkshopCreateSheetState extends State<_WorkshopCreateSheet> {
           icon: Icon(Icons.add_rounded, color: c),
           label: Text(tr('إضافة مواصلات', 'Add transport'), style: TextStyle(color: c, fontWeight: FontWeight.w800)))),
         const SizedBox(height: 6),
-        // ===== مصاريف أخرى =====
+        // ===== Other expenses =====
         Row(children: [
           Icon(Icons.receipt_long_rounded, color: c, size: 18), const SizedBox(width: 6),
           Text(tr('مصاريف أخرى (اختياري)', 'Other expenses (optional)'), style: TextStyle(fontWeight: FontWeight.w900, color: c)),

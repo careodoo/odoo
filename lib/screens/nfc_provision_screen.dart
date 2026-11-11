@@ -9,10 +9,10 @@ import '../core/widgets.dart';
 const _navy = Color(0xFF0E3A5F);
 const _accent = Color(0xFF6D28D9);
 
-/// برمجة شرائح NFC — the settings console for tagging locations: write the
+/// NFC tag programming — the settings console for tagging locations: write the
 /// location's code onto a blank tag, register the tag's hardware id against it,
 /// verify any tag in the field, and manage the tag lifecycle
-/// (مفعّلة / معطّلة / مفقودة).
+/// (active / disabled / missing).
 class NfcProvisionScreen extends StatefulWidget {
   const NfcProvisionScreen({super.key});
   @override

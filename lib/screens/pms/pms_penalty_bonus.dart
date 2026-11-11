@@ -1,4 +1,4 @@
-// شاشتا الجزاءات والمكافآت لمدير المشروع: قائمة + إنشاء + اعتماد + طباعة.
+// The penalties and bonuses screens for the project manager: list + create + approve + print.
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -191,7 +191,7 @@ class _PbScreenState extends State<_PbScreen> {
     );
   }
 
-  // ---------- نموذج الإنشاء ----------
+  // ---------- Creation form ----------
   Future<void> _openCreate() async {
     Map<String, dynamic> data;
     try {

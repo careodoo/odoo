@@ -1,14 +1,14 @@
-/// معطّلة عمداً: أُزيلت الخدمة الأمامية للكاميرا/الميكروفون امتثالاً لمتطلّبات
-/// Google Play (كانت تتطلّب فيديو توضيحياً لصلاحيتَي FOREGROUND_SERVICE_CAMERA/
-/// MICROPHONE). البثّ الآن يعمل والتطبيق مفتوح والشاشة شغّالة فقط، ويتوقّف عند
-/// قفل الشاشة/الخروج إلى الخلفية.
+/// Intentionally disabled: the camera/microphone foreground service was removed to comply with
+/// Google Play requirements (it required a demo video for the FOREGROUND_SERVICE_CAMERA/
+/// MICROPHONE permissions). Streaming now works only while the app is open and the screen is on, and stops on
+/// screen lock / going to background.
 ///
-/// أُبقيت الواجهة (start/stop) كما هي كي لا تتأثّر مواضع الاستدعاء — لكنها لا
-/// تشغّل أي خدمة أمامية.
+/// The interface (start/stop) is kept as is so call sites aren't affected — but it does
+/// not run any foreground service.
 class StreamForeground {
-  /// لا شيء — لم تعد تُشغّل خدمة أمامية.
+  /// Nothing — it no longer runs a foreground service.
   static Future<void> start(int incidentId) async {}
 
-  /// لا شيء.
+  /// Nothing.
   static Future<void> stop() async {}
 }

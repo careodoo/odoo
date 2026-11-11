@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 import '../../core/auth.dart';
 import '../../core/i18n.dart';
 
-/// أرصدة إجازات الموظف الحالي ومستحقاتها — شاشة خدمة ذاتية داخل «My».
+/// Current employee's leave balances and dues — a self-service screen inside «My».
 class LeaveBalancesScreen extends StatefulWidget {
   final Color accent;
   const LeaveBalancesScreen({super.key, this.accent = const Color(0xFF0F2A56)});

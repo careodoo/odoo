@@ -5,7 +5,7 @@ import '../core/auth.dart';
 import '../core/i18n.dart';
 import 'scan_screen.dart';
 
-/// «عهدة المفاتيح» — a guard scans a key (QR/NFC/barcode) or browses the board
+/// «Key Custody» — a guard scans a key (QR/NFC/barcode) or browses the board
 /// by state, checks it out to a recipient, returns it to a hub, or marks it
 /// lost. Each key keeps a full in/out log.
 class SecurityKeysScreen extends StatefulWidget {
