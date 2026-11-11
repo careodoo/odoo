@@ -2241,6 +2241,12 @@ class ApiClient {
           _u('/pms/extra-work/$rid/$kind'), headers: await _headers(),
           body: jsonEncode({'reason': reason ?? ''}))))['data'] as Map);
 
+  /// استئناف / عدم استئناف العمل الإضافي بعد عودة العامل من الإجازة.
+  Future<Map<String, dynamic>> pmsExtraWorkResume(int rid, {bool resume = true}) async =>
+      Map<String, dynamic>.from((await _handle(await _net.post(
+          _u('/pms/extra-work/$rid/${resume ? 'resume' : 'resume-decline'}'),
+          headers: await _headers(), body: jsonEncode(const {}))))['data'] as Map);
+
   /// PDF URL for the extra-work form (opened in the in-app viewer / browser).
   String pmsExtraWorkPrintUrl(int rid) => _u('/pms/extra-work/$rid/print').toString();
 

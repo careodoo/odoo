@@ -120,6 +120,41 @@ class _ExtraWorkScreenState extends State<ExtraWorkScreen> {
     }
   }
 
+  // استئناف / عدم استئناف العمل الإضافي بعد عودة العامل من الإجازة
+  Future<void> _resume(Map r, bool resume) async {
+    if (!resume) {
+      final ok = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: Text(tr('عدم الاستئناف', 'Do not resume')),
+          content: Text(tr('سيتم إنهاء العمل الإضافي دون استئناف. متابعة؟',
+              'The extra work will be ended without resuming. Continue?')),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(tr('إلغاء', 'Cancel'))),
+            ElevatedButton(
+                style: ElevatedButton.styleFrom(backgroundColor: Pms.red, foregroundColor: Colors.white),
+                onPressed: () => Navigator.pop(ctx, true),
+                child: Text(tr('إنهاء', 'End'))),
+          ],
+        ),
+      );
+      if (ok != true || !mounted) return;
+    }
+    try {
+      final res = await context.read<AuthProvider>().api
+          .pmsExtraWorkResume(r['id'] as int, resume: resume);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('${res['message'] ?? tr('تم', 'Done')}'),
+          backgroundColor: resume ? Pms.green : Pms.red));
+      await _refresh();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(tr('تعذّر: $e', 'Failed: $e')), backgroundColor: Pms.red));
+    }
+  }
+
   Future<void> _print(Map r) async {
     final api = context.read<AuthProvider>().api;
     final token = await api.token;
@@ -182,6 +217,8 @@ class _ExtraWorkScreenState extends State<ExtraWorkScreen> {
     final pending = r['pending'] == true;
     final canPause = r['can_pause'] == true;
     final canEnd = r['can_end'] == true;
+    final canResume = r['can_resume'] == true;
+    final pausedByLeave = r['auto_paused_by_leave'] == true;
     return Container(
       decoration: BoxDecoration(
         color: Colors.white, borderRadius: BorderRadius.circular(16),
@@ -220,6 +257,51 @@ class _ExtraWorkScreenState extends State<ExtraWorkScreen> {
                 tr('طلب ${r['stop_type'] == 'pause' ? 'إيقاف' : 'إنهاء'} بانتظار اعتماد الموارد البشرية',
                    'A ${r['stop_type']} request is pending HR approval'),
                 style: const TextStyle(fontSize: 12, color: Pms.ink, fontWeight: FontWeight.w700))),
+            ]),
+          ),
+        if (pausedByLeave && !canResume)
+          Padding(
+            padding: const EdgeInsets.only(top: 6),
+            child: Row(children: [
+              const Text('🏖️', style: TextStyle(fontSize: 13)),
+              const SizedBox(width: 6),
+              Expanded(child: Text(
+                tr('معلّق بسبب إجازة العامل', 'Paused due to the worker’s leave'),
+                style: const TextStyle(fontSize: 12, color: Pms.amber, fontWeight: FontWeight.w700))),
+            ]),
+          ),
+        if (canResume)
+          Container(
+            margin: const EdgeInsets.only(top: 8),
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: Pms.amber.withValues(alpha: 0.10),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: Pms.amber.withValues(alpha: 0.5)),
+            ),
+            child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+              Row(children: [
+                const Icon(Icons.keyboard_return_rounded, size: 17, color: Pms.amber),
+                const SizedBox(width: 6),
+                Expanded(child: Text(
+                  tr('عاد العامل من الإجازة — هل تستأنف العمل الإضافي؟',
+                     'The worker returned from leave — resume the extra work?'),
+                  style: const TextStyle(fontSize: 12.5, color: Pms.ink, fontWeight: FontWeight.w800))),
+              ]),
+              const SizedBox(height: 8),
+              Row(children: [
+                Expanded(child: ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(backgroundColor: Pms.green, foregroundColor: Colors.white),
+                  onPressed: () => _resume(r, true),
+                  icon: const Icon(Icons.play_arrow_rounded, size: 18),
+                  label: Text(tr('استئناف', 'Resume')))),
+                const SizedBox(width: 8),
+                Expanded(child: OutlinedButton.icon(
+                  style: OutlinedButton.styleFrom(foregroundColor: Pms.red, side: const BorderSide(color: Pms.red)),
+                  onPressed: () => _resume(r, false),
+                  icon: const Icon(Icons.stop_circle_outlined, size: 18),
+                  label: Text(tr('عدم الاستئناف', 'Don’t resume')))),
+              ]),
             ]),
           ),
         const SizedBox(height: 10),
