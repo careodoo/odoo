@@ -6,6 +6,7 @@ import '../../core/i18n.dart';
 import 'pms_shell.dart' show Pms;
 import 'pms_section.dart';
 import 'pms_extra_work.dart';
+import 'pms_overtime.dart';
 import 'pms_tasks.dart';
 
 /// Projects the user may see (Odoo record rules decide), with real progress.
@@ -324,8 +325,10 @@ class _PmsProjectDetailState extends State<PmsProjectDetail> {
                       onTap: () => Navigator.push(ctx, MaterialPageRoute(
                           builder: (_) => code == 'extra_work'
                               ? ExtraWorkScreen(projectId: widget.projectId, label: '${x['label']}')
-                              : PmsSectionScreen(
-                                  projectId: widget.projectId, code: code, label: '${x['label']}'))),
+                              : code == 'overtime'
+                                  ? OvertimeScreen(projectId: widget.projectId, label: '${x['label']}')
+                                  : PmsSectionScreen(
+                                      projectId: widget.projectId, code: code, label: '${x['label']}'))),
                       onLongPress: () => _delegateSheet(code, '${x['label']}'),
                       child: Container(
                         padding: const EdgeInsets.all(10),
@@ -870,6 +873,12 @@ class _PmsProjectDetailState extends State<PmsProjectDetail> {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
           content: Text(tr('الكتب والمراسلات تُدار من نظام المراسلات',
               'Correspondence is managed in the letters system'))));
+    } else if (code == 'extra_work') {
+      Navigator.push(context, MaterialPageRoute(
+          builder: (_) => ExtraWorkScreen(projectId: widget.projectId, label: label)));
+    } else if (code == 'overtime') {
+      Navigator.push(context, MaterialPageRoute(
+          builder: (_) => OvertimeScreen(projectId: widget.projectId, label: label)));
     } else {
       Navigator.push(context, MaterialPageRoute(
           builder: (_) => PmsSectionScreen(projectId: widget.projectId, code: code, label: label)));

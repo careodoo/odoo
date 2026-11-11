@@ -2250,6 +2250,31 @@ class ApiClient {
   /// PDF URL for the extra-work form (opened in the in-app viewer / browser).
   String pmsExtraWorkPrintUrl(int rid) => _u('/pms/extra-work/$rid/print').toString();
 
+  // ---- Overtime requests (طلبات العمل الإضافي — overtime.request) ----
+  Future<Map<String, dynamic>> pmsOvertimeList(int projectId) async =>
+      Map<String, dynamic>.from((await _handle(await _net.get(
+          _u('/pms/project/$projectId/overtime'), headers: await _headers())))['data'] as Map);
+
+  Future<Map<String, dynamic>> pmsOvertimeOptions(int projectId) async =>
+      Map<String, dynamic>.from((await _handle(await _net.get(
+          _u('/pms/project/$projectId/overtime/options'), headers: await _headers())))['data'] as Map);
+
+  Future<Map<String, dynamic>> pmsOvertimeCreate(int projectId, Map<String, dynamic> body) async =>
+      Map<String, dynamic>.from((await _handle(await _net.post(
+          _u('/pms/project/$projectId/overtime/create'), headers: await _headers(),
+          body: jsonEncode(body))))['data'] as Map);
+
+  Future<Map<String, dynamic>> pmsOvertime(int oid) async =>
+      Map<String, dynamic>.from((await _handle(await _net.get(
+          _u('/pms/overtime/$oid'), headers: await _headers())))['data'] as Map);
+
+  Future<Map<String, dynamic>> pmsOvertimeSubmit(int oid) async =>
+      Map<String, dynamic>.from((await _handle(await _net.post(
+          _u('/pms/overtime/$oid/submit'), headers: await _headers(),
+          body: jsonEncode(const {}))))['data'] as Map);
+
+  String pmsOvertimePrintUrl(int oid) => _u('/pms/overtime/$oid/print').toString();
+
   // ---- Work suspension (Work suspension request) ----
   Future<Map<String, dynamic>> pmsSuspension(int id) async =>
       Map<String, dynamic>.from((await _handle(await _net.get(
