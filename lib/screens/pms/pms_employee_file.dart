@@ -452,9 +452,10 @@ class _PmsEmployeeFileScreenState extends State<PmsEmployeeFileScreen> {
   Future<void> _requestAllowanceStop(Map r) async {
     final api = context.read<AuthProvider>().api;
     final ctrl = TextEditingController();
+    DateTime stopDate = DateTime.now();
     final ok = await showModalBottomSheet<bool>(
       context: context, isScrollControlled: true, showDragHandle: true,
-      builder: (ctx) => Padding(
+      builder: (ctx) => StatefulBuilder(builder: (ctx, setSt) => Padding(
         padding: EdgeInsets.only(left: 18, right: 18, top: 6, bottom: MediaQuery.of(ctx).viewInsets.bottom + 20),
         child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
           Row(children: [
@@ -465,7 +466,23 @@ class _PmsEmployeeFileScreenState extends State<PmsEmployeeFileScreen> {
           ]),
           const SizedBox(height: 4),
           Text('${r['name'] ?? ''}', style: TextStyle(color: Colors.grey.shade700, fontWeight: FontWeight.w700)),
-          const SizedBox(height: 14),
+          const SizedBox(height: 10),
+          ListTile(
+            contentPadding: EdgeInsets.zero,
+            leading: const Icon(Icons.event_busy_rounded, color: Color(0xFFE11D48)),
+            title: Text(tr('تاريخ إيقاف البدل', 'Allowance stop date')),
+            subtitle: Text(stopDate.toIso8601String().substring(0, 10),
+                style: const TextStyle(fontWeight: FontWeight.w800)),
+            trailing: const Icon(Icons.edit_calendar_rounded),
+            onTap: () async {
+              final d = await showDatePicker(context: ctx, initialDate: stopDate,
+                  firstDate: DateTime(2020), lastDate: DateTime(2035));
+              if (d != null) setSt(() => stopDate = d);
+            },
+          ),
+          Text(tr('يتوقّف الاستحقاق بعد هذا التاريخ.', 'Entitlement stops accruing after this date.'),
+              style: TextStyle(color: Colors.grey.shade600, fontSize: 12)),
+          const SizedBox(height: 12),
           TextField(controller: ctrl, autofocus: true, minLines: 2, maxLines: 4,
               decoration: InputDecoration(
                   labelText: tr('سبب الإيقاف', 'Stop reason'),
@@ -478,7 +495,7 @@ class _PmsEmployeeFileScreenState extends State<PmsEmployeeFileScreen> {
             label: Text(tr('إرسال الطلب', 'Send request'), style: const TextStyle(fontWeight: FontWeight.w800)),
           )),
         ]),
-      ),
+      )),
     );
     if (ok != true) return;
     final reason = ctrl.text.trim();
@@ -489,7 +506,7 @@ class _PmsEmployeeFileScreenState extends State<PmsEmployeeFileScreen> {
       return;
     }
     try {
-      await api.pmsAllowanceStop(r['id'] as int, reason);
+      await api.pmsAllowanceStop(r['id'] as int, reason, stopDate.toIso8601String().substring(0, 10));
       if (!mounted) return;
       _reloadAllowances();
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(

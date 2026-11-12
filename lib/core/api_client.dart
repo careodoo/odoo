@@ -2297,11 +2297,12 @@ class ApiClient {
       Map<String, dynamic>.from((await _handle(await _net.get(
           _u('/pms/employee/$eid/allowances'), headers: await _headers())))['data'] as Map);
 
-  /// Request stopping an allowance; the reason is required by the backend.
-  Future<Map<String, dynamic>> pmsAllowanceStop(int aid, String reason) async =>
+  /// Request stopping an allowance; the backend requires both a reason and a
+  /// stop date (ISO YYYY-MM-DD — entitlement stops accruing after that date).
+  Future<Map<String, dynamic>> pmsAllowanceStop(int aid, String reason, String stopDate) async =>
       Map<String, dynamic>.from((await _handle(await _net.post(
           _u('/pms/allowance/$aid/stop'), headers: await _headers(),
-          body: jsonEncode({'reason': reason})))) ['data'] as Map);
+          body: jsonEncode({'reason': reason, 'stop_date': stopDate})))) ['data'] as Map);
 
   /// PDF path for the approved allowance-stop-request form (PdfReportScreen adds the token).
   String pmsAllowanceStopReportPath(int aid) => '/pms/allowance/$aid/stop-report';
