@@ -23,12 +23,20 @@ class PmsEmployeeFileScreen extends StatefulWidget {
 
 class _PmsEmployeeFileScreenState extends State<PmsEmployeeFileScreen> {
   Future<Map<String, dynamic>>? _f;
+  Future<Map<String, dynamic>>? _allowF;
   static const _c = Color(0xFF0D9488);
 
   @override
   void initState() {
     super.initState();
-    _f = context.read<AuthProvider>().api.pmsEmployeeFile(widget.employeeId);
+    final api = context.read<AuthProvider>().api;
+    _f = api.pmsEmployeeFile(widget.employeeId);
+    _allowF = api.pmsEmployeeAllowances(widget.employeeId);
+  }
+
+  void _reloadAllowances() {
+    if (!mounted) return;
+    setState(() => _allowF = context.read<AuthProvider>().api.pmsEmployeeAllowances(widget.employeeId));
   }
 
   @override
@@ -67,6 +75,8 @@ class _PmsEmployeeFileScreenState extends State<PmsEmployeeFileScreen> {
               _suspensionCard(d['suspension'] as Map, e),
               const SizedBox(height: 14),
             ],
+            _allowanceStopCard(),
+            const SizedBox(height: 14),
             if (((d['details'] as List?) ?? const []).isNotEmpty) ...[
               _miniHead(tr('كل بيانات العامل', 'All employee data'), Icons.badge_rounded),
               const SizedBox(height: 8),
@@ -318,6 +328,177 @@ class _PmsEmployeeFileScreenState extends State<PmsEmployeeFileScreen> {
         ),
       ),
     );
+  }
+
+  // ===== Allowances + stop requests (البدلات / طلب إيقاف البدل) =====
+  static const _allowColor = Color(0xFF0D9488);
+
+  Widget _allowanceStopCard() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white, borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: _allowColor.withValues(alpha: 0.25)),
+        boxShadow: [BoxShadow(color: _allowColor.withValues(alpha: 0.07), blurRadius: 8, offset: const Offset(0, 3))],
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Container(
+          padding: const EdgeInsets.fromLTRB(14, 12, 12, 12),
+          decoration: BoxDecoration(gradient: LinearGradient(
+              colors: [_allowColor, Color.lerp(_allowColor, Colors.black, 0.22)!])),
+          child: Row(children: [
+            const Icon(Icons.payments_rounded, color: Colors.white, size: 20),
+            const SizedBox(width: 8),
+            Expanded(child: Text(tr('البدلات', 'Allowances'),
+                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 14))),
+          ]),
+        ),
+        FutureBuilder<Map<String, dynamic>>(
+          future: _allowF,
+          builder: (_, snap) {
+            if (snap.connectionState == ConnectionState.waiting) {
+              return const Padding(padding: EdgeInsets.all(22),
+                  child: Center(child: SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2.5))));
+            }
+            if (snap.hasError) {
+              return Padding(padding: const EdgeInsets.all(16),
+                  child: Text('${snap.error}', style: TextStyle(color: Colors.grey.shade600, fontSize: 12.5)));
+            }
+            final rows = ((snap.data?['rows'] as List?) ?? const []).cast<Map>();
+            if (rows.isEmpty) {
+              return Padding(padding: const EdgeInsets.all(16),
+                  child: Text(tr('لا توجد بدلات لهذا العامل.', 'No allowances for this worker.'),
+                      style: TextStyle(color: Colors.grey.shade600, fontSize: 12.5)));
+            }
+            return Padding(
+              padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
+              child: Column(children: [for (final r in rows) _allowRow(r)]),
+            );
+          },
+        ),
+      ]),
+    );
+  }
+
+  Widget _allowRow(Map r) {
+    final aid = r['id'] as int;
+    final stopState = '${r['stop_state'] ?? 'running'}';
+    final stopped = stopState == 'stopped';
+    final stopReq = stopState == 'stop_requested';
+    final Color ssc = switch (stopState) {
+      'stopped' => const Color(0xFFE11D48),
+      'stop_requested' => const Color(0xFFD97706),
+      'resume_requested' => const Color(0xFF0891B2),
+      _ => const Color(0xFF16A34A),
+    };
+    return Container(
+      margin: const EdgeInsets.only(top: 8),
+      padding: const EdgeInsets.all(11),
+      decoration: BoxDecoration(color: Pms.bg, borderRadius: BorderRadius.circular(12)),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Row(children: [
+          Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text('${r['name'] ?? ''}', style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 12.5, color: Pms.ink)),
+            if (r['type'] != null) Padding(padding: const EdgeInsets.only(top: 2),
+                child: Text('${r['type']}', style: const TextStyle(color: Pms.slate, fontSize: 11))),
+          ])),
+          if (r['amount'] != null) Padding(padding: const EdgeInsets.only(left: 6, right: 6),
+            child: Text('${r['amount']}', style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: _allowColor))),
+        ]),
+        const SizedBox(height: 8),
+        Row(children: [
+          if (r['state'] != null) Padding(padding: const EdgeInsets.only(right: 6),
+            child: _miniBadge('${r['state']}', const Color(0xFF64748B))),
+          _miniBadge('${r['stop_label'] ?? stopState}', ssc),
+        ]),
+        const SizedBox(height: 9),
+        Row(children: [
+          Expanded(child: OutlinedButton.icon(
+            style: OutlinedButton.styleFrom(
+              foregroundColor: (stopped || stopReq) ? Colors.grey : const Color(0xFFE11D48),
+              side: BorderSide(color: (stopped || stopReq) ? Colors.grey.shade300 : const Color(0xFFE11D48)),
+              padding: const EdgeInsets.symmetric(vertical: 9),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
+            onPressed: (stopped || stopReq) ? null : () => _requestAllowanceStop(r),
+            icon: const Icon(Icons.block_rounded, size: 15),
+            label: Text(tr('طلب إيقاف البدل', 'Request stop'),
+                style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 11.5)),
+          )),
+          const SizedBox(width: 8),
+          Expanded(child: OutlinedButton.icon(
+            style: OutlinedButton.styleFrom(
+              foregroundColor: _allowColor, side: BorderSide(color: _allowColor),
+              padding: const EdgeInsets.symmetric(vertical: 9),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
+            onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => PdfReportScreen(
+                path: context.read<AuthProvider>().api.pmsAllowanceStopReportPath(aid),
+                title: tr('نموذج إيقاف البدل', 'Allowance stop form'),
+                fileName: 'allowance_stop_$aid.pdf'))),
+            icon: const Icon(Icons.picture_as_pdf_rounded, size: 15),
+            label: Text(tr('طباعة نموذج الإيقاف', 'Print stop form'),
+                style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 11.5)),
+          )),
+        ]),
+      ]),
+    );
+  }
+
+  Widget _miniBadge(String t, Color c) => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+        decoration: BoxDecoration(color: c.withValues(alpha: 0.13), borderRadius: BorderRadius.circular(8)),
+        child: Text(t, style: TextStyle(color: c, fontWeight: FontWeight.w900, fontSize: 10)),
+      );
+
+  Future<void> _requestAllowanceStop(Map r) async {
+    final api = context.read<AuthProvider>().api;
+    final ctrl = TextEditingController();
+    final ok = await showModalBottomSheet<bool>(
+      context: context, isScrollControlled: true, showDragHandle: true,
+      builder: (ctx) => Padding(
+        padding: EdgeInsets.only(left: 18, right: 18, top: 6, bottom: MediaQuery.of(ctx).viewInsets.bottom + 20),
+        child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Row(children: [
+            const Icon(Icons.block_rounded, color: Color(0xFFE11D48)),
+            const SizedBox(width: 8),
+            Expanded(child: Text(tr('طلب إيقاف البدل', 'Request allowance stop'),
+                style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16))),
+          ]),
+          const SizedBox(height: 4),
+          Text('${r['name'] ?? ''}', style: TextStyle(color: Colors.grey.shade700, fontWeight: FontWeight.w700)),
+          const SizedBox(height: 14),
+          TextField(controller: ctrl, autofocus: true, minLines: 2, maxLines: 4,
+              decoration: InputDecoration(
+                  labelText: tr('سبب الإيقاف', 'Stop reason'),
+                  border: const OutlineInputBorder())),
+          const SizedBox(height: 14),
+          SizedBox(width: double.infinity, child: FilledButton.icon(
+            style: FilledButton.styleFrom(backgroundColor: const Color(0xFFE11D48), padding: const EdgeInsets.symmetric(vertical: 14)),
+            onPressed: () => Navigator.pop(ctx, true),
+            icon: const Icon(Icons.send_rounded, size: 18),
+            label: Text(tr('إرسال الطلب', 'Send request'), style: const TextStyle(fontWeight: FontWeight.w800)),
+          )),
+        ]),
+      ),
+    );
+    if (ok != true) return;
+    final reason = ctrl.text.trim();
+    if (reason.isEmpty) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(tr('السبب مطلوب', 'Reason is required')),
+          backgroundColor: const Color(0xFFE5484D)));
+      return;
+    }
+    try {
+      await api.pmsAllowanceStop(r['id'] as int, reason);
+      if (!mounted) return;
+      _reloadAllowances();
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(tr('تم إرسال طلب إيقاف البدل', 'Allowance stop request sent')),
+          backgroundColor: const Color(0xFF16A34A)));
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('$e'), backgroundColor: const Color(0xFFE5484D)));
+    }
   }
 
   // ===== Work suspension (work suspension request) =====

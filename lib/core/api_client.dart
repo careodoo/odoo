@@ -2291,6 +2291,21 @@ class ApiClient {
 
   String pmsSuspensionReportPath(int id) => '/pms/suspension/$id/report';
 
+  // ---- Allowance stop requests (طلب إيقاف البدل) ----
+  /// A worker's allowances with their stop/resume state (rows + badges).
+  Future<Map<String, dynamic>> pmsEmployeeAllowances(int eid) async =>
+      Map<String, dynamic>.from((await _handle(await _net.get(
+          _u('/pms/employee/$eid/allowances'), headers: await _headers())))['data'] as Map);
+
+  /// Request stopping an allowance; the reason is required by the backend.
+  Future<Map<String, dynamic>> pmsAllowanceStop(int aid, String reason) async =>
+      Map<String, dynamic>.from((await _handle(await _net.post(
+          _u('/pms/allowance/$aid/stop'), headers: await _headers(),
+          body: jsonEncode({'reason': reason})))) ['data'] as Map);
+
+  /// PDF path for the approved allowance-stop-request form (PdfReportScreen adds the token).
+  String pmsAllowanceStopReportPath(int aid) => '/pms/allowance/$aid/stop-report';
+
   // ---- Penalties / Bonuses (Penalties and bonuses) ----
   Future<Map<String, dynamic>> pmsPenalties() async =>
       Map<String, dynamic>.from((await _handle(await _net.get(
