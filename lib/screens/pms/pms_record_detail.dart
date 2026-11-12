@@ -9,25 +9,6 @@ import '../pdf_report_screen.dart';
 import 'pms_shell.dart' show Pms;
 import 'pms_section.dart' show PmsPhotoView, kPmsSectionColors, kPmsSectionIcons;
 
-/// Known QWeb-PDF report per section code (the generic detail endpoint only
-/// returns `can_print`, not the report ref). A code missing here simply shows
-/// no print button even if the backend reports a printable model.
-const Map<String, String> _kRecordReport = {
-  'allowances': 'care_hr.report_allowance_request',
-  'contracts': 'care_experience.report_contract_dossier',
-  'petty': 'care_pms.report_petty_cash_request',
-  'permits': 'care_permit_request.report_permit_request',
-  'overtime': 'hr_overtime_compensation.report_overtime_request',
-  'penalties': 'care_penalty_bonus.report_penalty_request_form',
-  'bonuses': 'care_penalty_bonus.report_bonus_request_form',
-  'timesheet': 'care_pms_timesheet.report_attendance_sheet',
-  'deliveries': 'care_pms.report_delivery_note',
-  'manpower': 'manpower_requisition.manpower_requisition_header_report',
-  'workshops': 'service_order.service_order_report',
-  'extrawork': 'care_extra_work.report_extra_work',
-  'requests': 'care_worker_docs.report_request_cards',
-};
-
 (Color, Color) _stateColors(String? s) {
   switch (s) {
     case 'approve':
@@ -134,14 +115,18 @@ class _PmsRecordDetailScreenState extends State<PmsRecordDetailScreen> {
   }
 
   void _print(Map<String, dynamic> d) {
-    final report = _kRecordReport[widget.code];
-    final model = '${d['model'] ?? ''}';
-    if (report == null || model.isEmpty) return;
+    // The backend resolves the right report (and falls back to the origin
+    // record for stop/resume), so use report_model/report_id/report as-is —
+    // the origin may differ from this record (suspension/resume).
+    final report = '${d['report'] ?? ''}';
+    final model = '${d['report_model'] ?? d['model'] ?? ''}';
+    final rid = (d['report_id'] as num?)?.toInt() ?? widget.id;
+    if (report.isEmpty || model.isEmpty) return;
     final api = context.read<AuthProvider>().api;
     Navigator.push(context, MaterialPageRoute(builder: (_) => PdfReportScreen(
-        path: api.pmsRecordReportPath(model, widget.id, report),
+        path: api.pmsRecordReportPath(model, rid, report),
         title: '${d['name'] ?? tr('التقرير', 'Report')}',
-        fileName: 'record-${widget.id}.pdf')));
+        fileName: 'record-$rid.pdf')));
   }
 
   @override
@@ -183,7 +168,7 @@ class _PmsRecordDetailScreenState extends State<PmsRecordDetailScreen> {
           final files = ((d['files'] as List?) ?? const []);
           final timeline = ((d['timeline'] as List?) ?? const []);
           final related = ((d['related'] as List?) ?? const []);
-          final canPrint = d['can_print'] == true && _kRecordReport[widget.code] != null;
+          final canPrint = d['report'] != null && '${d['report']}'.isNotEmpty;
 
           return RefreshIndicator(
             onRefresh: _refresh,
