@@ -12,6 +12,7 @@ import 'pms_vehicle_file.dart';
 import 'pms_attendance_advanced.dart';
 import 'pms_performance.dart';
 import 'pms_finance.dart';
+import 'pms_record_detail.dart';
 import '../pdf_report_screen.dart';
 
 /// Icons for the section codes the API advertises. Kept here rather than sent
@@ -638,7 +639,22 @@ class _PmsSectionScreenState extends State<PmsSectionScreen> {
         ],
       ]),
     );
-    if (opens.isEmpty) return inner;
+    // Fallback: a plain record row (no dedicated file screen) opens the rich
+    // generic detail screen when its section maps to a PMS record code.
+    const genericCodes = {'deliveries', 'requests', 'contracts', 'resume'};
+    if (opens.isEmpty) {
+      if (r['id'] != null && genericCodes.contains(widget.code)) {
+        return InkWell(
+          borderRadius: BorderRadius.circular(14),
+          onTap: () => Navigator.push(context, MaterialPageRoute(
+              builder: (_) => PmsRecordDetailScreen(
+                    code: widget.code, id: r['id'] as int,
+                    title: '${r['title'] ?? widget.label}', accent: _c))),
+          child: inner,
+        );
+      }
+      return inner;
+    }
     // Give a tappable row an affordance and open the right file.
     return InkWell(
       borderRadius: BorderRadius.circular(14),

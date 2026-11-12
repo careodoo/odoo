@@ -2170,6 +2170,21 @@ class ApiClient {
 
   String pmsLeaveReportPath(int id) => '/pms/leave/$id/report';
 
+  /// Rich generic detail for any PMS section record (fields/lines/files/
+  /// timeline/chatter/related + can_write/can_print). `code` is one of the
+  /// PMS section codes (penalties, allowances, deliveries, …).
+  Future<Map<String, dynamic>> pmsRecordDetail(String code, int id) async =>
+      Map<String, dynamic>.from((await _handle(await _net.get(
+          _u('/pms/record/$code/$id'), headers: await _headers())))['data'] as Map);
+
+  /// Post a chatter comment on a PMS record. Returns {author, date}.
+  /// The endpoint reads `body` from the request params, so it travels in the
+  /// query string (http-type route — a JSON body is not parsed into kw).
+  Future<Map<String, dynamic>> pmsRecordMessage(String code, int id, String body) async =>
+      Map<String, dynamic>.from((await _handle(await _net.post(
+          _u('/pms/record/$code/$id/message?body=${Uri.encodeQueryComponent(body)}'),
+          headers: await _headers())))['data'] as Map);
+
   /// Generic record report: renders any whitelisted QWeb report for a record
   /// the caller may read (e.g. the resignation request form after creating it).
   String pmsRecordReportPath(String model, int id, String report) =>
