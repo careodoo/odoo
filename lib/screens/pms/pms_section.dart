@@ -39,6 +39,11 @@ const Map<String, IconData> kPmsSectionIcons = {
   'manpower': Icons.groups_3_rounded,
   'permits': Icons.verified_user_rounded,
   'workshops': Icons.handyman_rounded,
+  'leaves': Icons.event_busy_rounded,
+  'passports': Icons.badge_rounded,
+  'loans': Icons.savings_rounded,
+  'resignations': Icons.logout_rounded,
+  'eos': Icons.exit_to_app_rounded,
 };
 
 const Map<String, Color> kPmsSectionColors = {
@@ -63,6 +68,11 @@ const Map<String, Color> kPmsSectionColors = {
   'manpower': Color(0xFF4338CA),
   'permits': Color(0xFF0D9488),
   'workshops': Color(0xFFEA580C),
+  'leaves': Color(0xFF2563EB),
+  'passports': Color(0xFF0369A1),
+  'loans': Color(0xFFCA8A04),
+  'resignations': Color(0xFFDC2626),
+  'eos': Color(0xFF6D28D9),
 };
 
 /// One project section — the same shape the portal shows, rendered natively.
@@ -639,17 +649,24 @@ class _PmsSectionScreenState extends State<PmsSectionScreen> {
         ],
       ]),
     );
-    // Fallback: a plain record row (no dedicated file screen) opens the rich
-    // generic detail screen when its section maps to a PMS record code.
-    const genericCodes = {'deliveries', 'requests', 'contracts', 'resume'};
+    // Section/row codes that have no dedicated file screen: they open the rich
+    // generic detail screen (/pms/record/<code>/<id> → PmsRecordDetailScreen).
+    // Data-driven sections send `open` equal to their own code (e.g. 'leaves',
+    // 'loans', 'eos', 'resume'); plain sections send an empty `open`.
+    const genericCodes = {
+      'deliveries', 'requests', 'contracts', 'resume',
+      'leaves', 'passports', 'loans', 'resignations', 'eos',
+      'allowances', 'penalties', 'bonuses', 'overtime', 'extrawork', 'tasks',
+    };
+    void openGeneric(String code) => Navigator.push(context, MaterialPageRoute(
+        builder: (_) => PmsRecordDetailScreen(
+              code: code, id: r['id'] as int,
+              title: '${r['title'] ?? widget.label}', accent: _c)));
     if (opens.isEmpty) {
       if (r['id'] != null && genericCodes.contains(widget.code)) {
         return InkWell(
           borderRadius: BorderRadius.circular(14),
-          onTap: () => Navigator.push(context, MaterialPageRoute(
-              builder: (_) => PmsRecordDetailScreen(
-                    code: widget.code, id: r['id'] as int,
-                    title: '${r['title'] ?? widget.label}', accent: _c))),
+          onTap: () => openGeneric(widget.code),
           child: inner,
         );
       }
@@ -687,6 +704,9 @@ class _PmsSectionScreenState extends State<PmsSectionScreen> {
           _openPermit(r['id'] as int);
         } else if (opens == 'workshop') {
           _openWorkshop(r['id'] as int);
+        } else if (r['id'] != null && genericCodes.contains(opens)) {
+          // leaves / passports / loans / resignations / eos / resume …
+          openGeneric(opens);
         }
       },
       child: inner,
