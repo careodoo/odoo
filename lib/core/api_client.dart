@@ -3353,6 +3353,79 @@ class ApiClient {
   Future<Map<String, dynamic>> costCenterDetail(int id) async =>
       Map<String, dynamic>.from((await _handle(
               await _net.get(_u('/costcenter/$id'), headers: await _headers())))['data'] as Map);
+
+  // ---- Garage (إدارة الكراج) ----------------------------------------------
+  Future<Map<String, dynamic>> grgDashboard() async =>
+      Map<String, dynamic>.from((await _handle(
+          await _net.get(_u('/garage/dashboard'), headers: await _headers())))['data'] as Map);
+
+  Future<Map<String, dynamic>> grgMe() async =>
+      Map<String, dynamic>.from((await _handle(
+          await _net.get(_u('/garage/me'), headers: await _headers())))['data'] as Map);
+
+  Future<List<dynamic>> grgRequests({String? state, String? q}) async {
+    final p = <String>[];
+    if (state != null && state.isNotEmpty) p.add('state=$state');
+    if (q != null && q.isNotEmpty) p.add('q=${Uri.encodeQueryComponent(q)}');
+    final qs = p.isEmpty ? '' : '?${p.join('&')}';
+    return List<dynamic>.from((await _handle(
+        await _net.get(_u('/garage/requests$qs'), headers: await _headers())))['data'] as List);
+  }
+
+  Future<Map<String, dynamic>> grgRequest(int id) async =>
+      Map<String, dynamic>.from((await _handle(
+          await _net.get(_u('/garage/request/$id'), headers: await _headers())))['data'] as Map);
+
+  Future<Map<String, dynamic>> grgRequestMeta() async =>
+      Map<String, dynamic>.from((await _handle(
+          await _net.get(_u('/garage/request/meta'), headers: await _headers())))['data'] as Map);
+
+  Future<Map<String, dynamic>> grgCreateRequest(Map<String, dynamic> body) async =>
+      Map<String, dynamic>.from((await _handle(await _net.post(
+          _u('/garage/request/create'), headers: await _headers(), body: jsonEncode(body))))['data'] as Map);
+
+  Future<Map<String, dynamic>> grgRequestAction(int id, String action) async =>
+      Map<String, dynamic>.from((await _handle(await _net.post(
+          _u('/garage/request/$id/action'), headers: await _headers(),
+          body: jsonEncode({'action': action}))))['data'] as Map);
+
+  Future<List<dynamic>> grgVehicles({String? q}) async {
+    final qs = (q != null && q.isNotEmpty) ? '?q=${Uri.encodeQueryComponent(q)}' : '';
+    return List<dynamic>.from((await _handle(
+        await _net.get(_u('/garage/vehicles$qs'), headers: await _headers())))['data'] as List);
+  }
+
+  Future<Map<String, dynamic>> grgVehicle(int id) async =>
+      Map<String, dynamic>.from((await _handle(
+          await _net.get(_u('/garage/vehicle/$id'), headers: await _headers())))['data'] as Map);
+
+  Future<List<dynamic>> grgTechnicians() async =>
+      List<dynamic>.from((await _handle(
+          await _net.get(_u('/garage/technicians'), headers: await _headers())))['data'] as List);
+
+  Future<List<dynamic>> grgItems({String? q}) async {
+    final qs = (q != null && q.isNotEmpty) ? '?q=${Uri.encodeQueryComponent(q)}' : '';
+    return List<dynamic>.from((await _handle(
+        await _net.get(_u('/garage/items$qs'), headers: await _headers())))['data'] as List);
+  }
+
+  Future<List<dynamic>> grgParts({String? state, String? q, int? itemId}) async {
+    final p = <String>[];
+    if (state != null && state.isNotEmpty) p.add('state=$state');
+    if (q != null && q.isNotEmpty) p.add('q=${Uri.encodeQueryComponent(q)}');
+    if (itemId != null) p.add('item_id=$itemId');
+    final qs = p.isEmpty ? '' : '?${p.join('&')}';
+    return List<dynamic>.from((await _handle(
+        await _net.get(_u('/garage/parts$qs'), headers: await _headers())))['data'] as List);
+  }
+
+  Future<List<dynamic>> grgDisposals() async =>
+      List<dynamic>.from((await _handle(
+          await _net.get(_u('/garage/disposals'), headers: await _headers())))['data'] as List);
+
+  Future<Map<String, dynamic>> grgDisposal(int id) async =>
+      Map<String, dynamic>.from((await _handle(
+          await _net.get(_u('/garage/disposal/$id'), headers: await _headers())))['data'] as Map);
 }
 
 class ApiException implements Exception {

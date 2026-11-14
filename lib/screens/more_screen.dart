@@ -48,6 +48,7 @@ import '../core/account_deletion.dart';
 /// CARE account page: a vibrant header, the systems rail (top icons) for
 /// switching interfaces, then grouped tiles. Nothing is more than two taps away.
 import 'service_settings_screen.dart';
+import 'garage/garage_home.dart';
 
 class MoreScreen extends StatelessWidget {
   const MoreScreen({super.key});
@@ -126,6 +127,7 @@ class MoreScreen extends StatelessWidget {
     if (!isField) tile(Icons.inbox_rounded, tr('طلبات الخدمة', 'Service requests'), const RequestsScreen(), c: const Color(0xFFE6295C));
     tile(Icons.event_repeat_rounded, tr('جدولة الأعمال', 'Work schedules'), const SchedulesScreen(), c: const Color(0xFF0D9488));
     if (!isField) tile(Icons.handyman_rounded, tr('الصيانة', 'Maintenance'), const MaintenanceScreen(), c: const Color(0xFFF7A23B));
+    if (!isField) tile(Icons.garage_rounded, tr('إدارة الكراج', 'Garage'), const GarageHome(), c: const Color(0xFF0A1F44));
     // Valet & hospitality are not a security guard's tools.
     if (!isSecurity) tile(Icons.directions_car_rounded, tr('صف السيارات', 'Valet parking'), const ValetScreen(), c: const Color(0xFFB45309));
     if (!isSecurity) tile(Icons.local_cafe_rounded, tr('الضيافة', 'Hospitality'), const HospitalityScreen(), c: const Color(0xFF8A6D3B));
