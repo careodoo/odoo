@@ -3359,6 +3359,10 @@ class ApiClient {
       Map<String, dynamic>.from((await _handle(
           await _net.get(_u('/garage/dashboard'), headers: await _headers())))['data'] as Map);
 
+  Future<Map<String, dynamic>> grgSchedule() async =>
+      Map<String, dynamic>.from((await _handle(
+          await _net.get(_u('/garage/schedule'), headers: await _headers())))['data'] as Map);
+
   Future<Map<String, dynamic>> grgMe() async =>
       Map<String, dynamic>.from((await _handle(
           await _net.get(_u('/garage/me'), headers: await _headers())))['data'] as Map);
