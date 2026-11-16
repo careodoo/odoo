@@ -241,8 +241,11 @@ class _ExtraWorkScreenState extends State<ExtraWorkScreen> {
         ]),
         const Divider(height: 18),
         _kv(Icons.home_work_rounded, tr('المشروع الأساسي', 'Home project'), '${r['home_project']}'),
-        _kv(Icons.event_rounded, tr('الفترة', 'Period'),
-            '${r['date_from']}${(r['date_to'] ?? '').toString().isNotEmpty ? ' → ${r['date_to']}' : ''}'),
+        if ((r['duration'] ?? '').toString().isNotEmpty)
+          _kv(Icons.timelapse_rounded, tr('نوع المدة', 'Duration'), '${r['duration']}'),
+        _kv(Icons.event_rounded, tr('تاريخ البدء', 'Start date'), '${r['date_from'] ?? '—'}'),
+        if ((r['date_to'] ?? '').toString().isNotEmpty)
+          _kv(Icons.event_available_rounded, tr('تاريخ الانتهاء', 'End date'), '${r['date_to']}'),
         _kv(Icons.payments_rounded, tr('التعويض', 'Compensation'),
             '${r['comp']} · ${(r['cost'] as num?)?.toStringAsFixed(1) ?? ''} ${r['currency'] ?? ''}'),
         if (pending)
