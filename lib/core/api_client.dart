@@ -2265,6 +2265,35 @@ class ApiClient {
   /// PDF URL for the extra-work form (opened in the in-app viewer / browser).
   String pmsExtraWorkPrintUrl(int rid) => _u('/pms/extra-work/$rid/print').toString();
 
+  // ---- التايم شيت الإضافي (care.extra.timesheet) ----
+  Future<Map<String, dynamic>> pmsExtraTimesheets(int projectId) async =>
+      Map<String, dynamic>.from((await _handle(await _net.get(
+          _u('/pms/project/$projectId/extra-timesheets'), headers: await _headers())))['data'] as Map);
+
+  Future<Map<String, dynamic>> pmsExtraTimesheet(int tid) async =>
+      Map<String, dynamic>.from((await _handle(await _net.get(
+          _u('/pms/extra-timesheet/$tid'), headers: await _headers())))['data'] as Map);
+
+  Future<Map<String, dynamic>> pmsExtraTimesheetNew(int projectId, String from, String to) async =>
+      Map<String, dynamic>.from((await _handle(await _net.post(
+          _u('/pms/project/$projectId/extra-timesheet/new'), headers: await _headers(),
+          body: jsonEncode({'period_from': from, 'period_to': to}))))['data'] as Map);
+
+  Future<Map<String, dynamic>> pmsExtraTimesheetHours(int tid, int lid, double hours) async =>
+      Map<String, dynamic>.from((await _handle(await _net.post(
+          _u('/pms/extra-timesheet/$tid/line/$lid'), headers: await _headers(),
+          body: jsonEncode({'hours': hours}))))['data'] as Map);
+
+  Future<Map<String, dynamic>> pmsExtraTimesheetRefresh(int tid) async =>
+      Map<String, dynamic>.from((await _handle(await _net.post(
+          _u('/pms/extra-timesheet/$tid/refresh'), headers: await _headers(), body: jsonEncode(const {}))))['data'] as Map);
+
+  Future<Map<String, dynamic>> pmsExtraTimesheetAction(int tid, String act) async =>
+      Map<String, dynamic>.from((await _handle(await _net.post(
+          _u('/pms/extra-timesheet/$tid/$act'), headers: await _headers(), body: jsonEncode(const {}))))['data'] as Map);
+
+  String pmsExtraTimesheetPrintUrl(int tid) => _u('/pms/extra-timesheet/$tid/print').toString();
+
   // ---- Overtime requests (طلبات العمل الإضافي — overtime.request) ----
   Future<Map<String, dynamic>> pmsOvertimeList(int projectId) async =>
       Map<String, dynamic>.from((await _handle(await _net.get(

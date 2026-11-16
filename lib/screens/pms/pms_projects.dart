@@ -6,6 +6,7 @@ import '../../core/i18n.dart';
 import 'pms_shell.dart' show Pms;
 import 'pms_section.dart';
 import 'pms_extra_work.dart';
+import 'pms_extra_timesheet.dart';
 import 'pms_overtime.dart';
 import 'pms_tasks.dart';
 
@@ -325,10 +326,12 @@ class _PmsProjectDetailState extends State<PmsProjectDetail> {
                       onTap: () => Navigator.push(ctx, MaterialPageRoute(
                           builder: (_) => code == 'extra_work'
                               ? ExtraWorkScreen(projectId: widget.projectId, label: '${x['label']}')
-                              : code == 'overtime'
-                                  ? OvertimeScreen(projectId: widget.projectId, label: '${x['label']}')
-                                  : PmsSectionScreen(
-                                      projectId: widget.projectId, code: code, label: '${x['label']}'))),
+                              : code == 'extra_timesheet'
+                                  ? ExtraTimesheetScreen(projectId: widget.projectId, label: '${x['label']}')
+                                  : code == 'overtime'
+                                      ? OvertimeScreen(projectId: widget.projectId, label: '${x['label']}')
+                                      : PmsSectionScreen(
+                                          projectId: widget.projectId, code: code, label: '${x['label']}'))),
                       onLongPress: () => _delegateSheet(code, '${x['label']}'),
                       child: Container(
                         padding: const EdgeInsets.all(10),
@@ -876,6 +879,9 @@ class _PmsProjectDetailState extends State<PmsProjectDetail> {
     } else if (code == 'extra_work') {
       Navigator.push(context, MaterialPageRoute(
           builder: (_) => ExtraWorkScreen(projectId: widget.projectId, label: label)));
+    } else if (code == 'extra_timesheet') {
+      Navigator.push(context, MaterialPageRoute(
+          builder: (_) => ExtraTimesheetScreen(projectId: widget.projectId, label: label)));
     } else if (code == 'overtime') {
       Navigator.push(context, MaterialPageRoute(
           builder: (_) => OvertimeScreen(projectId: widget.projectId, label: label)));
