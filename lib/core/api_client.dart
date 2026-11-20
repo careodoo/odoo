@@ -3076,6 +3076,28 @@ class ApiClient {
       Map<String, dynamic>.from((await _handle(await _net.get(
               _u('/management/inbox'), headers: await _headers())))['data'] as Map);
 
+  // ---- Approval Center (مركز الموافقات) — بيانات حقيقية بالحالة من care.approval.center ----
+  /// كل الطلبات المعلّقة لهذا المستخدم مجمّعة حسب النوع: {count, groups:[{key,module,icon,color,count,records:[…]}], user}.
+  Future<Map<String, dynamic>> approvalsData() async =>
+      Map<String, dynamic>.from((await _handle(await _net.get(
+              _u('/approvals/data'), headers: await _headers())))['data'] as Map);
+
+  /// تفاصيل شاملة لسجلّ واحد: {all_fields, state_label, can_act, title, ref, module, icon, …}.
+  Future<Map<String, dynamic>> approvalDetail(String model, int resId) async =>
+      Map<String, dynamic>.from((await _handle(await _net.get(
+              _u('/approvals/detail?model=${Uri.encodeQueryComponent(model)}&res_id=$resId'),
+              headers: await _headers())))['data'] as Map);
+
+  /// تنفيذ القرار (موافقة/رفض) مع سبب اختياري عند الرفض.
+  Future<void> approvalDecide(String model, int resId, bool approve, {String reason = ''}) async =>
+      _handle(await _net.post(_u('/approvals/decide'), headers: await _headers(),
+          body: jsonEncode({'model': model, 'res_id': resId, 'approve': approve, 'reason': reason})));
+
+  /// إعادة طلب مرفوض إلى مسودة — لمُقدّم الطلب أو مدير مخوّل.
+  Future<void> approvalResetDraft(String model, int resId) async =>
+      _handle(await _net.post(_u('/approvals/reset_draft'), headers: await _headers(),
+          body: jsonEncode({'model': model, 'res_id': resId})));
+
   // ---- Management access administration (managers) ----------------------
   Future<Map<String, dynamic>> managementAccessMeta() async =>
       Map<String, dynamic>.from((await _handle(await _net.get(

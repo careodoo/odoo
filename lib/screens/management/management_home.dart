@@ -8,7 +8,7 @@ import 'management_list.dart';
 import 'management_search.dart';
 import 'housing_hub_screen.dart';
 import 'management_analytics.dart';
-import 'management_inbox.dart';
+import 'approval_center_screen.dart';
 import 'management_payroll_hub.dart';
 import 'management_access.dart';
 import '../collections/collections_home.dart';
@@ -109,7 +109,16 @@ class _ManagementHomeState extends State<ManagementHome> {
 
   Future<void> _loadInbox() async {
     try {
-      final ib = await context.read<AuthProvider>().api.managementInbox();
+      // بيانات حقيقية بالحالة من مركز الموافقات (بدل عدّادات mail.activity الوهمية)
+      final d = await context.read<AuthProvider>().api.approvalsData();
+      final groups = ((d['groups'] as List?) ?? const []).cast<Map>();
+      final ib = {
+        'total': d['count'] ?? 0,
+        'sources': groups.map((g) => {
+          'key': g['key'], 'icon': g['icon'], 'count': g['count'],
+          'ar': g['module'], 'en': g['module'],
+        }).toList(),
+      };
       if (mounted) setState(() => _inbox = ib);
     } catch (_) {/* the featured tile is optional */}
   }
@@ -233,7 +242,7 @@ class _ManagementHomeState extends State<ManagementHome> {
         child: InkWell(
           borderRadius: BorderRadius.circular(20),
           onTap: () async {
-            await Navigator.push(context, MaterialPageRoute(builder: (_) => const ManagementInboxScreen()));
+            await Navigator.push(context, MaterialPageRoute(builder: (_) => const ApprovalCenterScreen()));
             _loadInbox();
           },
           child: Container(
