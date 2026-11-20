@@ -245,6 +245,8 @@ class _GridScreenState extends State<GridScreen> {
                       ]),
                     ]),
                   ),
+                  // رقائق حالات العمّال (مطابق للبورتال)
+                  _workerStatusChips(d),
                   // The grid
                   Expanded(child: _grid(d)),
                   _legend(),
@@ -384,6 +386,41 @@ class _GridScreenState extends State<GridScreen> {
         ),
         child: Text(isEmpty ? '—' : st, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: c != null ? Colors.white : const Color(0xFFCBD5E1))),
       ),
+    );
+  }
+
+  // رقائق توزيع حالات العمّال أعلى الشبكة (مثل البورتال: On Leave / Active …)
+  Widget _workerStatusChips(Map<String, dynamic> d) {
+    final lines = (d['lines'] ?? []) as List;
+    final counts = <String, int>{};
+    for (final l in lines) {
+      final lbl = ((l as Map)['worker_status_label'] ?? '').toString();
+      if (lbl.isEmpty) continue;
+      counts[lbl] = (counts[lbl] ?? 0) + 1;
+    }
+    if (counts.isEmpty) return const SizedBox.shrink();
+    Color chipColor(String l) {
+      if (l.contains('إجاز') || l.toLowerCase().contains('leave')) return const Color(0xFFD97706);
+      if (l.contains('وقف') || l.toLowerCase().contains('susp')) return const Color(0xFFDC2626);
+      return const Color(0xFF16A34A);
+    }
+    return Container(
+      width: double.infinity,
+      color: Colors.white,
+      padding: const EdgeInsets.fromLTRB(8, 8, 8, 4),
+      child: Wrap(spacing: 7, runSpacing: 5, children: [
+        for (final e in counts.entries)
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 4),
+            decoration: BoxDecoration(
+              color: chipColor(e.key).withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: chipColor(e.key).withValues(alpha: 0.35)),
+            ),
+            child: Text('${e.key} · ${e.value}',
+                style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w800, color: chipColor(e.key))),
+          ),
+      ]),
     );
   }
 
