@@ -293,8 +293,8 @@ class _GridScreenState extends State<GridScreen> {
               ),
             _hdr(tr('ح', 'P'), 30), _hdr(tr('غ', 'A'), 30), _hdr(tr('إ', 'E'), 30),
           ]),
-          // صفوف العمّال
-          for (int li = 0; li < lines.length; li++)
+          // صفوف العمّال (+ صفوف البدلاء تحت كل عامل غائب)
+          for (int li = 0; li < lines.length; li++) ...[
             Row(children: [
               _workerCell(lines[li] as Map, nameW, origin),
               for (int di = 0; di < (lines[li]['days'] as List).length; di++)
@@ -303,6 +303,9 @@ class _GridScreenState extends State<GridScreen> {
               _tot('${lines[li]['absent']}', const Color(0xFFDC2626)),
               _tot('${lines[li]['ot'] ?? 0}', const Color(0xFFB45309), bg: const Color(0xFFFEF9C3)),
             ]),
+            for (final sr in ((lines[li]['sub_rows'] ?? []) as List))
+              _subRow(sr as Map, lines[li]['days'] as List, nameW, cell),
+          ],
         ]),
       ),
     );
@@ -376,17 +379,70 @@ class _GridScreenState extends State<GridScreen> {
         ),
       );
     }
+    // مصدر الخانة: بصمة لِما مصدره البصمة، وأيقونتان (بصمة+قلم) إذا عُدّلت يدويًا
+    final bool edited = day['edited'] == true;
+    final bool isBio = !isEmpty && ((day['source'] == 'bio') || edited);
+    final bool isMan = !isEmpty && edited;
+    final bool covSub = day['sub'] == true && !isEmpty; // غطّى اليوم عاملٌ بديل
     return GestureDetector(
       onTap: isEmpty ? null : () => _toggle(day['id'], li, di),
       child: Container(
         width: cell, height: 36, alignment: Alignment.center,
         decoration: BoxDecoration(
           color: c ?? Colors.white,
-          border: Border.all(color: const Color(0xFFE4E9F2), width: .5),
+          border: covSub
+              ? Border.all(color: const Color(0xFF6D33D6), width: 1.6)
+              : Border.all(color: const Color(0xFFE4E9F2), width: .5),
         ),
-        child: Text(isEmpty ? '—' : st, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: c != null ? Colors.white : const Color(0xFFCBD5E1))),
+        child: Stack(alignment: Alignment.center, clipBehavior: Clip.none, children: [
+          Text(isEmpty ? '—' : st, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: c != null ? Colors.white : const Color(0xFFCBD5E1))),
+          if (covSub)
+            Positioned(top: -1, right: 1, child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 2),
+              decoration: BoxDecoration(color: const Color(0xFF6D33D6), borderRadius: BorderRadius.circular(3)),
+              child: const Text('بديل', style: TextStyle(fontSize: 6.5, fontWeight: FontWeight.w900, color: Colors.white)),
+            )),
+          if (isBio || isMan)
+            Positioned(bottom: 0, left: 1, child: Row(mainAxisSize: MainAxisSize.min, children: [
+              if (isBio) const Icon(Icons.fingerprint, size: 9, color: Color(0xFF0D9488)),
+              if (isMan) const Icon(Icons.edit, size: 8, color: Color(0xFFD97706)),
+            ])),
+        ]),
       ),
     );
+  }
+
+  // صفّ البديل تحت العامل الغائب: أيام البدل «B» مظلَّلة بنفسجيًّا، وبقيتها مُعتَّمة
+  Widget _subRow(Map sr, List days, double nameW, double cell) {
+    final cover = Set<String>.from((sr['cover'] ?? []) as List);
+    return Row(children: [
+      Container(
+        width: nameW, height: 34, padding: const EdgeInsets.symmetric(horizontal: 6),
+        alignment: Alignment.centerRight,
+        decoration: const BoxDecoration(
+          color: Color(0x0F6D33D6),
+          border: Border(right: BorderSide(color: Color(0xFF6D33D6), width: 3), bottom: BorderSide(color: Color(0xFFE4E9F2), width: .5)),
+        ),
+        child: Column(mainAxisAlignment: MainAxisAlignment.center, crossAxisAlignment: CrossAxisAlignment.end, children: [
+          Text('🔄 ${sr['name']}', maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 9.5, fontWeight: FontWeight.w800, color: Color(0xFF6D33D6))),
+          Text('${sr['ref']} · ${sr['state_label']} · ${sr['cost']} د.ك', maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 7.5, color: Color(0xFF94A3B8))),
+        ]),
+      ),
+      for (final dd in days)
+        Container(
+          width: cell, height: 34, alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: cover.contains('${dd['date']}') ? const Color(0x336D33D6) : const Color(0x08000000),
+            border: Border.all(color: const Color(0xFFE4E9F2), width: .5),
+          ),
+          child: cover.contains('${dd['date']}')
+              ? const Text('B', style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w900, color: Color(0xFF6D33D6)))
+              : const SizedBox.shrink(),
+        ),
+      _tot('${sr['days']}', const Color(0xFF6D33D6)),
+      _tot('', const Color(0xFF6D33D6)),
+      _tot('', const Color(0xFF6D33D6)),
+    ]);
   }
 
   // رقائق توزيع حالات العمّال أعلى الشبكة (مثل البورتال: On Leave / Active …)
