@@ -138,8 +138,12 @@ class _SubstitutionScreenState extends State<SubstitutionScreen> {
                 Text('${s['name']}', style: const TextStyle(fontSize: 10.5, color: _muted, fontWeight: FontWeight.w700)),
                 Text('${s['substitute']}  ←  ${s['absent']}',
                     style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w900, color: _sub)),
-                Text('${s['date_from']} · ${s['days']} ${tr('يوم', 'd')} · ${s['price_rule_label']}',
-                    style: const TextStyle(fontSize: 11, color: _muted)),
+                Text([
+                  if ('${s['month'] ?? ''}'.isNotEmpty) '🗓 ${s['month']}',
+                  '${s['days']} ${tr('يوم', 'd')}',
+                  '${s['price_rule_label']}',
+                  if ('${s['timesheet'] ?? ''}'.isNotEmpty) '${s['timesheet']}',
+                ].join(' · '), style: const TextStyle(fontSize: 11, color: _muted)),
               ]),
             ),
             Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
@@ -206,6 +210,7 @@ class _SubCreateState extends State<_SubCreate> {
   ApiClient get _api => context.read<AuthProvider>().api;
   Map? _meta;
   int? _absent, _substitute;
+  String? _subName;
   String _rule = 'substitute';
   DateTime _from = DateTime.now();
   DateTime _to = DateTime.now();
@@ -278,7 +283,24 @@ class _SubCreateState extends State<_SubCreate> {
               const SizedBox(height: 12),
               _dd(tr('العامل الغائب (X)', 'Absent (X)'), absentW, _absent, (v) => setState(() => _absent = v)),
               const SizedBox(height: 12),
-              _dd(tr('العامل البديل (Y)', 'Substitute (Y)'), subs, _substitute, (v) => setState(() => _substitute = v), accent: true),
+              // العامل البديل: منتقي بحث في كل موظّفي الشركة (اسم ع/EN + بادج)
+              InkWell(
+                onTap: () => _pickSubstitute(subs),
+                child: InputDecorator(
+                  decoration: _dec(tr('العامل البديل (Y)', 'Substitute (Y)')).copyWith(
+                      enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(11),
+                          borderSide: const BorderSide(color: _sub, width: 1.5)),
+                      suffixIcon: const Icon(Icons.search_rounded, color: _sub)),
+                  child: Text(
+                    _substitute == null ? tr('اضغط للبحث واختيار البديل', 'Tap to search') : (_subName ?? '#$_substitute'),
+                    style: TextStyle(
+                        fontWeight: FontWeight.w800,
+                        color: _substitute == null ? _muted : _navy),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ),
               const SizedBox(height: 12),
               Row(children: [
                 Expanded(child: _dateField(tr('من', 'From'), _from, (x) => setState(() => _from = x))),
@@ -298,6 +320,22 @@ class _SubCreateState extends State<_SubCreate> {
               TextField(controller: _reason, decoration: _dec(tr('سبب الغياب', 'Reason')), maxLines: 2),
             ]),
     );
+  }
+
+  Future<void> _pickSubstitute(List subs) async {
+    final picked = await showModalBottomSheet<Map>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(18))),
+      builder: (ctx) => _SubPicker(subs: subs),
+    );
+    if (picked != null && mounted) {
+      setState(() {
+        _substitute = (picked['id'] as num).toInt();
+        _subName = '${picked['name']}';
+      });
+    }
   }
 
   Widget _dd(String label, List opts, int? val, ValueChanged<int?> onCh, {bool accent = false}) =>
@@ -331,4 +369,74 @@ class _SubCreateState extends State<_SubCreate> {
   InputDecoration _dec(String h) => InputDecoration(
       labelText: h, filled: true, fillColor: Colors.white, isDense: true,
       border: OutlineInputBorder(borderRadius: BorderRadius.circular(11)));
+}
+
+/// منتقي بحث لكل موظّفي الشركة — بالاسم العربي/الإنجليزي أو رقم البادج.
+class _SubPicker extends StatefulWidget {
+  final List subs;
+  const _SubPicker({required this.subs});
+  @override
+  State<_SubPicker> createState() => _SubPickerState();
+}
+
+class _SubPickerState extends State<_SubPicker> {
+  String _q = '';
+
+  @override
+  Widget build(BuildContext context) {
+    final q = _q.trim().toLowerCase();
+    final list = q.isEmpty
+        ? widget.subs.take(60).toList()
+        : widget.subs.where((e) {
+            final m = e as Map;
+            final n = '${m['name'] ?? ''}'.toLowerCase();
+            final en = '${m['en'] ?? ''}'.toLowerCase();
+            final b = '${m['badge'] ?? ''}'.toLowerCase();
+            return n.contains(q) || en.contains(q) || b.contains(q);
+          }).take(60).toList();
+    return Padding(
+      padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+      child: SizedBox(
+        height: MediaQuery.of(context).size.height * 0.78,
+        child: Column(children: [
+          const SizedBox(height: 10),
+          Container(width: 44, height: 4, decoration: BoxDecoration(color: const Color(0xFFCBD5E1), borderRadius: BorderRadius.circular(3))),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(14, 12, 14, 8),
+            child: TextField(
+              autofocus: true,
+              onChanged: (v) => setState(() => _q = v),
+              decoration: InputDecoration(
+                hintText: tr('🔍 ابحث بالاسم ع/EN أو رقم البادج…', '🔍 Search name or badge…'),
+                filled: true, fillColor: const Color(0xFFF1F5F9), isDense: true,
+                prefixIcon: const Icon(Icons.search_rounded, color: _sub),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+              ),
+            ),
+          ),
+          Expanded(
+            child: list.isEmpty
+                ? Center(child: Text(tr('لا نتائج', 'No results'), style: const TextStyle(color: _muted)))
+                : ListView.separated(
+                    padding: const EdgeInsets.fromLTRB(10, 0, 10, 14),
+                    itemCount: list.length,
+                    separatorBuilder: (_, __) => const Divider(height: 1),
+                    itemBuilder: (_, i) {
+                      final m = list[i] as Map;
+                      final badge = '${m['badge'] ?? ''}';
+                      return ListTile(
+                        dense: true,
+                        title: Text('${m['name']}', style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13.5)),
+                        subtitle: Text('${badge.isNotEmpty ? '#$badge  ' : ''}${m['en'] ?? ''}',
+                            style: const TextStyle(fontSize: 11, color: _muted)),
+                        trailing: const Icon(Icons.chevron_left_rounded, color: _sub),
+                        onTap: () => Navigator.pop(context, m),
+                      );
+                    },
+                  ),
+          ),
+        ]),
+      ),
+    );
+  }
 }
