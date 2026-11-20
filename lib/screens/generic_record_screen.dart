@@ -11,7 +11,10 @@ class GenericRecordScreen extends StatefulWidget {
   final String model;
   final int recordId;
   final String? title;
-  const GenericRecordScreen({super.key, required this.model, required this.recordId, this.title});
+  /// يُظهر زرّ «إعادة إلى مسودة» — يُفعّل عند فتح السجل من إشعار رفضٍ لمُقدّم الطلب.
+  final bool allowResetDraft;
+  const GenericRecordScreen({super.key, required this.model, required this.recordId,
+      this.title, this.allowResetDraft = false});
   @override
   State<GenericRecordScreen> createState() => _GenericRecordScreenState();
 }
@@ -19,11 +22,31 @@ class GenericRecordScreen extends StatefulWidget {
 class _GenericRecordScreenState extends State<GenericRecordScreen> {
   late Future<Map<String, dynamic>> _f;
   static const _accent = Color(0xFF0E3A5F);
+  bool _resetting = false;
 
   @override
   void initState() {
     super.initState();
     _f = context.read<AuthProvider>().api.pmsGenericRecord(widget.model, widget.recordId);
+  }
+
+  Future<void> _resetDraft() async {
+    setState(() => _resetting = true);
+    try {
+      await context.read<AuthProvider>().api.approvalResetDraft(widget.model, widget.recordId);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(tr('أُعيد الطلب إلى مسودة — يمكنك تعديله وإرساله من جديد',
+                         'Returned to draft — edit and resubmit')),
+        backgroundColor: const Color(0xFF15803D), behavior: SnackBarBehavior.floating));
+      Navigator.pop(context);
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _resetting = false);
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(tr('تعذّر: $e', 'Failed: $e')),
+        backgroundColor: const Color(0xFFB91C1C), behavior: SnackBarBehavior.floating));
+    }
   }
 
   @override
@@ -56,6 +79,18 @@ class _GenericRecordScreenState extends State<GenericRecordScreen> {
                   style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 16)),
             ),
             const SizedBox(height: 12),
+            if (widget.allowResetDraft) Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: SizedBox(width: double.infinity, child: FilledButton.icon(
+                style: FilledButton.styleFrom(backgroundColor: const Color(0xFFB45309),
+                    padding: const EdgeInsets.symmetric(vertical: 13)),
+                onPressed: _resetting ? null : _resetDraft,
+                icon: _resetting
+                    ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                    : const Icon(Icons.restart_alt_rounded, size: 19),
+                label: Text(tr('إعادة إلى مسودة', 'Return to draft'), style: const TextStyle(fontWeight: FontWeight.w900)),
+              )),
+            ),
             for (final s in sections.cast<Map>()) _sectionCard(s),
             if (report != null) Padding(
               padding: const EdgeInsets.only(top: 8),

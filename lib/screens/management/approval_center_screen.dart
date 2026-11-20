@@ -305,6 +305,53 @@ class _ApprovalCenterScreenState extends State<ApprovalCenterScreen> {
   }
 }
 
+/// يفتح تفاصيل طلب اعتماد واحد (من إشعار tap مثلًا) مع موافقة/رفض/عرض النموذج.
+Future<void> openApprovalDetail(BuildContext context,
+    {required String model, required int id, String title = ''}) async {
+  final api = context.read<AuthProvider>().api;
+  void snack(String m, {bool bad = false}) {
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text(m), backgroundColor: bad ? const Color(0xFFB91C1C) : const Color(0xFF15803D),
+      behavior: SnackBarBehavior.floating));
+  }
+  Future<String?> askReason() {
+    final ctrl = TextEditingController();
+    return showDialog<String>(context: context, builder: (ctx) => AlertDialog(
+      title: Text(tr('سبب الرفض', 'Rejection reason')),
+      content: TextField(controller: ctrl, autofocus: true, maxLines: 3,
+        decoration: InputDecoration(hintText: tr('سيصل لمُقدّم الطلب', 'Sent to requester'), border: const OutlineInputBorder())),
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(ctx), child: Text(tr('إلغاء', 'Cancel'))),
+        FilledButton(style: FilledButton.styleFrom(backgroundColor: const Color(0xFFB91C1C)),
+          onPressed: () => Navigator.pop(ctx, ctrl.text.trim()), child: Text(tr('رفض', 'Reject'))),
+      ]));
+  }
+  await showModalBottomSheet(
+    context: context, isScrollControlled: true, backgroundColor: Colors.transparent,
+    builder: (_) => _DetailSheet(
+      model: model, resId: id, color: Mgmt.deep,
+      onApprove: () async {
+        try { await api.approvalDecide(model, id, true);
+          snack(tr('✅ تمّت الموافقة وخُتم التوقيع', '✅ Approved & signed'));
+          if (context.mounted) Navigator.pop(context);
+        } catch (e) { snack(tr('تعذّر التنفيذ: $e', 'Failed: $e'), bad: true); }
+      },
+      onReject: () async {
+        if (context.mounted) Navigator.pop(context);
+        final reason = await askReason();
+        if (reason == null) return;
+        try { await api.approvalDecide(model, id, false, reason: reason);
+          snack(tr('✖ تم الرفض وأُشعِر مُقدّم الطلب', '✖ Rejected, requester notified'), bad: true);
+        } catch (e) { snack(tr('تعذّر التنفيذ: $e', 'Failed: $e'), bad: true); }
+      },
+      onForm: () => Navigator.push(context, MaterialPageRoute(builder: (_) => PdfReportScreen(
+        path: '/api/v1/approvals/report?model=${Uri.encodeQueryComponent(model)}&res_id=$id',
+        title: title.isEmpty ? tr('النموذج', 'Form') : title, fileName: 'request-$id.pdf'))),
+    ),
+  );
+}
+
 // ======================= تفاصيل الطلب (bottom sheet) =======================
 class _DetailSheet extends StatefulWidget {
   const _DetailSheet({required this.model, required this.resId, required this.color,
