@@ -265,70 +265,169 @@ class _GridScreenState extends State<GridScreen> {
 
   Widget _grid(Map<String, dynamic> d) {
     final dayNums = (d['day_nums'] ?? []) as List;
+    final dayDows = (d['day_dows'] ?? []) as List;
     final lines = (d['lines'] ?? []) as List;
-    const cell = 30.0;
+    const cell = 26.0;
+    const nameW = 172.0;
+    final origin = context.read<AuthProvider>().api.origin;
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       child: SingleChildScrollView(
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          // Days header
+          // رأس الأعمدة: الاسم + (رقم اليوم + يوم الأسبوع) + ح/غ/إ (مطابق للبورتال)
           Row(children: [
-            _hcell(tr('الاسم', 'Name'), 130, bold: true),
-            for (final n in dayNums) SizedBox(width: cell, child: Center(child: Text('$n', style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w700)))),
-            _hcell(tr('ح', 'P'), 34, bold: true),
-            _hcell(tr('غ', 'A'), 34, bold: true),
+            _hdr(tr('العامل', 'Worker'), nameW, align: Alignment.centerRight),
+            for (int i = 0; i < dayNums.length; i++)
+              SizedBox(
+                width: cell,
+                child: Container(
+                  height: 34,
+                  decoration: BoxDecoration(color: const Color(0xFFF6F8FC), border: Border.all(color: const Color(0xFFE4E9F2), width: .5)),
+                  child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+                    Text('${dayNums[i]}', style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: Color(0xFF5F6B85))),
+                    Text(i < dayDows.length ? '${dayDows[i]}' : '', style: const TextStyle(fontSize: 8, color: Color(0xFF9AA4BB), fontWeight: FontWeight.w600)),
+                  ]),
+                ),
+              ),
+            _hdr(tr('ح', 'P'), 30), _hdr(tr('غ', 'A'), 30), _hdr(tr('إ', 'E'), 30),
           ]),
-          // Worker rows
+          // صفوف العمّال
           for (int li = 0; li < lines.length; li++)
             Row(children: [
-              _hcell(lines[li]['name'] ?? '', 130),
+              _workerCell(lines[li] as Map, nameW, origin),
               for (int di = 0; di < (lines[li]['days'] as List).length; di++)
                 _dayCell(lines[li]['days'][di], li, di, cell),
-              _hcell('${lines[li]['present']}', 34, color: const Color(0xFF16A34A)),
-              _hcell('${lines[li]['absent']}', 34, color: const Color(0xFFDC2626)),
+              _tot('${lines[li]['present']}', const Color(0xFF16A34A)),
+              _tot('${lines[li]['absent']}', const Color(0xFFDC2626)),
+              _tot('${lines[li]['ot'] ?? 0}', const Color(0xFFB45309), bg: const Color(0xFFFEF9C3)),
             ]),
         ]),
       ),
     );
   }
 
-  Widget _hcell(String t, double w, {bool bold = false, Color? color}) => Container(
-        width: w, height: 30, alignment: Alignment.center,
-        decoration: BoxDecoration(border: Border.all(color: const Color(0xFFE4E9F2), width: .5)),
-        child: Text(t, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 11, fontWeight: bold ? FontWeight.w800 : FontWeight.w600, color: color)),
+  Widget _hdr(String t, double w, {Alignment align = Alignment.center}) => Container(
+        width: w, height: 34, alignment: align, padding: const EdgeInsets.symmetric(horizontal: 6),
+        decoration: BoxDecoration(color: const Color(0xFFF6F8FC), border: Border.all(color: const Color(0xFFE4E9F2), width: .5)),
+        child: Text(t, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: Color(0xFF5F6B85))),
       );
 
+  Widget _tot(String t, Color color, {Color? bg}) => Container(
+        width: 30, height: 36, alignment: Alignment.center,
+        decoration: BoxDecoration(color: bg, border: Border.all(color: const Color(0xFFE4E9F2), width: .5)),
+        child: Text(t, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: color)),
+      );
+
+  // عمود العامل: أفاتار + الاسم + باركود + الوظيفة (مطابق للبورتال)
+  Widget _workerCell(Map ln, double w, String origin) {
+    final name = (ln['name'] ?? '').toString();
+    final badge = (ln['badge'] ?? '').toString();
+    final job = (ln['job'] ?? '').toString();
+    final eid = ln['emp_id'];
+    return Container(
+      width: w, height: 36, padding: const EdgeInsets.symmetric(horizontal: 8),
+      decoration: BoxDecoration(color: Colors.white, border: Border.all(color: const Color(0xFFE4E9F2), width: .5)),
+      child: Row(children: [
+        ClipRRect(
+          borderRadius: BorderRadius.circular(7),
+          child: Image.network(
+            '$origin/web/image/hr.employee/$eid/image_128',
+            width: 28, height: 28, fit: BoxFit.cover,
+            errorBuilder: (_, __, ___) => Container(
+              width: 28, height: 28, color: const Color(0xFFEEF2FB), alignment: Alignment.center,
+              child: Text(name.isNotEmpty ? name.characters.first : '?', style: const TextStyle(fontWeight: FontWeight.w900, color: _navy, fontSize: 12)),
+            ),
+          ),
+        ),
+        const SizedBox(width: 7),
+        Expanded(
+          child: Column(mainAxisAlignment: MainAxisAlignment.center, crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text(name, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w800, color: Color(0xFF13213A))),
+            Row(children: [
+              if (badge.isNotEmpty)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  decoration: BoxDecoration(color: const Color(0xFFEEF4FF), borderRadius: BorderRadius.circular(4)),
+                  child: Text('#$badge', style: const TextStyle(fontSize: 8.5, fontWeight: FontWeight.w800, color: Color(0xFF2563EB))),
+                ),
+              const SizedBox(width: 4),
+              Expanded(child: Text(job, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 9, color: Color(0xFF5F6B85)))),
+            ]),
+          ]),
+        ),
+      ]),
+    );
+  }
+
   Widget _dayCell(Map day, int li, int di, double cell) {
-    final st = day['status'] ?? '-';
-    final isX = st == 'X' || st == '-';
+    final st = (day['status'] ?? '-').toString();
+    final isX = st == 'X';
+    final isEmpty = st == '-' || st.isEmpty;
     final c = kStatusColor[st];
+    if (isX) {
+      return GestureDetector(
+        onTap: null,
+        child: Container(
+          width: cell, height: 36,
+          decoration: BoxDecoration(border: Border.all(color: const Color(0xFFE4E9F2), width: .5)),
+          child: CustomPaint(painter: _HatchPainter(), child: const Center(child: Text('—', style: TextStyle(fontSize: 10, color: Color(0xFF94A3B8), fontWeight: FontWeight.w900)))),
+        ),
+      );
+    }
     return GestureDetector(
-      onTap: isX ? null : () => _toggle(day['id'], li, di),
+      onTap: isEmpty ? null : () => _toggle(day['id'], li, di),
       child: Container(
-        width: cell, height: 30, alignment: Alignment.center,
+        width: cell, height: 36, alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: c ?? const Color(0xFFE2E8F0),
+          color: c ?? Colors.white,
           border: Border.all(color: const Color(0xFFE4E9F2), width: .5),
         ),
-        child: Text(isX ? '—' : st, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: c != null ? Colors.white : const Color(0xFF94A3B8))),
+        child: Text(isEmpty ? '—' : st, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: c != null ? Colors.white : const Color(0xFFCBD5E1))),
       ),
     );
   }
 
   Widget _legend() {
-    const items = {'P': 'حاضر', 'O': 'أسبوعية', 'A': 'غائب', 'L': 'إجازة', 'H': 'عطلة', 'S': 'مرضي'};
+    // المفتاح الكامل — مطابق للبورتال (9 رموز)
+    const items = {
+      'P': 'حاضر', 'O': 'إجازة أسبوعية', 'A': 'غائب', 'L': 'إجازة سنوية',
+      'H': 'عطلة رسمية', 'S': 'مرضي', 'T': 'تأخير', 'E': 'إضافي', 'X': 'خارج المشروع',
+    };
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(8),
       color: Colors.white,
       child: Wrap(spacing: 10, runSpacing: 4, children: [
+        const Text('المفتاح:', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w800, color: Color(0xFF5F6B85))),
         for (final e in items.entries)
           Row(mainAxisSize: MainAxisSize.min, children: [
-            Container(width: 16, height: 16, alignment: Alignment.center, decoration: BoxDecoration(color: kStatusColor[e.key], borderRadius: BorderRadius.circular(4)), child: Text(e.key, style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.w900))),
+            Container(
+              width: 16, height: 16, alignment: Alignment.center,
+              decoration: BoxDecoration(color: kStatusColor[e.key] ?? const Color(0xFFCBD5E1), borderRadius: BorderRadius.circular(4)),
+              child: Text(e.key, style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.w900)),
+            ),
             const SizedBox(width: 3),
-            Text(tr(e.value, e.key), style: const TextStyle(fontSize: 11)),
+            Text(e.value, style: const TextStyle(fontSize: 11)),
           ]),
       ]),
     );
   }
+}
+
+// نمط التظليل المائل لخلايا «خارج المشروع» (X) — مطابق للبورتال
+class _HatchPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final bg = Paint()..color = const Color(0xFFE2E8F0);
+    canvas.drawRect(Offset.zero & size, bg);
+    final p = Paint()
+      ..color = const Color(0xFFCBD5E1)
+      ..strokeWidth = 2;
+    for (double x = -size.height; x < size.width; x += 6) {
+      canvas.drawLine(Offset(x, 0), Offset(x + size.height, size.height), p);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
