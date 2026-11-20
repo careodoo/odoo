@@ -1634,6 +1634,29 @@ class ApiClient {
       Map<String, dynamic>.from((await _handle(await _net.get(
           _u('/client/timesheet/departments'), headers: await _headers())))['data'] as Map);
 
+  // ---- الإحلال (البديل عن الغائب) ----
+  Future<Map<String, dynamic>> subMeta(int projectId) async =>
+      Map<String, dynamic>.from((await _handle(await _net.get(
+          _u('/pm/substitution/meta?project_id=$projectId'), headers: await _headers())))['data'] as Map);
+
+  Future<List<dynamic>> subList({int? projectId, String? state}) async {
+    final p = <String>[];
+    if (projectId != null) p.add('project_id=$projectId');
+    if (state != null && state.isNotEmpty) p.add('state=$state');
+    final qs = p.isEmpty ? '' : '?${p.join('&')}';
+    return List<dynamic>.from((await _handle(await _net.get(
+        _u('/pm/substitution/list$qs'), headers: await _headers())))['data'] as List);
+  }
+
+  Future<Map<String, dynamic>> subCreate(Map<String, dynamic> body) async =>
+      Map<String, dynamic>.from((await _handle(await _net.post(
+          _u('/pm/substitution/create'), headers: await _headers(), body: jsonEncode(body))))['data'] as Map);
+
+  Future<Map<String, dynamic>> subAction(int id, String action) async =>
+      Map<String, dynamic>.from((await _handle(await _net.post(
+          _u('/pm/substitution/$id/action'), headers: await _headers(),
+          body: jsonEncode({'action': action}))))['data'] as Map);
+
   /// Create a timesheet for a department + period; generates from attendance
   /// and optionally submits it for approval.
   Future<Map<String, dynamic>> timesheetCreate({

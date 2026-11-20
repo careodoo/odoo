@@ -2,6 +2,7 @@ import '../petrol_screen.dart';
 import '../training_screen.dart';
 import '../cost_center_screen.dart';
 import 'pms_timesheet.dart';
+import 'pms_substitution.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -92,6 +93,8 @@ class PmsMoreScreen extends StatelessWidget {
         // ===== Administrative tools (for authorized users only: manager/supervisor — not a regular contract manager) =====
         _tile(context, Icons.calendar_month_rounded, tr('كشوف الدوام', 'Attendance sheets'), const Color(0xFF6D33D6),
             onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const TimesheetScreen()))),
+        _tile(context, Icons.swap_horiz_rounded, tr('الإحلال (البديل عن الغائب)', 'Substitutions'), const Color(0xFF4F46E5),
+            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SubstitutionScreen()))),
         if ((p?.isAdmin ?? false) || (p?.isSupervisor ?? false)) ...[
           _header(tr('أدوات', 'Tools')),
           _tile(context, Icons.local_gas_station_rounded, tr('إدارة الوقود', 'Fuel management'), const Color(0xFFE8873B),
