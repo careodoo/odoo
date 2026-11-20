@@ -6,6 +6,7 @@ import '../core/auth.dart';
 import '../core/i18n.dart';
 import '../core/widgets.dart';
 import '../core/app_version.dart';
+import 'otp_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -57,23 +58,43 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> _submit() async {
     if (_login.text.isEmpty || _pass.text.isEmpty) return;
     setState(() => _busy = true);
-    final ok = await context.read<AuthProvider>().login(_login.text.trim(), _pass.text);
-    // «Remember me»: save the username to fill it in later, or erase it if the option is unchecked
-    try {
-      if (ok && _remember) {
-        await _store.write(key: _kRememberLogin, value: _login.text.trim());
-      } else if (!_remember) {
-        await _store.delete(key: _kRememberLogin);
-      }
-    } catch (_) {}
+    final res = await context.read<AuthProvider>().login(_login.text.trim(), _pass.text);
     if (mounted) setState(() => _busy = false);
-    if (ok && mounted && Navigator.canPop(context)) {
-      // opened on-demand from guest mode → close and reveal the signed-in tree
-      Navigator.pop(context);
-    } else if (!ok && mounted) {
+    if (!mounted) return;
+
+    if (res.needOtp) {
+      // Account has app two-factor: no session yet — collect the e-mailed code.
+      // The real token is issued only after /auth/verify_otp succeeds.
+      final verified = await Navigator.of(context).push<bool>(MaterialPageRoute(
+        builder: (_) => OtpScreen(
+          challenge: res.challenge!,
+          maskedEmail: res.maskedEmail,
+        ),
+      ));
+      if (verified == true && mounted) await _afterLogin();
+      return;
+    }
+
+    if (res.ok) {
+      await _afterLogin();
+    } else {
       final err = context.read<AuthProvider>().error ?? tr('فشل الدخول', 'Login failed');
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(err)));
     }
+  }
+
+  /// Shared tail of a successful sign-in (normal or two-factor): persist the
+  /// «remember me» username and, if we were opened on-demand from guest mode,
+  /// close this screen to reveal the signed-in tree.
+  Future<void> _afterLogin() async {
+    try {
+      if (_remember) {
+        await _store.write(key: _kRememberLogin, value: _login.text.trim());
+      } else {
+        await _store.delete(key: _kRememberLogin);
+      }
+    } catch (_) {}
+    if (mounted && Navigator.canPop(context)) Navigator.pop(context);
   }
 
   /// Forgot password — asks for the email then sends the recovery link.

@@ -6,6 +6,8 @@ import '../../core/i18n.dart';
 import 'garage_requests.dart';
 import 'garage_browse.dart';
 import 'garage_schedule_screen.dart';
+import 'garage_handovers.dart';
+import 'garage_fleet_extra.dart';
 
 const kGrgNavy = Color(0xFF0A1F44);
 const kGrgGold = Color(0xFFC9A227);
@@ -167,6 +169,9 @@ class _GarageHomeState extends State<GarageHome> {
       (Icons.build_circle_rounded, tr('طلبات الصيانة', 'Maintenance'), const Color(0xFFE08A00), const GarageRequestsScreen()),
       (Icons.event_available_rounded, tr('متابعة المواعيد', 'Service schedule'), const Color(0xFF2563EB), const GarageScheduleScreen()),
       (Icons.directions_bus_rounded, tr('المركبات', 'Vehicles'), const Color(0xFF334155), const GarageVehiclesScreen()),
+      (Icons.car_rental_rounded, tr('استلام السيارات', 'Handovers'), const Color(0xFF0A7E8C), const GarageHandoversScreen()),
+      (Icons.search_rounded, tr('فحص الفرق', 'Inspections'), const Color(0xFF8B5CF6), const GarageInspectionsScreen()),
+      (Icons.shield_rounded, tr('صرف التأمين', 'Insurance'), const Color(0xFF16A34A), const GarageInsuranceScreen()),
       (Icons.engineering_rounded, tr('الفنّيون', 'Technicians'), const Color(0xFF7C3AED), const GarageTechniciansScreen()),
       (Icons.inventory_2_rounded, tr('الأصناف', 'Items'), const Color(0xFF0E8A8A), const GarageItemsScreen()),
       (Icons.report_gmailerrorred_rounded, tr('القطع التالفة', 'Damaged parts'), const Color(0xFFDC3030),

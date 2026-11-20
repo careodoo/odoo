@@ -201,9 +201,9 @@ class MoreScreen extends StatelessWidget {
     tile(Icons.help_outline_rounded, tr('كيف يعمل التطبيق', 'How the app works'), null, c: const Color(0xFF7C3AED),
         onTap: () => _howItWorks(context));
     tile(Icons.privacy_tip_outlined, tr('سياسة الخصوصية', 'Privacy policy'), null, c: const Color(0xFF16A34A),
-        onTap: () => _openUrl(context, 'https://ecare.care-kw.com/care_hr/static/legal/privacy.html'));
+        onTap: () => _openUrl(context, 'https://care-kw.com/care_hr/static/legal/privacy.html'));
     tile(Icons.article_outlined, tr('شروط الاستخدام', 'Terms of use'), null, c: const Color(0xFF64748B),
-        onTap: () => _openUrl(context, 'https://ecare.care-kw.com/care_hr/static/legal/terms.html'));
+        onTap: () => _openUrl(context, 'https://care-kw.com/care_hr/static/legal/terms.html'));
     tile(Icons.star_rate_rounded, tr('قيّم التطبيق', 'Rate the app'), null, c: const Color(0xFFF59E0B),
         onTap: () => _rateApp(context));
     tile(Icons.system_update_rounded, tr('التحقق من التحديثات', 'Check for updates'), null, c: const Color(0xFF0891B2),

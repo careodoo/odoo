@@ -131,27 +131,80 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
-  Future<bool> login(String login, String password) async {
+  Future<LoginResult> login(String login, String password) async {
     error = null;
     notifyListeners();
     try {
-      profile = Profile.fromJson(await api.login(login, password));
-      _startPolling();
-      Push.registerWith(api); // this device now belongs to this user
-      notifyListeners();
-      return true;
+      final data = await api.login(login, password);
+      // Account has app two-factor on: the server returned no token, only a
+      // challenge. The caller must collect the e-mailed code before we have a
+      // session — do NOT treat this as a successful login.
+      if (data['need_otp'] == true) {
+        return LoginResult.otp(
+          challenge: '${data['challenge'] ?? ''}',
+          maskedEmail: data['to'] as String?,
+        );
+      }
+      _finishLogin(data);
+      return const LoginResult.success();
     } on ApiException catch (e) {
       error = e.message;
       notifyListeners();
-      return false;
+      return const LoginResult.failure();
     } catch (e) {
       // This catch used to report "could not reach the server" for ANY
       // failure — a parse error, a bad field, a timeout — which sends everyone
       // hunting the network while the real fault is elsewhere. Name it.
       error = _reachError(e);
       notifyListeners();
+      return const LoginResult.failure();
+    }
+  }
+
+  /// Complete two-factor login: verify the e-mailed [otp] for [challenge].
+  /// On success the real token is stored and the session comes up exactly as a
+  /// normal login. Returns false (and sets [error]) on a wrong/expired code.
+  Future<bool> verifyOtp(String challenge, String otp) async {
+    error = null;
+    notifyListeners();
+    try {
+      _finishLogin(await api.verifyOtp(challenge, otp));
+      return true;
+    } on ApiException catch (e) {
+      error = e.message;
+      notifyListeners();
+      return false;
+    } catch (e) {
+      error = _reachError(e);
+      notifyListeners();
       return false;
     }
+  }
+
+  /// Ask the server for a fresh two-factor code. Returns the new
+  /// `{challenge, to}` (the challenge is rotated, so the caller must adopt it),
+  /// or null on failure (with [error] set).
+  Future<Map<String, dynamic>?> resendOtp(String challenge) async {
+    try {
+      return await api.resendOtp(challenge);
+    } on ApiException catch (e) {
+      error = e.message;
+      notifyListeners();
+      return null;
+    } catch (e) {
+      error = _reachError(e);
+      notifyListeners();
+      return null;
+    }
+  }
+
+  /// Bring the signed-in session up from a `me` payload — shared by the normal
+  /// login and the two-factor second step so both behave identically.
+  void _finishLogin(Map<String, dynamic> data) {
+    profile = Profile.fromJson(data);
+    _startPolling();
+    Push.registerWith(api); // this device now belongs to this user
+    notifyListeners();
   }
 
   /// A message that distinguishes "the network is down" from "something else
@@ -217,4 +270,20 @@ class AuthProvider extends ChangeNotifier {
     _poll?.cancel();
     super.dispose();
   }
+}
+
+/// Outcome of a login attempt. A plain bool could not carry the "needs an OTP"
+/// branch, which is neither a success (no session yet) nor a failure.
+class LoginResult {
+  const LoginResult.success()
+      : ok = true, needOtp = false, challenge = null, maskedEmail = null;
+  const LoginResult.failure()
+      : ok = false, needOtp = false, challenge = null, maskedEmail = null;
+  const LoginResult.otp({required this.challenge, this.maskedEmail})
+      : ok = false, needOtp = true;
+
+  final bool ok;
+  final bool needOtp;
+  final String? challenge;
+  final String? maskedEmail;
 }

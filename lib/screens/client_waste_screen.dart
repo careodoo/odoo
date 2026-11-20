@@ -150,7 +150,7 @@ class _ClientWasteScreenState extends State<ClientWasteScreen> {
       ));
 
   /// Prominent entry to the exact web portal dashboard (same data, reports,
-  /// printing and colours as https://ecare.care-kw.com/service_orders).
+  /// printing and colours as https://care-kw.com/service_orders).
   Widget _portalBanner() => Padding(
         padding: const EdgeInsets.fromLTRB(10, 10, 10, 2),
         child: InkWell(

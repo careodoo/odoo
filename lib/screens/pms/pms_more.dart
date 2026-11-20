@@ -124,9 +124,9 @@ class PmsMoreScreen extends StatelessWidget {
         // ===== help =====
         _header(tr('المساعدة والدعم', 'Help & support')),
         _tile(context, Icons.privacy_tip_outlined, tr('سياسة الخصوصية', 'Privacy policy'), const Color(0xFF16A34A),
-            onTap: () => _openUrl(context, 'https://ecare.care-kw.com/care_hr/static/legal/privacy.html')),
+            onTap: () => _openUrl(context, 'https://care-kw.com/care_hr/static/legal/privacy.html')),
         _tile(context, Icons.article_outlined, tr('شروط الاستخدام', 'Terms of use'), const Color(0xFF64748B),
-            onTap: () => _openUrl(context, 'https://ecare.care-kw.com/care_hr/static/legal/terms.html')),
+            onTap: () => _openUrl(context, 'https://care-kw.com/care_hr/static/legal/terms.html')),
         _tile(context, Icons.info_outline_rounded, tr('عن التطبيق', 'About'), const Color(0xFF0E3A5F),
             onTap: () => _about(context)),
         _tile(context, Icons.logout_rounded, tr('تسجيل الخروج', 'Sign out'), const Color(0xFFE11D48),

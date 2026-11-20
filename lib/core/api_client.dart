@@ -36,7 +36,7 @@ class ApiClient {
   ApiClient({String? baseUrl})
       : baseUrl = baseUrl ?? const String.fromEnvironment(
               'CARE_API_BASE',
-              defaultValue: 'https://ecare.care-kw.com/api/v1',
+              defaultValue: 'https://care-kw.com/api/v1',
             );
 
   final String baseUrl;
@@ -117,7 +117,34 @@ class ApiClient {
         headers: await _headers(),
         body: jsonEncode({'login': login, 'password': password, 'device': device}));
     final body = await _handle(r) as Map;
+    // When the account has app 2FA on, the server answers 200/ok with
+    // `data.need_otp = true` and NO token — the real token only arrives after
+    // /auth/verify_otp. So only persist a token when one is actually present.
     await _setToken(body['token'] as String?);
+    return Map<String, dynamic>.from(body['data'] as Map);
+  }
+
+  /// Second step of two-factor login: send the e-mailed code for the pending
+  /// `challenge` and, on success, persist the real token exactly like login.
+  /// Returns the `me` payload.
+  Future<Map<String, dynamic>> verifyOtp(String challenge, String otp,
+      {String? device}) async {
+    final r = await _net.post(_u('/auth/verify_otp'),
+        headers: await _headers(),
+        body: jsonEncode({'challenge': challenge, 'otp': otp.trim(), 'device': device}));
+    final body = await _handle(r) as Map;
+    await _setToken(body['token'] as String?);
+    return Map<String, dynamic>.from(body['data'] as Map);
+  }
+
+  /// Ask the server to issue a fresh code for the pending two-factor
+  /// `challenge`. Returns `{need_otp, challenge, to}` — note the challenge is a
+  /// NEW one that replaces the old, so callers must keep the returned value.
+  Future<Map<String, dynamic>> resendOtp(String challenge, {String? device}) async {
+    final r = await _net.post(_u('/auth/resend_otp'),
+        headers: await _headers(),
+        body: jsonEncode({'challenge': challenge, 'device': device}));
+    final body = await _handle(r) as Map;
     return Map<String, dynamic>.from(body['data'] as Map);
   }
 
@@ -3431,6 +3458,55 @@ class ApiClient {
   Future<Map<String, dynamic>> grgVehicle(int id) async =>
       Map<String, dynamic>.from((await _handle(
           await _net.get(_u('/garage/vehicle/$id'), headers: await _headers())))['data'] as Map);
+
+  // ---- D6 استلام السيارات ----
+  Future<List<dynamic>> grgHandovers({String? state, String? q}) async {
+    final p = <String>[];
+    if (state != null && state.isNotEmpty) p.add('state=$state');
+    if (q != null && q.isNotEmpty) p.add('q=${Uri.encodeQueryComponent(q)}');
+    final qs = p.isEmpty ? '' : '?${p.join('&')}';
+    return List<dynamic>.from((await _handle(
+        await _net.get(_u('/garage/handovers$qs'), headers: await _headers())))['data'] as List);
+  }
+
+  Future<Map<String, dynamic>> grgHandover(int id) async =>
+      Map<String, dynamic>.from((await _handle(
+          await _net.get(_u('/garage/handover/$id'), headers: await _headers())))['data'] as Map);
+
+  Future<Map<String, dynamic>> grgHandoverMeta() async =>
+      Map<String, dynamic>.from((await _handle(
+          await _net.get(_u('/garage/handover/meta'), headers: await _headers())))['data'] as Map);
+
+  Future<Map<String, dynamic>> grgHandoverCreate(Map<String, dynamic> body) async =>
+      Map<String, dynamic>.from((await _handle(await _net.post(
+          _u('/garage/handover/create'), headers: await _headers(), body: jsonEncode(body))))['data'] as Map);
+
+  Future<Map<String, dynamic>> grgHandoverAction(int id, String action) async =>
+      Map<String, dynamic>.from((await _handle(await _net.post(
+          _u('/garage/handover/$id/action'), headers: await _headers(),
+          body: jsonEncode({'action': action}))))['data'] as Map);
+
+  // ---- D8 فحص الفرق (عرض) ----
+  Future<List<dynamic>> grgInspections({String? q}) async {
+    final qs = (q != null && q.isNotEmpty) ? '?q=${Uri.encodeQueryComponent(q)}' : '';
+    return List<dynamic>.from((await _handle(
+        await _net.get(_u('/garage/inspections$qs'), headers: await _headers())))['data'] as List);
+  }
+
+  Future<Map<String, dynamic>> grgInspection(int id) async =>
+      Map<String, dynamic>.from((await _handle(
+          await _net.get(_u('/garage/inspection/$id'), headers: await _headers())))['data'] as Map);
+
+  // ---- D7 صرف التأمين (عرض) ----
+  Future<List<dynamic>> grgInsuranceRequests({String? state}) async {
+    final qs = (state != null && state.isNotEmpty) ? '?state=$state' : '';
+    return List<dynamic>.from((await _handle(
+        await _net.get(_u('/garage/insurance/requests$qs'), headers: await _headers())))['data'] as List);
+  }
+
+  Future<Map<String, dynamic>> grgInsuranceRequest(int id) async =>
+      Map<String, dynamic>.from((await _handle(
+          await _net.get(_u('/garage/insurance/request/$id'), headers: await _headers())))['data'] as Map);
 
   Future<List<dynamic>> grgTechnicians() async =>
       List<dynamic>.from((await _handle(

@@ -104,8 +104,8 @@ class _C2CAccountScreenState extends State<C2CAccountScreen> {
             if (!widget.showModeSwitch && widget.canSwitchCafm)
               _tile(Icons.apartment_rounded, tr('التحويل إلى إدارة المرافق (CAFM)', 'Switch to CAFM'), () => openCafm(context), ic: C2C.navy),
             _tile(Icons.language_rounded, tr('اللغة', 'Language'), _langSheet, ic: const Color(0xFF16A34A)),
-            _tile(Icons.privacy_tip_outlined, tr('سياسة الخصوصية', 'Privacy policy'), () => _openUrl('https://ecare.care-kw.com/care_hr/static/legal/privacy.html'), ic: const Color(0xFF0891B2)),
-            _tile(Icons.article_outlined, tr('شروط الاستخدام', 'Terms of use'), () => _openUrl('https://ecare.care-kw.com/care_hr/static/legal/terms.html'), ic: const Color(0xFF64748B)),
+            _tile(Icons.privacy_tip_outlined, tr('سياسة الخصوصية', 'Privacy policy'), () => _openUrl('https://care-kw.com/care_hr/static/legal/privacy.html'), ic: const Color(0xFF0891B2)),
+            _tile(Icons.article_outlined, tr('شروط الاستخدام', 'Terms of use'), () => _openUrl('https://care-kw.com/care_hr/static/legal/terms.html'), ic: const Color(0xFF64748B)),
             _tile(Icons.logout_rounded, tr('تسجيل الخروج', 'Sign out'), () => context.read<AuthProvider>().logout(), ic: C2C.red, danger: true),
             _tile(Icons.delete_forever_outlined, tr('طلب حذف الحساب', 'Delete account'), _deleteAccount, ic: const Color(0xFFB91C1C), danger: true),
             const SizedBox(height: 20),
