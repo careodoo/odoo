@@ -449,12 +449,13 @@ class _GridScreenState extends State<GridScreen> {
   Widget _workerStatusChips(Map<String, dynamic> d) {
     final lines = (d['lines'] ?? []) as List;
     final counts = <String, int>{};
+    int subCount = 0;
     for (final l in lines) {
       final lbl = ((l as Map)['worker_status_label'] ?? '').toString();
-      if (lbl.isEmpty) continue;
-      counts[lbl] = (counts[lbl] ?? 0) + 1;
+      if (lbl.isNotEmpty) counts[lbl] = (counts[lbl] ?? 0) + 1;
+      if (((l['sub_rows'] ?? []) as List).isNotEmpty) subCount++;
     }
-    if (counts.isEmpty) return const SizedBox.shrink();
+    if (counts.isEmpty && subCount == 0) return const SizedBox.shrink();
     Color chipColor(String l) {
       if (l.contains('إجاز') || l.toLowerCase().contains('leave')) return const Color(0xFFD97706);
       if (l.contains('وقف') || l.toLowerCase().contains('susp')) return const Color(0xFFDC2626);
@@ -475,6 +476,17 @@ class _GridScreenState extends State<GridScreen> {
             ),
             child: Text('${e.key} · ${e.value}',
                 style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w800, color: chipColor(e.key))),
+          ),
+        if (subCount > 0)
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 4),
+            decoration: BoxDecoration(
+              color: const Color(0xFF6D33D6).withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: const Color(0xFF6D33D6).withValues(alpha: 0.4)),
+            ),
+            child: Text('🔄 لديهم بديل · $subCount',
+                style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w800, color: Color(0xFF6D33D6))),
           ),
       ]),
     );
