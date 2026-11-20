@@ -49,6 +49,7 @@ import '../core/account_deletion.dart';
 /// switching interfaces, then grouped tiles. Nothing is more than two taps away.
 import 'service_settings_screen.dart';
 import 'garage/garage_home.dart';
+import 'driver/driver_home.dart';
 
 class MoreScreen extends StatelessWidget {
   const MoreScreen({super.key});
@@ -128,6 +129,7 @@ class MoreScreen extends StatelessWidget {
     tile(Icons.event_repeat_rounded, tr('جدولة الأعمال', 'Work schedules'), const SchedulesScreen(), c: const Color(0xFF0D9488));
     if (!isField) tile(Icons.handyman_rounded, tr('الصيانة', 'Maintenance'), const MaintenanceScreen(), c: const Color(0xFFF7A23B));
     if (!isField) tile(Icons.garage_rounded, tr('إدارة الكراج', 'Garage'), const GarageHome(), c: const Color(0xFF0A1F44));
+    tile(Icons.local_taxi_rounded, tr('تطبيق السائق', 'Driver app'), const DriverHome(), c: const Color(0xFF14306B));
     // Valet & hospitality are not a security guard's tools.
     if (!isSecurity) tile(Icons.directions_car_rounded, tr('صف السيارات', 'Valet parking'), const ValetScreen(), c: const Color(0xFFB45309));
     if (!isSecurity) tile(Icons.local_cafe_rounded, tr('الضيافة', 'Hospitality'), const HospitalityScreen(), c: const Color(0xFF8A6D3B));

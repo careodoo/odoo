@@ -3508,6 +3508,38 @@ class ApiClient {
       Map<String, dynamic>.from((await _handle(
           await _net.get(_u('/garage/insurance/request/$id'), headers: await _headers())))['data'] as Map);
 
+  // ---- تطبيق السائق (معزول) ----
+  Future<Map<String, dynamic>> driverMe() async =>
+      Map<String, dynamic>.from((await _handle(
+          await _net.get(_u('/driver/me'), headers: await _headers())))['data'] as Map);
+
+  Future<List<dynamic>> driverVehicles() async =>
+      List<dynamic>.from((await _handle(
+          await _net.get(_u('/driver/vehicle'), headers: await _headers())))['data'] as List);
+
+  Future<Map<String, dynamic>> driverViolations({String? status}) async {
+    final qs = (status != null && status.isNotEmpty) ? '?status=$status' : '';
+    final r = await _handle(await _net.get(_u('/driver/violations$qs'), headers: await _headers()));
+    return Map<String, dynamic>.from(r as Map); // يحوي data + count + unpaid_total
+  }
+
+  Future<Map<String, dynamic>> driverViolation(int id) async =>
+      Map<String, dynamic>.from((await _handle(
+          await _net.get(_u('/driver/violation/$id'), headers: await _headers())))['data'] as Map);
+
+  Future<Map<String, dynamic>> driverPay(int id) async =>
+      Map<String, dynamic>.from((await _handle(await _net.post(
+          _u('/driver/violation/$id/pay'), headers: await _headers(), body: '{}')))['data'] as Map);
+
+  Future<Map<String, dynamic>> driverConfirmPayment(int id, String ref, {String method = 'KNET'}) async =>
+      Map<String, dynamic>.from((await _handle(await _net.post(
+          _u('/driver/violation/$id/confirm-payment'), headers: await _headers(),
+          body: jsonEncode({'payment_ref': ref, 'method': method}))))['data'] as Map);
+
+  Future<List<dynamic>> driverNotifications() async =>
+      List<dynamic>.from((await _handle(
+          await _net.get(_u('/driver/notifications'), headers: await _headers())))['data'] as List);
+
   Future<List<dynamic>> grgTechnicians() async =>
       List<dynamic>.from((await _handle(
           await _net.get(_u('/garage/technicians'), headers: await _headers())))['data'] as List);
