@@ -3,6 +3,7 @@ import '../training_screen.dart';
 import '../cost_center_screen.dart';
 import 'pms_timesheet.dart';
 import 'pms_substitution.dart';
+import 'pms_transport.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -95,6 +96,8 @@ class PmsMoreScreen extends StatelessWidget {
             onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const TimesheetScreen()))),
         _tile(context, Icons.swap_horiz_rounded, tr('الإحلال (البديل عن الغائب)', 'Substitutions'), const Color(0xFF4F46E5),
             onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SubstitutionScreen()))),
+        _tile(context, Icons.directions_bus_rounded, tr('المواصلات', 'Transport'), const Color(0xFF0EA5E9),
+            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const TransportScreen()))),
         if ((p?.isAdmin ?? false) || (p?.isSupervisor ?? false)) ...[
           _header(tr('أدوات', 'Tools')),
           _tile(context, Icons.local_gas_station_rounded, tr('إدارة الوقود', 'Fuel management'), const Color(0xFFE8873B),
