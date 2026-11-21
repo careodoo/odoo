@@ -11,7 +11,6 @@ import 'notifications_screen.dart';
 import 'supervisor_screen.dart';
 import 'admin_home.dart';
 import 'security_incidents_screen.dart';
-import 'security_list_screen.dart';
 import 'security_my_team_screen.dart';
 import 'security_keys_screen.dart';
 import 'security_inspections_screen.dart';
@@ -50,6 +49,7 @@ import '../core/account_deletion.dart';
 import 'service_settings_screen.dart';
 import 'garage/garage_home.dart';
 import 'driver/driver_home.dart';
+import 'approvals/approvals_screen.dart';
 
 class MoreScreen extends StatelessWidget {
   const MoreScreen({super.key});
@@ -123,6 +123,8 @@ class MoreScreen extends StatelessWidget {
     // ===== Work & operations =====
     header(tr('العمل والعمليات', 'Work & operations'));
     tile(Icons.assignment_rounded, isField ? tr('مهامي', 'My tasks') : tr('أوامر العمل', 'Work orders'), const WorkOrdersScreen(), c: _navy);
+    // مركز الموافقات — الطلبات المعلّقة بانتظار اعتماد هذا المستخدم (يُظهر فراغًا لمن لا طلبات لديه)
+    if (!isField) tile(Icons.approval_rounded, tr('مركز الموافقات', 'Approval Center'), const ApprovalsScreen(), c: const Color(0xFF15803D));
     tile(Icons.forum_rounded, tr('التواصل والمحادثات', 'Messages & directory'), const ChatHubScreen(), c: const Color(0xFF0E7490));
     if (!isSecurity) tile(Icons.fact_check_rounded, tr('الجودة والجولات', 'Quality & rounds'), const QualityScreen(), c: const Color(0xFF0EA5A4));
     if (!isField) tile(Icons.inbox_rounded, tr('طلبات الخدمة', 'Service requests'), const RequestsScreen(), c: const Color(0xFFE6295C));

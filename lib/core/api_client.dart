@@ -3098,12 +3098,20 @@ class ApiClient {
       _handle(await _net.post(_u('/approvals/reset_draft'), headers: await _headers(),
           body: jsonEncode({'model': model, 'res_id': resId})));
 
-  /// اعتماد/رفض جماعي لكل المعروض من نوعٍ واحد.
-  Future<Map<String, dynamic>> approvalDecideBulk(String model, List<int> ids, bool approve) async {
+  /// اعتماد/رفض جماعي لكل المعروض من نوعٍ واحد (مع سبب اختياري عند الرفض).
+  Future<Map<String, dynamic>> approvalDecideBulk(String model, List<int> ids, bool approve, {String reason = ''}) async {
     final body = await _handle(await _net.post(_u('/approvals/decide_bulk'),
         headers: await _headers(),
-        body: jsonEncode({'model': model, 'res_ids': ids, 'approve': approve})));
+        body: jsonEncode({'model': model, 'res_ids': ids, 'approve': approve, 'reason': reason})));
     return Map<String, dynamic>.from((body['data'] as Map?) ?? {});
+  }
+
+  /// رابط نموذج الطلب (PDF) حاملًا التوكن — كما تبني بقية روابط الـPDF في التطبيق
+  /// (الأصل بدون /api/v1 ثم المسار ثم token=). يُمرَّر إلى [PdfReportScreen] كـ`url`.
+  Future<String> approvalsReportUrl(String model, int resId) async {
+    final t = await token;
+    final path = '/api/v1/approvals/report?model=${Uri.encodeQueryComponent(model)}&res_id=$resId';
+    return '$origin$path&token=${Uri.encodeQueryComponent(t ?? '')}';
   }
 
   /// تنفيذ زرّ إجراء آخر (غير موافقة/رفض) على سجلّ الاعتماد — حسب نوع الموديل.
