@@ -137,6 +137,21 @@ class ApiClient {
     return Map<String, dynamic>.from(body['data'] as Map);
   }
 
+  /// Second step of Authenticator (TOTP) two-factor login: send the 6-digit
+  /// `code` from the authenticator app for the pending `challenge` and, on
+  /// success, persist the real token exactly like login. Returns the `me`
+  /// payload. Unlike the e-mail code there is nothing to resend — the code is
+  /// generated on the user's device.
+  Future<Map<String, dynamic>> verifyTotp(String challenge, String code,
+      {String? device}) async {
+    final r = await _net.post(_u('/auth/verify_totp'),
+        headers: await _headers(),
+        body: jsonEncode({'challenge': challenge, 'code': code.trim(), 'device': device}));
+    final body = await _handle(r) as Map;
+    await _setToken(body['token'] as String?);
+    return Map<String, dynamic>.from(body['data'] as Map);
+  }
+
   /// Ask the server to issue a fresh code for the pending two-factor
   /// `challenge`. Returns `{need_otp, challenge, to}` — note the challenge is a
   /// NEW one that replaces the old, so callers must keep the returned value.
@@ -528,6 +543,25 @@ class ApiClient {
   Future<Map<String, dynamic>> adminDashboard() async =>
       Map<String, dynamic>.from((await _handle(
               await _net.get(_u('/admin/dashboard'), headers: await _headers())))['data'] as Map);
+
+  // ---- e-signature enrollment (التوقيع الإلكتروني) -------------------------
+  /// قائمة الموظّفين لاختيار من يوقّع — مع حالة وجود توقيع سابق (لمدير التواقيع).
+  Future<Map<String, dynamic>> esignMeta({String? q}) async {
+    final query = (q != null && q.trim().isNotEmpty) ? '?q=${Uri.encodeQueryComponent(q.trim())}' : '';
+    return Map<String, dynamic>.from((await _handle(
+            await _net.get(_u('/esign/meta$query'), headers: await _headers())))['data'] as Map);
+  }
+
+  /// يحفظ صورة توقيع الموظّف (PNG base64) في ملفه، ويوثّقه باعتماد فعّال.
+  Future<Map<String, dynamic>> esignEnroll(int employeeId, String signatureB64) async =>
+      Map<String, dynamic>.from((await _handle(await _net.post(
+              _u('/esign/enroll'), headers: await _headers(),
+              body: jsonEncode({'employee_id': employeeId, 'signature_b64': signatureB64}))))['data'] as Map);
+
+  /// آخر اعتمادات التوقيع (للعرض في الشاشة).
+  Future<Map<String, dynamic>> esignEnrollments() async =>
+      Map<String, dynamic>.from((await _handle(
+              await _net.get(_u('/esign/enrollments'), headers: await _headers())))['data'] as Map);
 
   // ---- supervisor ----------------------------------------------------------
   Future<Map<String, dynamic>> stats() async =>

@@ -145,6 +145,12 @@ class AuthProvider extends ChangeNotifier {
           maskedEmail: data['to'] as String?,
         );
       }
+      // Account has Authenticator (TOTP) two-factor on: again no token, only a
+      // challenge — the caller must collect the 6-digit code from the user's
+      // authenticator app before we have a session.
+      if (data['need_totp'] == true) {
+        return LoginResult.totp(challenge: '${data['challenge'] ?? ''}');
+      }
       _finishLogin(data);
       return const LoginResult.success();
     } on ApiException catch (e) {
@@ -169,6 +175,27 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
     try {
       _finishLogin(await api.verifyOtp(challenge, otp));
+      return true;
+    } on ApiException catch (e) {
+      error = e.message;
+      notifyListeners();
+      return false;
+    } catch (e) {
+      error = _reachError(e);
+      notifyListeners();
+      return false;
+    }
+  }
+
+  /// Complete Authenticator (TOTP) two-factor login: verify the 6-digit [code]
+  /// from the user's authenticator app for [challenge]. On success the real
+  /// token is stored and the session comes up exactly as a normal login.
+  /// Returns false (and sets [error]) on a wrong/expired code.
+  Future<bool> verifyTotp(String challenge, String code) async {
+    error = null;
+    notifyListeners();
+    try {
+      _finishLogin(await api.verifyTotp(challenge, code));
       return true;
     } on ApiException catch (e) {
       error = e.message;
@@ -276,14 +303,17 @@ class AuthProvider extends ChangeNotifier {
 /// branch, which is neither a success (no session yet) nor a failure.
 class LoginResult {
   const LoginResult.success()
-      : ok = true, needOtp = false, challenge = null, maskedEmail = null;
+      : ok = true, needOtp = false, needTotp = false, challenge = null, maskedEmail = null;
   const LoginResult.failure()
-      : ok = false, needOtp = false, challenge = null, maskedEmail = null;
+      : ok = false, needOtp = false, needTotp = false, challenge = null, maskedEmail = null;
   const LoginResult.otp({required this.challenge, this.maskedEmail})
-      : ok = false, needOtp = true;
+      : ok = false, needOtp = true, needTotp = false;
+  const LoginResult.totp({required this.challenge})
+      : ok = false, needOtp = false, needTotp = true, maskedEmail = null;
 
   final bool ok;
   final bool needOtp;
+  final bool needTotp;
   final String? challenge;
   final String? maskedEmail;
 }

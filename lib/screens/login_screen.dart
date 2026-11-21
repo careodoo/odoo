@@ -7,6 +7,7 @@ import '../core/i18n.dart';
 import '../core/widgets.dart';
 import '../core/app_version.dart';
 import 'otp_screen.dart';
+import 'totp_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -70,6 +71,17 @@ class _LoginScreenState extends State<LoginScreen> {
           challenge: res.challenge!,
           maskedEmail: res.maskedEmail,
         ),
+      ));
+      if (verified == true && mounted) await _afterLogin();
+      return;
+    }
+
+    if (res.needTotp) {
+      // Account secured with an authenticator app: no session yet — collect the
+      // 6-digit TOTP code. The real token is issued only after
+      // /auth/verify_totp succeeds.
+      final verified = await Navigator.of(context).push<bool>(MaterialPageRoute(
+        builder: (_) => TotpScreen(challenge: res.challenge!),
       ));
       if (verified == true && mounted) await _afterLogin();
       return;

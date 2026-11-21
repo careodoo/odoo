@@ -38,6 +38,7 @@ class Profile {
     this.isProjectManager = false,
     this.isSecuritySupervisor = false,
     this.isSecurityManager = false,
+    this.isEsignManager = false,
     required this.isAdmin,
     required this.canAddWorkers,
     this.riCreator = false,
@@ -62,6 +63,7 @@ class Profile {
   final bool isSecuritySupervisor;
   /// Security project manager (or security manager) → «Security management» icon on their board
   final bool isSecurityManager;
+  final bool isEsignManager;
   final bool isAdmin;
   final bool canAddWorkers;
   /// Invoice-request roles
@@ -89,6 +91,7 @@ class Profile {
       isProjectManager: j['is_project_manager'] as bool? ?? false,
       isSecuritySupervisor: j['is_security_supervisor'] as bool? ?? false,
       isSecurityManager: j['is_security_manager'] as bool? ?? false,
+      isEsignManager: j['is_esign_manager'] as bool? ?? false,
       riCreator: j['ri_creator'] as bool? ?? false,
       riManager: j['ri_manager'] as bool? ?? false,
       riFinance: j['ri_finance'] as bool? ?? false,

@@ -50,6 +50,7 @@ import 'service_settings_screen.dart';
 import 'garage/garage_home.dart';
 import 'driver/driver_home.dart';
 import 'approvals/approvals_screen.dart';
+import 'esign/esign_screen.dart';
 
 class MoreScreen extends StatelessWidget {
   const MoreScreen({super.key});
@@ -171,6 +172,8 @@ class MoreScreen extends StatelessWidget {
     // ===== Contracts & administration (client / back-office only) =====
     if (!isField) {
       header(tr('العقود والإدارة', 'Contracts & administration'));
+      // التوقيع الإلكتروني — تظهر فقط لمدير منظومة التوقيع الإلكتروني (مطابقة لحارس الـAPI)
+      if (p.isEsignManager) tile(Icons.draw_rounded, tr('التوقيع الإلكتروني', 'E-signature'), const EsignScreen(), c: const Color(0xFF7C3AED));
       // contracts are the client's own commercial file — not a supervisor tool
       if (isClient || p.isAdmin) tile(Icons.description_rounded, tr('العقود', 'Contracts'), const ContractsScreen(), c: const Color(0xFF0B6EA8));
       // per-service settings — a client tunes notifications/reports per service
