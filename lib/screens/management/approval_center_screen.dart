@@ -381,6 +381,70 @@ class _DetailSheetState extends State<_DetailSheet> {
     } catch (e) { if (mounted) setState(() => _err = '$e'); }
   }
 
+  Future<void> _runAction(String method) async {
+    setState(() => _busy = true);
+    try {
+      final r = await context.read<AuthProvider>().api.approvalRunAction(widget.model, widget.resId, method);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text('✓ ${tr('تمّ التنفيذ', 'Done')}${r['opened_action'] == true ? tr(' (يفتح نموذجًا في النظام)', ' (opens a form in backend)') : ''}'),
+        backgroundColor: const Color(0xFF15803D), behavior: SnackBarBehavior.floating));
+      await _load();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(tr('تعذّر: $e', 'Failed: $e')), backgroundColor: const Color(0xFFB91C1C), behavior: SnackBarBehavior.floating));
+    } finally { if (mounted) setState(() => _busy = false); }
+  }
+
+  /// شبكة مؤشّرات القرار + صفّ الأزرار الأخرى (كلٌّ حسب نوع الموديل).
+  List<Widget> _decisionWidgets(Map d) {
+    final out = <Widget>[];
+    final metrics = ((d['metrics'] as List?) ?? const []).cast<Map>();
+    if (metrics.isNotEmpty) {
+      out.add(Wrap(spacing: 8, runSpacing: 8, children: metrics.map((m) {
+        final big = m['big'] == true;
+        final good = m['good'];
+        final vc = good == false ? const Color(0xFFB91C1C) : (good == true ? const Color(0xFF15803D) : Mgmt.ink);
+        return Container(
+          width: big ? double.infinity : null,
+          constraints: big ? null : const BoxConstraints(minWidth: 150),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+          decoration: BoxDecoration(
+            color: big ? const Color(0xFFEEF2FF) : Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: big ? const Color(0xFFC7D2FE) : const Color(0xFFEEF2F7))),
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
+            Text('${m['label']}', style: const TextStyle(color: Mgmt.slate, fontWeight: FontWeight.w700, fontSize: 11)),
+            const SizedBox(height: 2),
+            Text('${m['value']}', style: TextStyle(color: vc, fontWeight: FontWeight.w900, fontSize: big ? 18 : 15)),
+          ]));
+      }).toList()));
+      out.add(const SizedBox(height: 12));
+    }
+    final actions = ((d['actions'] as List?) ?? const []).cast<Map>();
+    if (actions.isNotEmpty) {
+      out.add(Container(
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(color: const Color(0xFFF8FAFC), borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: const Color(0xFFE2E8F0), style: BorderStyle.solid)),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text(tr('إجراءات أخرى', 'Other actions'), style: const TextStyle(color: Mgmt.slate, fontWeight: FontWeight.w800, fontSize: 12)),
+          const SizedBox(height: 8),
+          Wrap(spacing: 7, runSpacing: 7, children: actions.map((a) => OutlinedButton(
+            onPressed: _busy ? null : () => _runAction('${a['name']}'),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: a['primary'] == true ? Mgmt.deep : Mgmt.ink,
+              side: BorderSide(color: a['primary'] == true ? Mgmt.deep : const Color(0xFFD9DEE7)),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+              visualDensity: VisualDensity.compact),
+            child: Text('${a['string']}', style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12.5)))).toList()),
+        ])));
+      out.add(const SizedBox(height: 12));
+    }
+    return out;
+  }
+
   @override
   Widget build(BuildContext context) {
     final d = _d;
@@ -421,6 +485,7 @@ class _DetailSheetState extends State<_DetailSheet> {
                   label: Text(tr('عرض النموذج (PDF)', 'View form (PDF)'),
                     style: const TextStyle(fontWeight: FontWeight.w800))),
                 const SizedBox(height: 12),
+                ..._decisionWidgets(d!),
                 Container(
                   decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14)),
                   child: Column(children: [

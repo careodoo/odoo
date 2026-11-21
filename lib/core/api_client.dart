@@ -3098,6 +3098,14 @@ class ApiClient {
       _handle(await _net.post(_u('/approvals/reset_draft'), headers: await _headers(),
           body: jsonEncode({'model': model, 'res_id': resId})));
 
+  /// تنفيذ زرّ إجراء آخر (غير موافقة/رفض) على سجلّ الاعتماد — حسب نوع الموديل.
+  Future<Map<String, dynamic>> approvalRunAction(String model, int resId, String method) async {
+    final body = await _handle(await _net.post(_u('/approvals/run_action'),
+        headers: await _headers(),
+        body: jsonEncode({'model': model, 'res_id': resId, 'method': method})));
+    return Map<String, dynamic>.from((body['data'] as Map?) ?? {});
+  }
+
   // ---- Management access administration (managers) ----------------------
   Future<Map<String, dynamic>> managementAccessMeta() async =>
       Map<String, dynamic>.from((await _handle(await _net.get(
