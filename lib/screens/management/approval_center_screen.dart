@@ -231,9 +231,44 @@ class _ApprovalCenterScreenState extends State<ApprovalCenterScreen> {
         Container(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 1),
           decoration: BoxDecoration(color: color.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(10)),
           child: Text('${recs.length}', style: TextStyle(color: color, fontWeight: FontWeight.w900, fontSize: 11.5))),
+        const Spacer(),
+        TextButton.icon(
+          onPressed: () => _bulkApprove(g),
+          style: TextButton.styleFrom(foregroundColor: const Color(0xFF15803D),
+            padding: const EdgeInsets.symmetric(horizontal: 8), visualDensity: VisualDensity.compact),
+          icon: const Icon(Icons.done_all_rounded, size: 17),
+          label: Text(tr('اعتماد الكل', 'Approve all'), style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 12))),
       ])),
       ...recs.map((r) => _recCard(r, color)),
     ]));
+  }
+
+  Future<void> _bulkApprove(Map g) async {
+    final recs = (g['records'] as List).cast<Map>();
+    if (recs.isEmpty) return;
+    final api = context.read<AuthProvider>().api;
+    final model = '${recs.first['model']}';
+    final ids = recs.map((r) => r['id'] as int).toList();
+    final ok = await showDialog<bool>(context: context, builder: (ctx) => AlertDialog(
+      title: Text(tr('اعتماد جماعي', 'Bulk approve')),
+      content: Text(tr('اعتماد ${ids.length} طلبًا من «${g['module']}»؟ لا يمكن التراجع.',
+                       'Approve ${ids.length} requests in "${g['module']}"? This cannot be undone.')),
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(tr('إلغاء', 'Cancel'))),
+        FilledButton(style: FilledButton.styleFrom(backgroundColor: const Color(0xFF15803D)),
+          onPressed: () => Navigator.pop(ctx, true), child: Text(tr('اعتماد الكل', 'Approve all'))),
+      ]));
+    if (ok != true) return;
+    try {
+      final r = await api.approvalDecideBulk(model, ids, true);
+      final done = (r['done'] ?? 0) as int;
+      final failed = ((r['failed'] as List?) ?? const []).length;
+      final failedIds = {for (final f in ((r['failed'] as List?) ?? const [])) (f as Map)['id']};
+      for (final id in ids) { if (!failedIds.contains(id)) _removeLocal(model, id); }
+      _snack('✅ ${tr('اعتُمد', 'Approved')} $done${failed > 0 ? ' · ${tr('فشل', 'failed')} $failed' : ''}');
+    } catch (e) {
+      _snack(tr('تعذّر: $e', 'Failed: $e'), bad: true);
+    }
   }
 
   Widget _recCard(Map r, Color color) {

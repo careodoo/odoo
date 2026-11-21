@@ -3098,6 +3098,14 @@ class ApiClient {
       _handle(await _net.post(_u('/approvals/reset_draft'), headers: await _headers(),
           body: jsonEncode({'model': model, 'res_id': resId})));
 
+  /// اعتماد/رفض جماعي لكل المعروض من نوعٍ واحد.
+  Future<Map<String, dynamic>> approvalDecideBulk(String model, List<int> ids, bool approve) async {
+    final body = await _handle(await _net.post(_u('/approvals/decide_bulk'),
+        headers: await _headers(),
+        body: jsonEncode({'model': model, 'res_ids': ids, 'approve': approve})));
+    return Map<String, dynamic>.from((body['data'] as Map?) ?? {});
+  }
+
   /// تنفيذ زرّ إجراء آخر (غير موافقة/رفض) على سجلّ الاعتماد — حسب نوع الموديل.
   Future<Map<String, dynamic>> approvalRunAction(String model, int resId, String method) async {
     final body = await _handle(await _net.post(_u('/approvals/run_action'),
