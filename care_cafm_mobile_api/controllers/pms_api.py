@@ -1856,6 +1856,34 @@ class PmsSectionsApi(Controller):
         } for r in recs]
         return {'rows': rows, 'stats': {'نهاية خدمة': len(recs)}}
 
+    def _sec_discipline(self, env, p):
+        """الشكاوى التأديبية لعمّال هذا المشروع (قسم بوابة مدير المشروع)."""
+        if 'care.complaint' not in env:
+            return {'rows': [], 'stats': {}, 'empty': 'وحدة الشكاوى التأديبية غير مثبّتة.'}
+        C = env['care.complaint'].sudo()
+        ssel = dict(C._fields['state']._description_selection(env))
+        sevsel = dict(C._fields['severity']._description_selection(env)) if 'severity' in C._fields else {}
+        dept = self._dept(p)
+        emp_ids = env['hr.employee'].sudo().search([('department_id', '=', dept)]).ids if dept else []
+        recs = C.search([('employee_id', 'in', emp_ids)], order='id desc', limit=300) if emp_ids else C.browse()
+        pending = ('submitted', 'manager_approved', 'hr_review', 'legal_review', 'penalty_decided')
+        rows, pend = [], 0
+        for r in recs:
+            if r.state in pending:
+                pend += 1
+            rows.append({
+                'id': r.id, 'title': r.employee_id.name or r.name,
+                'subtitle': '%s · %s' % (r.category_id.name or '—', _d(r.incident_date)),
+                'state': r.state, 'state_label': ssel.get(r.state, r.state),
+                'open': 'complaint',
+                'badges': [x for x in [sevsel.get(r.severity) if r.severity else None] if x],
+                'search': ('%s %s %s' % (r.name or '', r.employee_id.name or '', r.description or '')).lower(),
+            })
+        return {'rows': rows, 'can_create': True, 'stats': {
+            'الشكاوى': len(rows),
+            'قيد المعالجة': pend,
+            'مطبّقة': sum(1 for r in recs if r.state == 'applied')}}
+
     SECTIONS = {
         'leaves': ('طلبات الإجازة', 'event_busy', _sec_leaves),
         'passports': ('سحب الجوازات', 'badge', _sec_passports),
@@ -1889,7 +1917,7 @@ class PmsSectionsApi(Controller):
         'extra_work': ('العمل الإضافي الوارد', 'group_add', None),
         'extra_timesheet': ('التايم شيت الإضافي', 'bolt', None),
         'overtime': ('طلبات العمل الإضافي', 'schedule', None),
-        'discipline': ('الشكاوى التأديبية', 'gavel', None),
+        'discipline': ('الشكاوى التأديبية', 'gavel', _sec_discipline),
     }
 
     @route(API + '/pms/project/<int:pid>/sections', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
@@ -5294,14 +5322,8 @@ class PmsSectionsApi(Controller):
         if not emp:
             return _err('هذا الموظف ليس ضمن مشاريعك', 403)
 
-        # صلاحيات منظومة الصلاحيات: عند عرض المدير لعاملٍ آخر، أخفِ الحقول الحسّاسة المقنّعة
-        # عن مسمّى هذا المدير (جواز/مدني/هوية/ميلاد...). لا إخفاء عند عرض المستخدم لملفه هو.
+        # ملاحظة: ملف العامل لمدير المشروع يعرض كل الحقول بلا قيود (بقرار المستخدم 2026-11-22).
         _emp_hidden = set()
-        if _mgr_view:
-            try:
-                _emp_hidden = env['hr.employee']._ah_hidden_fields() or set()
-            except Exception:
-                _emp_hidden = set()
 
         def _rows(model, extra=None):
             if model not in env:
@@ -5669,6 +5691,7 @@ class PmsSectionsApi(Controller):
             'loans': _rows('hr.loan', ['loan_amount', 'balance_amount', 'total_amount']) + _rows('care.loan', ['amount']),
             'penalties': _rows('penalty.request', ['amount']),
             'bonuses': _rows('bonus.request', ['amount']),
+            'complaints': _rows('care.complaint', ['incident_date', 'severity', 'penalty_type']),
             'allowances': _rows('care.allowance', ['amount', 'date']),
             'eos': _rows('care.eos', ['last_working_day']),
             'permissions': _rows('permission.request', ['permission_hours']),
@@ -5976,6 +5999,90 @@ class PmsSectionsApi(Controller):
         if not r:
             return _err('غير موجود أو لا صلاحية', 404)
         return _ok(self._penalty_json(env, r))
+
+    # ============ الشكاوى التأديبية (care_discipline) — بوابة/تطبيق مدير المشروع ============
+    def _complaint_json(self, env, r):
+        ssel = dict(r._fields['state']._description_selection(env))
+        sevsel = dict(r._fields['severity']._description_selection(env)) if 'severity' in r._fields else {}
+        return {
+            'id': r.id, 'name': r.name, 'employee': r.employee_id.name or None,
+            'employee_id': r.employee_id.id,
+            'category': r.category_id.name or None,
+            'severity': sevsel.get(r.severity) if r.severity else None,
+            'incident_date': _d(r.incident_date),
+            'description': r.description or None,
+            'witnesses': r.witnesses or None,
+            'complainant': r.complainant_id.name or None,
+            'manager': r.manager_id.name if r.manager_id else None,
+            'penalty_type': dict(r._fields['penalty_type']._description_selection(env)).get(r.penalty_type) if ('penalty_type' in r._fields and r.penalty_type) else None,
+            'reject_reason': r.reject_reason or None,
+            'state': r.state, 'state_label': ssel.get(r.state, r.state),
+        }
+
+    @route(API + '/pms/discipline/categories', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
+    def pms_discipline_categories(self, **kw):
+        """فئات المخالفات + مستويات الخطورة لنموذج رفع الشكوى."""
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        if 'care.complaint.category' not in env:
+            return _err('الوحدة غير مثبّتة', 404)
+        cats = [{'id': c.id, 'name': c.name,
+                 'severity': c.default_severity if 'default_severity' in c._fields else None}
+                for c in env['care.complaint.category'].sudo().search([('active', '=', True)], order='sequence')]
+        sev = [{'value': k, 'label': l}
+               for k, l in env['care.complaint']._fields['severity']._description_selection(env)]
+        return _ok({'categories': cats, 'severities': sev})
+
+    @route(API + '/pms/complaint/<int:rid>', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
+    def pms_complaint_detail(self, rid, **kw):
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        if 'care.complaint' not in env:
+            return _err('الوحدة غير مثبّتة', 404)
+        r = env['care.complaint'].sudo().browse(int(rid)).exists()
+        if not r or not self._emp_viewable(env, r.employee_id.id):
+            return _err('غير موجود أو ليس ضمن مشاريعك', 404)
+        return _ok(self._complaint_json(env, r))
+
+    @route(API + '/pms/employee/<int:eid>/complaint-create', type='http', auth='public', methods=['POST'], csrf=False, cors='*')
+    def pms_complaint_create(self, eid, **kw):
+        """مدير المشروع يرفع شكوى تأديبية على عاملٍ ضمن مشاريعه."""
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        if 'care.complaint' not in env:
+            return _err('وحدة الشكاوى التأديبية غير مثبّتة', 404)
+        emp = self._emp_in_scope(env, eid)
+        if not emp:
+            return _err('هذا الموظف ليس ضمن مشاريعك', 403)
+        from .api import _body
+        from odoo import fields as _f
+        b = _body() or {}
+        desc = (b.get('description') or '').strip()
+        if not desc:
+            return _err('اكتب وصف الواقعة', 422)
+        if not b.get('category_id'):
+            return _err('اختر نوع المخالفة', 422)
+        vals = {
+            'employee_id': emp.id,
+            'complainant_id': env.user.id,
+            'category_id': int(b['category_id']),
+            'description': desc,
+            'incident_date': b.get('incident_date') or _f.Date.today(),
+            'witnesses': b.get('witnesses') or False,
+            'complainant_ack': True,  # مدير المشروع يُقرّ بصحّة البيانات عند الرفع
+        }
+        if b.get('severity'):
+            vals['severity'] = b['severity']
+        try:
+            rec = env['care.complaint'].sudo().create(vals)
+            if b.get('submit', True):
+                rec.action_submit()
+        except Exception as e:
+            return _err(str(e) or 'تعذّر رفع الشكوى', 422)
+        return _ok(self._complaint_json(env, rec))
 
     @route(API + '/pms/employee/<int:eid>/penalty-create', type='http', auth='public', methods=['POST'], csrf=False, cors='*')
     def pms_penalty_create(self, eid, **kw):
