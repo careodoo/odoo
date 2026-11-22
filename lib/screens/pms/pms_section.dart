@@ -44,6 +44,7 @@ const Map<String, IconData> kPmsSectionIcons = {
   'loans': Icons.savings_rounded,
   'resignations': Icons.logout_rounded,
   'eos': Icons.exit_to_app_rounded,
+  'discipline': Icons.gavel_rounded,
 };
 
 const Map<String, Color> kPmsSectionColors = {
@@ -73,6 +74,7 @@ const Map<String, Color> kPmsSectionColors = {
   'loans': Color(0xFFCA8A04),
   'resignations': Color(0xFFDC2626),
   'eos': Color(0xFF6D28D9),
+  'discipline': Color(0xFFB0343F),
 };
 
 /// One project section — the same shape the portal shows, rendered natively.

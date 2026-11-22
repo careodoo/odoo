@@ -6,6 +6,7 @@ import '../../core/i18n.dart';
 import 'pms_shell.dart' show Pms;
 import 'pms_section.dart';
 import 'pms_extra_work.dart';
+import 'pms_discipline.dart';
 import 'pms_extra_timesheet.dart';
 import 'pms_overtime.dart';
 import 'pms_tasks.dart';
@@ -330,8 +331,10 @@ class _PmsProjectDetailState extends State<PmsProjectDetail> {
                                   ? ExtraTimesheetScreen(projectId: widget.projectId, label: '${x['label']}')
                                   : code == 'overtime'
                                       ? OvertimeScreen(projectId: widget.projectId, label: '${x['label']}')
-                                      : PmsSectionScreen(
-                                          projectId: widget.projectId, code: code, label: '${x['label']}'))),
+                                      : code == 'discipline'
+                                          ? DisciplineScreen(projectId: widget.projectId, label: '${x['label']}')
+                                          : PmsSectionScreen(
+                                              projectId: widget.projectId, code: code, label: '${x['label']}'))),
                       onLongPress: () => _delegateSheet(code, '${x['label']}'),
                       child: Container(
                         padding: const EdgeInsets.all(10),

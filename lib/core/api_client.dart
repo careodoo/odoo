@@ -2372,6 +2372,23 @@ class ApiClient {
   /// PDF URL for the extra-work form (opened in the in-app viewer / browser).
   String pmsExtraWorkPrintUrl(int rid) => _u('/pms/extra-work/$rid/print').toString();
 
+  // ---- الشكاوى التأديبية (care.complaint) ----
+  /// ملف الموظف: شكاوى المستخدم (العامل) نفسه.
+  Future<Map<String, dynamic>> myComplaints() async =>
+      Map<String, dynamic>.from((await _handle(await _net.get(
+          _u('/discipline/my'), headers: await _headers())))['data'] as Map);
+
+  /// مدير المشروع: قائمة شكاواه + عمّال وأنواع للنموذج.
+  Future<Map<String, dynamic>> pmComplaints(int projectId) async =>
+      Map<String, dynamic>.from((await _handle(await _net.get(
+          _u('/pms/discipline/$projectId'), headers: await _headers())))['data'] as Map);
+
+  /// مدير المشروع: تقديم شكوى جديدة.
+  Future<Map<String, dynamic>> pmFileComplaint(int projectId, Map<String, dynamic> body) async =>
+      Map<String, dynamic>.from((await _handle(await _net.post(
+          _u('/pms/discipline/$projectId/file'), headers: await _headers(),
+          body: jsonEncode(body))))['data'] as Map);
+
   // ---- التايم شيت الإضافي (care.extra.timesheet) ----
   Future<Map<String, dynamic>> pmsExtraTimesheets(int projectId) async =>
       Map<String, dynamic>.from((await _handle(await _net.get(
