@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="action_report_esign_log" model="ir.actions.report">
+        <field name="name">سجلّ التواقيع (PDF)</field>
+        <field name="model">care.esignature</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">care_esignature.report_esign_log</field>
+        <field name="report_file">care_esignature.report_esign_log</field>
+        <field name="binding_model_id" ref="model_care_esignature"/>
+        <field name="binding_type">report</field>
+    </record>
+
+    <template id="report_esign_log">
+        <t t-call="web.html_container">
+            <t t-call="web.external_layout">
+                <div class="page" dir="rtl" style="font-family:'Tajawal','DejaVu Sans',sans-serif;color:#0f2438">
+                    <h3 style="margin:0 0 3px;color:#114b73">سجلّ التواقيع الإلكترونية · Electronic Signature Log</h3>
+                    <p style="font-size:11px;color:#5a7186;margin:0 0 10px">عدد السجلات: <t t-esc="len(docs)"/> · سجلّ تدقيق للقراءة فقط</p>
+                    <table style="width:100%;border-collapse:collapse;font-size:11px">
+                        <thead>
+                            <tr style="background:#eef2f6">
+                                <th style="border:1px solid #cdd9e8;padding:5px 6px">السيريال</th>
+                                <th style="border:1px solid #cdd9e8;padding:5px 6px">التاريخ والوقت</th>
+                                <th style="border:1px solid #cdd9e8;padding:5px 6px">الموقِّع</th>
+                                <th style="border:1px solid #cdd9e8;padding:5px 6px">الصفة</th>
+                                <th style="border:1px solid #cdd9e8;padding:5px 6px">نوع المستند</th>
+                                <th style="border:1px solid #cdd9e8;padding:5px 6px">المستند</th>
+                                <th style="border:1px solid #cdd9e8;padding:5px 6px">الحالة</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr t-foreach="docs" t-as="s">
+                                <td style="border:1px solid #cdd9e8;padding:4px 6px;font-family:monospace;direction:ltr;font-size:9.5px"><t t-esc="s.name"/></td>
+                                <td style="border:1px solid #cdd9e8;padding:4px 6px;direction:ltr;font-size:10px"><t t-esc="s.sign_date"/></td>
+                                <td style="border:1px solid #cdd9e8;padding:4px 6px;font-weight:700"><t t-esc="s.signer_name"/></td>
+                                <td style="border:1px solid #cdd9e8;padding:4px 6px"><t t-esc="s.signer_role"/></td>
+                                <td style="border:1px solid #cdd9e8;padding:4px 6px"><t t-esc="s.res_model_name or s.model"/></td>
+                                <td style="border:1px solid #cdd9e8;padding:4px 6px;direction:ltr"><t t-esc="s.res_ref or s.res_id"/></td>
+                                <td style="border:1px solid #cdd9e8;padding:4px 6px"><t t-esc="dict(s._fields['state'].selection).get(s.state)"/></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <p style="font-size:10px;color:#5a7186;margin-top:10px">كل سيريال يحمل التاريخ والوقت ورمز الموديول ورقم السجل وبصمة تحقّق — غير مكرّر. للتحقق: التواقيع الإلكترونية ← التحقّق من توقيع.</p>
+                </div>
+            </t>
+        </t>
+    </template>
+</odoo>

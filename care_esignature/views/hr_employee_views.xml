@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- تبويب «اعتماد التوقيع الإلكتروني» في ملف الموظف — محميّ: يظهر فقط لمدير منظومة التواقيع -->
+    <record id="view_employee_form_esign_enrollment" model="ir.ui.view">
+        <field name="name">hr.employee.form.esign.enrollment</field>
+        <field name="model">hr.employee</field>
+        <field name="inherit_id" ref="hr.view_employee_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//notebook" position="inside">
+                <page string="اعتماد التوقيع الإلكتروني" name="esign_enrollment"
+                      groups="care_esignature.group_esign_manager">
+                    <group>
+                        <field name="esign_state" readonly="1"/>
+                        <field name="esign_enrollment_count" invisible="1"/>
+                    </group>
+                    <field name="esign_enrollment_ids" nolabel="1">
+                        <tree decoration-success="state=='active'" decoration-muted="state in ('disabled','rejected')"
+                              decoration-warning="state=='to_approve'">
+                            <field name="name"/>
+                            <field name="request_date"/>
+                            <field name="approved_date"/>
+                            <field name="effective_date"/>
+                            <field name="serial" optional="hide"/>
+                            <field name="state" widget="badge"
+                                   decoration-success="state=='active'" decoration-warning="state=='to_approve'"
+                                   decoration-info="state=='approved'" decoration-muted="state in ('disabled','rejected')"/>
+                        </tree>
+                    </field>
+                </page>
+            </xpath>
+        </field>
+    </record>
+</odoo>

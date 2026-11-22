@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_esignature_tree" model="ir.ui.view">
+        <field name="name">care.esignature.tree</field>
+        <field name="model">care.esignature</field>
+        <field name="arch" type="xml">
+            <tree decoration-muted="state=='void'" create="false" delete="false">
+                <field name="name"/>
+                <field name="sign_date"/>
+                <field name="signer_name"/>
+                <field name="signer_role"/>
+                <field name="res_model_name"/>
+                <field name="module_code"/>
+                <field name="res_ref"/>
+                <field name="company_id" groups="base.group_multi_company"/>
+                <field name="state" widget="badge" decoration-success="state=='valid'" decoration-danger="state=='void'"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_esignature_form" model="ir.ui.view">
+        <field name="name">care.esignature.form</field>
+        <field name="model">care.esignature</field>
+        <field name="arch" type="xml">
+            <form create="false" edit="false">
+                <header>
+                    <button name="action_open_document" type="object" string="فتح المستند الموقّع"
+                            class="btn-primary" icon="fa-external-link"/>
+                    <button name="action_void" type="object" string="إلغاء التوقيع" groups="care_esignature.group_esign_manager"
+                            confirm="تعليم هذا التوقيع كمُلغى؟ لن يُحذف السجل." invisible="state=='void'"/>
+                    <field name="state" widget="statusbar"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1><field name="name" readonly="1"/></h1>
+                    </div>
+                    <group>
+                        <group string="الموقِّع">
+                            <field name="signer_name" readonly="1"/>
+                            <field name="signer_role" readonly="1"/>
+                            <field name="delegated_by_name" readonly="1" invisible="not delegated_by_id"/>
+                            <field name="delegated_by_id" invisible="1"/>
+                            <field name="user_id" readonly="1"/>
+                            <field name="employee_id" readonly="1"/>
+                            <field name="signature" widget="image" readonly="1" options="{'size':[220,90]}"/>
+                        </group>
+                        <group string="المستند">
+                            <field name="res_model_name" readonly="1"/>
+                            <field name="model" readonly="1"/>
+                            <field name="res_id" readonly="1"/>
+                            <field name="res_ref" readonly="1"/>
+                            <field name="module_code" readonly="1"/>
+                            <field name="sign_date" readonly="1"/>
+                            <field name="company_id" readonly="1" groups="base.group_multi_company"/>
+                        </group>
+                    </group>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_esignature_search" model="ir.ui.view">
+        <field name="name">care.esignature.search</field>
+        <field name="model">care.esignature</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name" string="السيريال"/>
+                <field name="signer_name"/>
+                <field name="res_ref" string="المستند"/>
+                <field name="res_model_name" string="نوع المستند"/>
+                <filter name="valid" string="صحيح" domain="[('state','=','valid')]"/>
+                <filter name="void" string="مُلغى" domain="[('state','=','void')]"/>
+                <separator/>
+                <filter name="today" string="اليوم" domain="[('sign_date','&gt;=', datetime.datetime.combine(context_today(), datetime.time(0,0,0)))]"/>
+                <group expand="0" string="تجميع">
+                    <filter name="g_user" string="الموقِّع" context="{'group_by':'signer_name'}"/>
+                    <filter name="g_role" string="الصفة" context="{'group_by':'signer_role'}"/>
+                    <filter name="g_model" string="الموديول" context="{'group_by':'res_model_name'}"/>
+                    <filter name="g_date" string="التاريخ" context="{'group_by':'sign_date:day'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_esignature" model="ir.actions.act_window">
+        <field name="name">سجلّ التواقيع</field>
+        <field name="res_model">care.esignature</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="view_esignature_search"/>
+        <field name="context">{'create': False}</field>
+    </record>
+
+    <menuitem id="menu_esign_root" name="التواقيع الإلكترونية" sequence="85"/>
+    <menuitem id="menu_esign_registry" name="سجلّ التواقيع" parent="menu_esign_root" action="action_esignature" sequence="10"/>
+</odoo>

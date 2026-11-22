@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <!-- ديمو آمن: ينشئ اعتمادات بحالات مختلفة على أوائل الموظفين (يتخطّى إن تعذّر) -->
+        <function model="care.esign.enrollment" name="_create_demo_enrollments"/>
+    </data>
+</odoo>

@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="esign_demo_1" model="care.esignature">
+        <field name="name">SIG-20261116-1122-PO-16539-7F3A</field>
+        <field name="user_id" ref="base.user_admin"/>
+        <field name="signer_name">عبدالمحسن الطخيم</field>
+        <field name="signer_role">الرئيس التنفيذي</field>
+        <field name="signer_role_en">Chief Executive Officer</field>
+        <field name="model">purchase.order</field>
+        <field name="res_id">16539</field>
+        <field name="res_ref">P16539</field>
+        <field name="res_model_name">أمر شراء</field>
+        <field name="module_code">PO</field>
+        <field name="sign_date">2026-11-16 11:22:10</field>
+    </record>
+    <record id="esign_demo_2" model="care.esignature">
+        <field name="name">SIG-20261117-0831-BD-00912-4C1E</field>
+        <field name="user_id" ref="base.user_admin"/>
+        <field name="signer_name">خالد محمد طنش</field>
+        <field name="signer_role">المدير المالي</field>
+        <field name="signer_role_en">Finance Manager</field>
+        <field name="model">care.allowance.payout</field>
+        <field name="res_id">912</field>
+        <field name="res_ref">ALWPAY-2026-0011</field>
+        <field name="res_model_name">طلب صرف البدلات</field>
+        <field name="module_code">BD</field>
+        <field name="sign_date">2026-11-17 08:31:04</field>
+    </record>
+    <record id="esign_demo_3" model="care.esignature">
+        <field name="name">SIG-20261117-0802-XW-01847-2BD9</field>
+        <field name="user_id" ref="base.user_admin"/>
+        <field name="signer_name">سمير محمد السيد</field>
+        <field name="signer_role">مدير المشروع</field>
+        <field name="signer_role_en">Project Manager</field>
+        <field name="model">care.extra.work</field>
+        <field name="res_id">1847</field>
+        <field name="res_ref">EXW-01847</field>
+        <field name="res_model_name">طلب عمل إضافي</field>
+        <field name="module_code">XW</field>
+        <field name="sign_date">2026-11-17 08:02:40</field>
+    </record>
+</odoo>

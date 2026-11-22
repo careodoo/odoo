@@ -1,0 +1,180 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!--
+      مكوّن توقيع موحّد — يُحقَن في أي تقرير فيه مربّع توقيع.
+      الاستدعاء من تقرير:
+        <t t-call="care_esignature.esign_box">
+            <t t-set="sig" t-value="o.esign_for_role('مدير المشروع')"/>
+            <t t-set="role">مدير المشروع</t>
+            <t t-set="role_en">Project Manager</t>
+            <t t-set="name" t-value="o.pm_approved_by.signature_name"/>
+        </t>
+      sig = سجل care.esignature (أو فارغ ⇒ يظهر مربّع بانتظار التوقيع).
+    -->
+    <template id="esign_box">
+        <t t-set="_signed" t-value="bool(sig)"/>
+        <!-- sig_img: صورة توقيع احتياطية (توقيع المُعِدّ الشخصي) تظهر إن لم يوجد سجل توقيع رسمي -->
+        <t t-set="_fb" t-value="(not _signed) and bool(sig_img)"/>
+        <td t-attf-style="width:#{w or '25%'};vertical-align:top;border:1.5px solid #{'#1e7a3c' if _signed else '#8ca7cc'};border-radius:8px;padding:9px 10px;text-align:center;background:#{'#f0f9f2' if _signed else '#ffffff'}">
+            <div style="font-size:11px;font-weight:800;color:#0f2a56;text-transform:uppercase"><t t-esc="role_en or (sig and sig.signer_role_en) or ''"/></div>
+            <div style="font-size:12px;font-weight:800;color:#0f2a56" dir="rtl"><t t-esc="role or (sig and sig.signer_role) or ''"/></div>
+            <div style="font-size:12.5px;font-weight:800;color:#000;margin-top:3px;min-height:16px" dir="auto"><t t-esc="(sig and sig.signer_name) or name or ''"/></div>
+            <div t-if="_signed and sig.delegated_by_name" style="font-size:8.5px;color:#b8922f;font-weight:700;margin-top:1px" dir="rtl">↳ مفوّض من قبل: <t t-esc="sig.delegated_by_name"/></div>
+            <div style="height:38px;display:flex;align-items:flex-end;justify-content:center;margin-top:2px">
+                <img t-if="_signed and sig.signature_png" t-att-src="image_data_uri(sig.signature_png)" style="max-height:38px;max-width:150px"/>
+                <img t-elif="_fb" t-att-src="image_data_uri(sig_img)" style="max-height:38px;max-width:150px"/>
+                <span t-else="" style="color:#9fb1c9;font-size:10px;align-self:center">بانتظار التوقيع</span>
+            </div>
+            <t t-if="_signed">
+                <div style="border-top:1px dotted #777;margin-top:4px;padding-top:4px">
+                    <div style="font-family:monospace;font-size:9px;font-weight:700;color:#114b73;direction:ltr;word-break:break-all"><t t-esc="sig.name"/></div>
+                    <div style="font-size:8.5px;color:#5a7186;direction:ltr"><t t-esc="sig.sign_date"/></div>
+                    <img t-att-src="sig.qr_src" style="width:38px;height:38px;margin-top:3px" title="امسح للتحقّق · Scan to verify"/>
+                </div>
+            </t>
+            <t t-else="">
+                <div style="border-top:1.5px dotted #777;margin-top:4px;padding-top:4px;font-size:9px;color:#444;font-weight:700">التوقيع · Signature &#160;|&#160; التاريخ · Date</div>
+            </t>
+        </td>
+    </template>
+
+    <!-- صفّ اعتمادات كامل من قائمة أدوار: roles = [(role_ar, role_en, fallback_name), …] -->
+    <template id="esign_row">
+        <table width="100%" style="border-collapse:separate;border-spacing:8px;margin:6px 0;table-layout:fixed">
+            <tr>
+                <t t-foreach="roles or []" t-as="r">
+                    <t t-call="care_esignature.esign_box">
+                        <t t-set="role" t-value="r[0]"/>
+                        <t t-set="role_en" t-value="r[1] if len(r)>1 else ''"/>
+                        <t t-set="name" t-value="r[2] if len(r)>2 else ''"/>
+                        <t t-set="sig" t-value="doc.esign_for_role(r[0]) if doc else False"/>
+                        <t t-set="sig_img" t-value="False"/>
+                        <t t-set="w" t-value="'%d%%' % (100/(len(roles) or 1))"/>
+                    </t>
+                </t>
+            </tr>
+        </table>
+    </template>
+
+    <!-- ===== صفحة التحقّق العامة (يفتحها الـQR عند المسح) ===== -->
+    <template id="verify_page" name="E-Signature Verification">
+        <t t-set="valid" t-value="rec and rec.state == 'valid'"/>
+        <html lang="ar" dir="rtl">
+            <head>
+                <meta charset="utf-8"/>
+                <meta name="viewport" content="width=device-width, initial-scale=1"/>
+                <title>التحقّق من التوقيع · E-Signature Verification</title>
+                <style>
+                    *{box-sizing:border-box} body{margin:0;background:#eef2f7;font-family:'Tajawal','Segoe UI',Arial,sans-serif;color:#25324a;padding:16px}
+                    .card{max-width:640px;margin:18px auto;background:#fff;border-radius:16px;box-shadow:0 10px 36px rgba(20,41,74,.12);overflow:hidden}
+                    .hd{padding:22px 20px;text-align:center;color:#fff}
+                    .hd.ok{background:linear-gradient(135deg,#17844a,#0f6b3b)} .hd.bad{background:linear-gradient(135deg,#c0392b,#96271b)} .hd.void{background:linear-gradient(135deg,#d68910,#b9770e)}
+                    .hd .ic{font-size:40px;line-height:1} .hd h1{margin:8px 0 2px;font-size:20px;font-weight:800} .hd .sub{opacity:.9;font-size:12.5px;direction:ltr}
+                    .body{padding:18px 20px}
+                    .sig-img{display:block;max-height:90px;max-width:220px;margin:4px auto 12px;padding:8px 10px;border:1px solid #e3eaf3;border-radius:10px;background:#fafcff}
+                    table.kv{width:100%;border-collapse:collapse;font-size:13.5px}
+                    table.kv td{padding:9px 10px;border-bottom:1px solid #eef2f7;vertical-align:top}
+                    table.kv td.k{color:#7a8aa0;font-weight:700;width:42%;white-space:nowrap} table.kv td.v{font-weight:700;color:#1b2740}
+                    .serial{font-family:monospace;direction:ltr;font-size:12.5px;color:#114b73;word-break:break-all}
+                    .foot{padding:12px 20px 20px;text-align:center;color:#8794a9;font-size:11px;border-top:1px solid #eef2f7}
+                    .badge{display:inline-block;padding:3px 10px;border-radius:999px;font-size:11.5px;font-weight:800}
+                    .b-ok{background:#e4f4ea;color:#17844a} .b-void{background:#fdf0dc;color:#b9770e}
+                    /* ===== حماية التوقيع ومنع الحفظ ===== */
+                    body{-webkit-user-select:none;-moz-user-select:none;user-select:none;-webkit-touch-callout:none}
+                    .sig-wrap{position:relative;display:inline-block;margin:4px auto 12px;max-width:100%}
+                    .sig-wrap img{display:block;max-height:90px;max-width:220px;padding:8px 10px;border:1px solid #e3eaf3;border-radius:10px;background:#fafcff;
+                        -webkit-user-drag:none;-khtml-user-drag:none;-moz-user-drag:none;user-drag:none;pointer-events:none;-webkit-user-select:none;user-select:none}
+                    /* طبقة شفافة فوق الصورة تلتقط النقر-اليمين/الحفظ بدل الصورة */
+                    .sig-guard{position:absolute;inset:0;z-index:6}
+                    /* علامة مائية مائلة متكرّرة فوق التوقيع (تحمل السيريال والوقت) */
+                    .wm{position:absolute;inset:0;z-index:5;pointer-events:none;overflow:hidden;display:flex;align-items:center;justify-content:center}
+                    .wm span{position:absolute;white-space:nowrap;transform:rotate(-24deg);font-weight:800;font-size:11px;color:rgba(18,41,74,.30);letter-spacing:.5px}
+                    .wm .w1{top:14%} .wm .w2{top:46%} .wm .w3{top:78%}
+                    .protected-note{font-size:10.5px;color:#9aa6b8;text-align:center;margin:-4px 0 10px}
+                    @media print{ html,body{display:none !important} }
+                    .blurred .sig-wrap img{filter:blur(9px) grayscale(1)} .blurred .wm span{color:rgba(192,57,43,.6)}
+                </style>
+            </head>
+            <body>
+                <div class="card">
+                    <t t-if="rec and valid">
+                        <div class="hd ok">
+                            <div class="ic">✅</div>
+                            <h1>توقيع إلكتروني صحيح وموثّق</h1>
+                            <div class="sub">Verified Electronic Signature · CARE</div>
+                        </div>
+                        <div class="body">
+                            <div t-if="img_src" class="sig-wrap" oncontextmenu="return false">
+                                <img t-att-src="img_src" alt="signature" draggable="false" oncontextmenu="return false"/>
+                                <div class="wm">
+                                    <span class="w1">CARE ✓ تحقّق · <t t-esc="rec.name"/></span>
+                                    <span class="w2">نسخة تحقّق — لا تُستخدم · <t t-esc="rec.sign_date"/></span>
+                                    <span class="w3">CARE ✓ <t t-esc="rec.name"/></span>
+                                </div>
+                                <div class="sig-guard"/>
+                            </div>
+                            <div t-if="img_src" class="protected-note">🔒 صورة محمية — العلامة المائية تحمل السيريال ووقت التوقيع · أي نسخة غير صالحة للاستخدام</div>
+                            <table class="kv">
+                                <tr><td class="k">نوع المستند · Document</td><td class="v"><t t-esc="rec.res_model_name or rec.model"/></td></tr>
+                                <tr><td class="k">رقم المرجع · Reference</td><td class="v"><t t-esc="rec.res_ref or ('#%s' % rec.res_id)"/></td></tr>
+                                <tr t-if="doc_date"><td class="k">تاريخ المستند · Document date</td><td class="v"><t t-esc="doc_date"/></td></tr>
+                                <tr><td class="k">الموقِّع · Signatory</td><td class="v"><t t-esc="rec.signer_name or ''"/></td></tr>
+                                <tr><td class="k">الصفة · Role</td><td class="v"><t t-esc="rec.signer_role or ''"/><t t-if="rec.signer_role_en"> · <t t-esc="rec.signer_role_en"/></t></td></tr>
+                                <tr><td class="k">تاريخ ووقت التوقيع · Signed at</td><td class="v" style="direction:ltr;text-align:right"><t t-esc="rec.sign_date"/></td></tr>
+                                <tr t-if="rec.company_id"><td class="k">الشركة · Company</td><td class="v"><t t-esc="rec.company_id.name"/></td></tr>
+                                <tr><td class="k">السيريال · Serial</td><td class="v serial"><t t-esc="rec.name"/></td></tr>
+                                <tr><td class="k">الحالة · Status</td><td class="v"><span class="badge b-ok">صحيح · Valid</span></td></tr>
+                            </table>
+                        </div>
+                        <div class="foot">هذه الصفحة تؤكّد أن التوقيع أعلاه صادر من منظومة CARE للتوقيع الإلكتروني ويخصّ المستند المذكور حصراً.<br/>تاريخ التحقّق: <span style="direction:ltr" t-esc="now"/></div>
+                    </t>
+                    <t t-elif="rec and not valid">
+                        <div class="hd void"><div class="ic">⚠️</div><h1>توقيع مُلغى</h1><div class="sub">Voided Signature</div></div>
+                        <div class="body">
+                            <table class="kv">
+                                <tr><td class="k">نوع المستند</td><td class="v"><t t-esc="rec.res_model_name or rec.model"/></td></tr>
+                                <tr><td class="k">رقم المرجع</td><td class="v"><t t-esc="rec.res_ref or ('#%s' % rec.res_id)"/></td></tr>
+                                <tr><td class="k">الموقِّع</td><td class="v"><t t-esc="rec.signer_name or ''"/> — <t t-esc="rec.signer_role or ''"/></td></tr>
+                                <tr><td class="k">السيريال</td><td class="v serial"><t t-esc="rec.name"/></td></tr>
+                                <tr><td class="k">الحالة</td><td class="v"><span class="badge b-void">مُلغى · Void</span></td></tr>
+                            </table>
+                        </div>
+                        <div class="foot">هذا التوقيع كان مُسجّلًا لكنّه أُلغي ولم يعد ساريًا.</div>
+                    </t>
+                    <t t-else="">
+                        <div class="hd bad"><div class="ic">⛔</div><h1>لا يوجد توقيع بهذا السيريال</h1><div class="sub">Signature Not Found</div></div>
+                        <div class="body">
+                            <p style="text-align:center;color:#c0392b;font-weight:700">السيريال المطلوب غير موجود في سجلّ CARE — قد يكون غير صحيح أو مُزوَّرًا.</p>
+                            <table class="kv"><tr><td class="k">السيريال المطلوب</td><td class="v serial"><t t-esc="serial"/></td></tr></table>
+                        </div>
+                        <div class="foot">لم يُعثر على توقيع مطابق. تأكّد من السيريال أو امسح رمز الـQR مباشرة من المستند الأصلي.</div>
+                    </t>
+                </div>
+                <script type="text/javascript">
+                    <![CDATA[
+                    (function(){
+                        var block=function(e){e.preventDefault();return false;};
+                        document.addEventListener('contextmenu', block);
+                        document.addEventListener('dragstart', block);
+                        document.addEventListener('selectstart', block);
+                        document.addEventListener('copy', block);
+                        // رادع للسكرين شوت: تمويه التوقيع عند مغادرة الصفحة/فقدان التركيز
+                        var b=document.body;
+                        var hide=function(){b.classList.add('blurred');};
+                        var show=function(){b.classList.remove('blurred');};
+                        document.addEventListener('visibilitychange', function(){ if(document.hidden){hide();}else{show();} });
+                        window.addEventListener('blur', hide);
+                        window.addEventListener('focus', show);
+                        // منع اختصارات الحفظ/الطباعة الشائعة
+                        document.addEventListener('keydown', function(e){
+                            var k=(e.key||'').toLowerCase();
+                            if((e.ctrlKey||e.metaKey) && (k==='s'||k==='p'||k==='u')){ e.preventDefault(); hide(); setTimeout(show,1200); }
+                            if(k==='printscreen'){ hide(); setTimeout(show,1500); }
+                        });
+                    })();
+                    ]]>
+                </script>
+            </body>
+        </html>
+    </template>
+</odoo>

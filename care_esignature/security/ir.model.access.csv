@@ -1,0 +1,6 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_esign_user,esign user read,model_care_esignature,base.group_user,1,0,0,0
+access_esign_manager,esign manager,model_care_esignature,group_esign_manager,1,1,1,1
+access_esign_verify_user,esign verify wizard,model_care_esign_verify,base.group_user,1,1,1,1
+access_esign_enrollment_manager,esign enrollment manager,model_care_esign_enrollment,group_esign_manager,1,1,1,1
+access_esign_enrollment_hr,esign enrollment hr read,model_care_esign_enrollment,hr.group_hr_manager,1,0,0,0

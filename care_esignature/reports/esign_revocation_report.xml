@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="action_report_esign_revocation" model="ir.actions.report">
+        <field name="name">نموذج إلغاء اعتماد التوقيع الإلكتروني</field>
+        <field name="model">care.esign.enrollment</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">care_esignature.report_esign_revocation</field>
+        <field name="report_file">care_esignature.report_esign_revocation</field>
+        <field name="binding_model_id" ref="model_care_esign_enrollment"/>
+        <field name="binding_type">report</field>
+        <field name="paperformat_id" ref="paperformat_esign_enrollment"/>
+    </record>
+
+    <template id="report_esign_revocation">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="doc">
+                <t t-set="hco" t-value="doc.company_id or doc.env.company"/>
+                <t t-set="rtitle">نموذج إلغاء اعتماد التوقيع الإلكتروني</t>
+                <t t-set="rtitle_en">E-Signature Revocation Notice</t>
+                <t t-set="hrno" t-value="doc.revocation_serial or doc.name"/>
+                <div class="page article" dir="rtl" style="font-family:'Tajawal','DejaVu Sans',sans-serif;color:#000000;font-size:11px">
+                    <t t-call="care_report_layout.lh_header_inner"/>
+                    <style>
+                        .care-ttl-box{border:0 !important;background:transparent !important;border-radius:0 !important;padding:2px 8px !important}
+                        .care-sep{border-left:0 !important}
+                        div[style*="1f3a5f"]{background:#ffffff !important;height:0 !important;margin:0 !important}
+                    </style>
+
+                    <!-- شريط «لاغٍ» -->
+                    <div style="text-align:center;margin:10px 0 14px">
+                        <span style="display:inline-block;border:2px solid #b02a2a;color:#b02a2a;font-weight:800;font-size:16px;letter-spacing:2px;padding:6px 26px;border-radius:8px">لاغٍ · VOID</span>
+                    </div>
+
+                    <!-- بيانات الموظف والاعتماد الملغى -->
+                    <table style="width:100%;border-collapse:collapse;font-size:11px;margin-bottom:12px;color:#000000">
+                        <tr>
+                            <td style="border:1px solid #000;padding:5px 9px;background:#f0f0f0;font-weight:700;width:22%">اسم الموظف</td>
+                            <td style="border:1px solid #000;padding:5px 9px;width:28%"><t t-esc="doc.employee_id.name"/></td>
+                            <td style="border:1px solid #000;padding:5px 9px;background:#f0f0f0;font-weight:700;width:22%">الرقم المدني</td>
+                            <td style="border:1px solid #000;padding:5px 9px;width:28%;direction:ltr;text-align:right"><t t-esc="doc.employee_id.care_civilid_display or doc.employee_id.civil_code or '-'"/></td>
+                        </tr>
+                        <tr>
+                            <td style="border:1px solid #000;padding:5px 9px;background:#f0f0f0;font-weight:700">رقم الاعتماد الملغى</td>
+                            <td style="border:1px solid #000;padding:5px 9px;direction:ltr;text-align:right"><t t-esc="doc.name"/></td>
+                            <td style="border:1px solid #000;padding:5px 9px;background:#f0f0f0;font-weight:700">رقم البادج</td>
+                            <td style="border:1px solid #000;padding:5px 9px;direction:ltr;text-align:right"><t t-esc="doc.employee_id.barcode or '-'"/></td>
+                        </tr>
+                        <tr>
+                            <td style="border:1px solid #000;padding:5px 9px;background:#f0f0f0;font-weight:700">سيريال التوقيع الأصلي</td>
+                            <td style="border:1px solid #000;padding:5px 9px;direction:ltr;text-align:right;font-family:monospace;font-size:9.5px"><t t-esc="doc.serial or '-'"/></td>
+                            <td style="border:1px solid #000;padding:5px 9px;background:#f0f0f0;font-weight:700">تاريخ الإلغاء</td>
+                            <td style="border:1px solid #000;padding:5px 9px;direction:ltr;text-align:right;font-weight:800;color:#b02a2a"><t t-esc="doc.revocation_date"/></td>
+                        </tr>
+                    </table>
+
+                    <!-- بيان الإلغاء -->
+                    <div style="border:2px solid #b02a2a;border-radius:8px;padding:12px 16px;margin-bottom:12px;line-height:1.7;font-size:11.5px">
+                        يُعلَن بموجب هذا النموذج أنّ <b>التوقيع الإلكتروني واعتماد التوقيع رقم <t t-esc="doc.name"/></b> الخاص بالموظف
+                        <b><t t-esc="doc.employee_id.name"/></b> قد أصبح <b style="color:#b02a2a">لاغيًا وغير معتمد</b> اعتبارًا من تاريخ
+                        <b style="color:#b02a2a"><t t-esc="doc.revocation_date"/></b>. وأيّ استخدام لهذا التوقيع أو الاعتماد بعد هذا التاريخ
+                        يُعدّ <b style="color:#b02a2a">غير صحيح وغير نافذ</b> ولا يُعتدّ به أمام الشركة أو الغير.
+                        <div style="direction:ltr;text-align:left;font-size:10px;color:#333;margin-top:8px;line-height:1.55">
+                            This notice declares that the <b>electronic signature and authorization No. <t t-esc="doc.name"/></b> of employee
+                            <b><t t-esc="doc.employee_id.name"/></b> has become <b style="color:#b02a2a">VOID and no longer approved</b> as of
+                            <b style="color:#b02a2a"><t t-esc="doc.revocation_date"/></b>. Any use of this signature or authorization after this date
+                            is <b style="color:#b02a2a">INVALID and of no effect</b>, and shall not be relied upon by the Company or any third party.
+                        </div>
+                    </div>
+
+                    <!-- سبب الإلغاء (إن وُجد) -->
+                    <table t-if="doc.revocation_reason" style="width:100%;border-collapse:collapse;font-size:10.5px;margin-bottom:12px;color:#000000">
+                        <tr>
+                            <td style="border:1px solid #000;padding:5px 9px;background:#f0f0f0;font-weight:700;width:22%">سبب الإلغاء</td>
+                            <td style="border:1px solid #000;padding:5px 9px"><t t-esc="doc.revocation_reason"/></td>
+                        </tr>
+                    </table>
+
+                    <!-- الإصدار والتوقيع -->
+                    <table style="width:100%;border-collapse:collapse;font-size:10.5px;margin-top:4px;color:#000000">
+                        <tr>
+                            <td style="width:62%;border:1px solid #000;padding:0;vertical-align:top">
+                                <div style="background:#f0f0f0;padding:5px 10px;font-weight:800;color:#000;border-bottom:1px solid #000">اعتماد الإلغاء · Authorized by</div>
+                                <div style="padding:7px 12px">
+                                    <div>الاسم: <b><t t-esc="doc.revoked_by.signature_name or doc.revoked_by.name or '-'"/></b> — مدير منظومة التواقيع</div>
+                                    <div style="height:46px"></div>
+                                    <div style="border-top:1px dotted #777;padding-top:4px;font-size:9px;color:#000">التوقيع · Signature &#160;|&#160; التاريخ · Date: <t t-esc="doc.revocation_date"/></div>
+                                </div>
+                            </td>
+                            <td style="width:38%;border:1px solid #000;padding:8px;text-align:center;vertical-align:top">
+                                <div style="font-size:9px;font-weight:800;color:#000;margin-bottom:4px">الرقم التسلسلي للإلغاء · Revocation Ref</div>
+                                <div style="font-family:monospace;font-size:9.5px;font-weight:700;color:#b02a2a;direction:ltr;word-break:break-all;margin-bottom:4px"><t t-esc="doc.revocation_serial or '-'"/></div>
+                                <img t-if="doc.revocation_serial" t-att-src="doc.revocation_qr_datauri()" style="width:70px;height:70px" title="تحقّق · Verify"/>
+                            </td>
+                        </tr>
+                    </table>
+
+                    <t t-call="care_report_layout.lh_footer_inner"/>
+                </div>
+            </t>
+        </t>
+    </template>
+</odoo>

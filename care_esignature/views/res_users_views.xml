@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- توقيع المستخدم في نموذج المستخدم الكامل (للمسؤول) -->
+    <record id="view_users_form_esign" model="ir.ui.view">
+        <field name="name">res.users.form.esign</field>
+        <field name="model">res.users</field>
+        <field name="inherit_id" ref="base.view_users_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//notebook" position="inside">
+                <page string="التوقيع الإلكتروني" name="esign">
+                    <group>
+                        <field name="esign_signature" widget="topaz_signature" nolabel="1"/>
+                        <field name="esign_signature_set" readonly="1"/>
+                    </group>
+                    <div class="text-muted">وقّع داخل المربّع أعلاه (ارسم توقيعك أو اكتبه) فيُحفَظ ويُختَم تلقائيًا على التقارير عند الاعتماد، وتحته سيريال فريد.</div>
+                </page>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- توقيع المستخدم في تفضيلاته الشخصية (كل مستخدم يضبط توقيعه) -->
+    <record id="view_users_form_simple_modif_esign" model="ir.ui.view">
+        <field name="name">res.users.preferences.esign</field>
+        <field name="model">res.users</field>
+        <field name="inherit_id" ref="base.view_users_form_simple_modif"/>
+        <field name="arch" type="xml">
+            <xpath expr="//group[@name='preferences']" position="after">
+                <group string="توقيعي الإلكتروني" name="esign_pref">
+                    <field name="esign_signature" widget="topaz_signature" nolabel="1"/>
+                    <div class="text-muted" colspan="2">وقّع عبر جهاز Topaz (SigWeb) أو داخل المربّع، فيُحفَظ توقيعك ويظهر على اعتماداتك في التقارير.</div>
+                </group>
+            </xpath>
+        </field>
+    </record>
+</odoo>

@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- ============ Tree ============ -->
+    <record id="view_esign_enrollment_tree" model="ir.ui.view">
+        <field name="name">care.esign.enrollment.tree</field>
+        <field name="model">care.esign.enrollment</field>
+        <field name="arch" type="xml">
+            <tree string="اعتمادات التوقيع الإلكتروني" decoration-success="state=='active'"
+                  decoration-muted="state in ('disabled','rejected')" decoration-warning="state=='to_approve'">
+                <field name="name"/>
+                <field name="employee_id"/>
+                <field name="department_id"/>
+                <field name="request_date"/>
+                <field name="effective_date"/>
+                <field name="serial" optional="hide"/>
+                <field name="state" widget="badge"
+                       decoration-success="state=='active'" decoration-warning="state=='to_approve'"
+                       decoration-info="state=='approved'" decoration-muted="state in ('disabled','rejected')"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- ============ Form ============ -->
+    <record id="view_esign_enrollment_form" model="ir.ui.view">
+        <field name="name">care.esign.enrollment.form</field>
+        <field name="model">care.esign.enrollment</field>
+        <field name="arch" type="xml">
+            <form string="اعتماد التوقيع الإلكتروني">
+                <header>
+                    <button name="action_submit" string="تقديم للاعتماد" type="object"
+                            class="btn-primary" invisible="state != 'draft'"/>
+                    <button name="action_approve" string="اعتماد" type="object"
+                            class="btn-primary" invisible="state != 'to_approve'"/>
+                    <button name="action_reject" string="رفض" type="object"
+                            invisible="state in ('active','disabled','rejected')"/>
+                    <button name="action_activate" string="تفعيل التوقيع" type="object"
+                            class="btn-primary" invisible="state != 'approved'"/>
+                    <button name="action_disable" string="تعطيل التوقيع" type="object"
+                            invisible="state != 'active'"/>
+                    <button name="action_enable" string="إعادة التفعيل" type="object"
+                            class="btn-primary" invisible="state != 'disabled'"/>
+                    <button name="action_revoke" string="طلب إلغاء الاعتماد" type="object"
+                            class="btn-danger" confirm="سيتم إلغاء اعتماد التوقيع نهائيًّا وتعطيل التوقيع، ويصدر نموذج إلغاء رسمي. متابعة؟"
+                            invisible="state in ('draft','to_approve','rejected','revoked')"/>
+                    <button name="action_reset_to_draft" string="إرجاع إلى مسودة" type="object"
+                            confirm="سيُعاد الطلب إلى «مسودة» وتُحذف كل التوقيعات والاعتمادات السابقة. متابعة؟"
+                            invisible="state in ('draft','active')"/>
+                    <button name="action_print_form" string="طباعة نموذج الاعتماد" type="object"
+                            class="btn-secondary" invisible="state in ('draft','rejected')"/>
+                    <button name="action_print_revocation" string="طباعة نموذج الإلغاء" type="object"
+                            class="btn-secondary" invisible="state != 'revoked'"/>
+                    <field name="state" widget="statusbar"
+                           statusbar_visible="draft,to_approve,approved,active"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1><field name="name" readonly="1"/></h1>
+                    </div>
+                    <group>
+                        <group string="الموظّف">
+                            <field name="employee_id"/>
+                            <field name="identification_id"/>
+                            <field name="job_id"/>
+                            <field name="department_id"/>
+                            <field name="user_id"/>
+                        </group>
+                        <group string="الطلب والاعتماد">
+                            <field name="company_id" string="الشركة"/>
+                            <field name="request_date"/>
+                            <field name="requested_by"/>
+                            <field name="approved_by" readonly="1"/>
+                            <field name="approved_date" readonly="1"/>
+                            <field name="effective_date" readonly="1"/>
+                            <field name="serial" readonly="1"/>
+                            <field name="policy_version"/>
+                        </group>
+                    </group>
+                    <group>
+                        <group string="النموذج الموقّع والتوقيع">
+                            <field name="employee_signature" widget="image" options="{'size': [170, 70]}"
+                                   string="التوقيع الإلكتروني للموظف (من ملفه)" readonly="1"/>
+                            <field name="signed_form" filename="signed_form_filename"
+                                   string="صورة اعتماد التوقيع بعد توقيع الموظف عليها"/>
+                            <field name="signed_form_filename" invisible="1"/>
+                        </group>
+                        <group string="التعطيل" invisible="state != 'disabled'">
+                            <field name="disabled_by" readonly="1"/>
+                            <field name="disabled_date" readonly="1"/>
+                            <field name="disable_reason"/>
+                        </group>
+                        <group string="الإلغاء النهائي" invisible="state != 'revoked'">
+                            <field name="revoked_by" readonly="1"/>
+                            <field name="revocation_date" readonly="1"/>
+                            <field name="revocation_serial" readonly="1"/>
+                            <field name="revocation_reason"/>
+                        </group>
+                    </group>
+                    <field name="note" placeholder="ملاحظات…"/>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <!-- ============ Search ============ -->
+    <record id="view_esign_enrollment_search" model="ir.ui.view">
+        <field name="name">care.esign.enrollment.search</field>
+        <field name="model">care.esign.enrollment</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="employee_id"/>
+                <field name="serial"/>
+                <field name="department_id"/>
+                <filter name="f_active" string="فعّال" domain="[('state','=','active')]"/>
+                <filter name="f_wait" string="بانتظار الاعتماد" domain="[('state','=','to_approve')]"/>
+                <filter name="f_approved" string="بانتظار توقيع الموظف" domain="[('state','=','approved')]"/>
+                <filter name="f_disabled" string="معطّل" domain="[('state','=','disabled')]"/>
+                <separator/>
+                <group expand="0" string="تجميع حسب">
+                    <filter name="g_state" string="الحالة" context="{'group_by':'state'}"/>
+                    <filter name="g_dept" string="القسم" context="{'group_by':'department_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- ============ Action ============ -->
+    <record id="action_esign_enrollment" model="ir.actions.act_window">
+        <field name="name">اعتمادات التوقيع الإلكتروني</field>
+        <field name="res_model">care.esign.enrollment</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="view_esign_enrollment_search"/>
+        <field name="context">{}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">لا توجد اعتمادات توقيع إلكتروني بعد</p>
+            <p>أنشئ اعتمادًا لموظف ثمّ اعتمده ليوقّع النموذج ويُرفع فيصبح التوقيع فعّالاً.</p>
+        </field>
+    </record>
+
+    <!-- ============ Menu (محميّ: مدير منظومة التواقيع فقط) ============ -->
+    <menuitem id="menu_esign_enrollment" name="اعتمادات التوقيع"
+              parent="menu_esign_root" action="action_esign_enrollment" sequence="20"
+              groups="care_esignature.group_esign_manager"/>
+</odoo>

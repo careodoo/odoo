@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- عنصر تدقيق للمحادثة على سجل التوقيع -->
+    <record id="mt_esign_signed" model="mail.message.subtype">
+        <field name="name">توقيع إلكتروني</field>
+        <field name="res_model">care.esignature</field>
+        <field name="default" eval="True"/>
+        <field name="description">تمّ تنفيذ توقيع إلكتروني.</field>
+    </record>
+</odoo>

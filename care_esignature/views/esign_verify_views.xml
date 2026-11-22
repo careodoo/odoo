@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_esign_verify_form" model="ir.ui.view">
+        <field name="name">care.esign.verify.form</field>
+        <field name="model">care.esign.verify</field>
+        <field name="arch" type="xml">
+            <form string="التحقّق من توقيع">
+                <sheet>
+                    <div class="oe_title"><h2>🔍 التحقّق من توقيع إلكتروني</h2></div>
+                    <group>
+                        <field name="serial" placeholder="SIG-20261117-0842-XW-01847-A7F3"/>
+                    </group>
+                    <field name="found" invisible="1"/>
+                    <field name="info" widget="html" readonly="1" nolabel="1"/>
+                    <field name="result_id" invisible="1"/>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_esign_verify" model="ir.actions.act_window">
+        <field name="name">التحقّق من توقيع</field>
+        <field name="res_model">care.esign.verify</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+    <menuitem id="menu_esign_verify" name="التحقّق من توقيع" parent="menu_esign_root" action="action_esign_verify" sequence="20"/>
+</odoo>
