@@ -52,6 +52,9 @@
                 <header>
                     <button name="action_preview" type="object" string="معاينة آمنة (dry-run)"
                             class="btn-primary" icon="fa-search"/>
+                    <button name="action_derive_matrix" type="object" string="⟲ اشتقاق المصفوفة من الوضع الحالي"
+                            icon="fa-magic"
+                            confirm="سيُشتقّ مستوى كل مودل من مجموعات هذا المسمّى الحالية (قراءة فقط، بلا تعديل إنتاجي). متابعة؟"/>
                 </header>
                 <sheet>
                     <div class="oe_button_box" name="button_box">
@@ -91,7 +94,23 @@
                                options="{'no_create': True}"/>
                     </group>
                     <notebook>
-                        <page string="مصفوفة الصلاحيات" name="perms">
+                        <page string="مصفوفة الصلاحيات (المودلز)" name="model_perms">
+                            <div class="alert alert-info" role="alert">
+                                المصفوفة الغنية: مستوى هذا المسمّى على كل مودل. اضغط «⟲ اشتقاق المصفوفة» لملئها من الوضع الحالي، ثم عدّل، واضغط «الحقول» لإخفاء حقول حسّاسة.
+                            </div>
+                            <field name="model_perm_ids">
+                                <tree string="مصفوفة المودلز" editable="bottom" default_order="sequence">
+                                    <field name="sequence" widget="handle"/>
+                                    <field name="module"/>
+                                    <field name="model_label"/>
+                                    <field name="model_name" optional="hide"/>
+                                    <field name="level"/>
+                                    <field name="mask_count" string="حقول مخفية"/>
+                                    <button name="action_fields" type="object" string="🔒 الحقول" class="btn-link"/>
+                                </tree>
+                            </field>
+                        </page>
+                        <page string="مصفوفة المناطق" name="perms">
                             <field name="perm_line_ids">
                                 <tree string="مصفوفة الصلاحيات" editable="bottom">
                                     <field name="area"/>

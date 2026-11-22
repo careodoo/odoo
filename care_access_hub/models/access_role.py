@@ -38,7 +38,8 @@ class CareJobRole(models.Model):
         'res.groups', 'care_role_group_rel', 'role_id', 'group_id',
         string='مجموعات أودو المقابلة',
         help='المجموعات الفعلية التي يرِثها المستخدم عند إسناده لهذا المسمّى.')
-    perm_line_ids = fields.One2many('care.role.perm', 'role_id', string='مصفوفة الصلاحيات')
+    perm_line_ids = fields.One2many('care.role.perm', 'role_id', string='مصفوفة الصلاحيات (مناطق)')
+    model_perm_ids = fields.One2many('care.role.model.perm', 'role_id', string='مصفوفة الصلاحيات (مودلز)')
 
     user_ids = fields.Many2many('res.users', 'care_user_role_rel', 'role_id', 'user_id',
                                 string='المستخدمون بهذا المسمّى')
@@ -64,6 +65,50 @@ class CareJobRole(models.Model):
             'view_mode': 'tree,form',
             'target': 'current',
         }
+
+    # ---------- الترحيل الفعلي: اشتقاق المصفوفة من المجموعات الحالية ----------
+    def _level_from_groups(self, groups, model_name):
+        """مستوى المسمّى على مودل، مُشتقّ من ACL مجموعاته الحالية:
+        2=كتابة إن منحت أي مجموعة write/create، 1=قراءة إن منحت read، 0=بلا."""
+        if not groups:
+            return '0'
+        acls = self.env['ir.model.access'].sudo().search([
+            ('model_id.model', '=', model_name), ('group_id', 'in', groups.ids)])
+        if not acls:
+            return '0'
+        if any(a.perm_write or a.perm_create for a in acls):
+            return '2'
+        if any(a.perm_read for a in acls):
+            return '1'
+        return '0'
+
+    def action_derive_matrix(self):
+        """يملأ مصفوفة المودلز من الوضع الحالي (مجموعات المسمّى) — ترحيل فعلي، بلا تعديل إنتاجي."""
+        from .access_matrix import MATRIX
+        Line = self.env['care.role.model.perm'].sudo()
+        for role in self:
+            groups = role.odoo_group_ids
+            existing = {l.model_name: l for l in role.model_perm_ids}
+            seq = 0
+            for module, models_ in MATRIX:
+                for mname, mlabel in models_:
+                    seq += 1
+                    if self.env.get(mname) is None:
+                        continue  # المودل غير مُثبّت — نتخطّاه
+                    lvl = role._level_from_groups(groups, mname)
+                    vals = {'module': module, 'model_label': mlabel, 'sequence': seq, 'level': lvl}
+                    if mname in existing:
+                        existing[mname].write(vals)
+                    else:
+                        vals.update({'role_id': role.id, 'model_name': mname})
+                        Line.create(vals)
+        return True
+
+    @api.model
+    def cron_or_action_derive_all(self):
+        """اشتقاق مصفوفة كل المسمّيات (زرّ/سيرفر أكشن)."""
+        self.search([]).action_derive_matrix()
+        return True
 
 
 MODULE_AREAS = [

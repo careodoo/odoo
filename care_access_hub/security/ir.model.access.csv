@@ -16,3 +16,7 @@ access_notify_channel_mgr,care.access.notify.channel manager,model_care_access_n
 access_notify_channel_user,care.access.notify.channel user,model_care_access_notify_channel,base.group_user,1,0,0,0
 access_notify_optout_own,care.access.notify.optout own,model_care_access_notify_optout,base.group_user,1,1,1,1
 access_notify_optout_mgr,care.access.notify.optout mgr,model_care_access_notify_optout,care_access_hub.group_access_manager,1,1,1,1
+access_role_model_perm_mgr,care.role.model.perm mgr,model_care_role_model_perm,care_access_hub.group_access_manager,1,1,1,1
+access_role_model_perm_user,care.role.model.perm user,model_care_role_model_perm,base.group_user,1,0,0,0
+access_role_field_mask_mgr,care.role.field.mask mgr,model_care_role_field_mask,care_access_hub.group_access_manager,1,1,1,1
+access_role_field_mask_user,care.role.field.mask user,model_care_role_field_mask,base.group_user,1,0,0,0

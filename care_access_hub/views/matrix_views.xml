@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- إخفاء الحقول (popup من زرّ الحقول) -->
+    <record id="view_field_mask_tree" model="ir.ui.view">
+        <field name="name">care.role.field.mask.tree</field>
+        <field name="model">care.role.field.mask</field>
+        <field name="arch" type="xml">
+            <tree string="إخفاء الحقول" editable="bottom" create="false">
+                <field name="field_label" readonly="1"/>
+                <field name="field_name" readonly="1" optional="hide"/>
+                <field name="hidden" widget="boolean_toggle"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- اشتقاق مصفوفة كل المسمّيات -->
+    <record id="action_derive_all_matrices_srv" model="ir.actions.server">
+        <field name="name">⟲ اشتقاق مصفوفة كل المسمّيات (ترحيل)</field>
+        <field name="model_id" ref="model_care_job_role"/>
+        <field name="state">code</field>
+        <field name="code">env['care.job.role'].cron_or_action_derive_all()
+action = {'type': 'ir.actions.client', 'tag': 'display_notification',
+          'params': {'title': 'الترحيل', 'message': 'اشتُقّت مصفوفة كل المسمّيات من الوضع الحالي.',
+                     'type': 'success', 'sticky': False}}</field>
+    </record>
+
+    <menuitem id="menu_derive_all" name="⟲ اشتقاق المصفوفات (ترحيل)"
+              parent="menu_access_migration" action="action_derive_all_matrices_srv" sequence="3"/>
+</odoo>

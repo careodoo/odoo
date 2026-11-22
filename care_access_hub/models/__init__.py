@@ -6,3 +6,4 @@ from . import res_config_settings
 from . import access_snapshot
 from . import access_learn
 from . import access_notify
+from . import access_matrix
