@@ -15,7 +15,7 @@ from odoo import fields
 from odoo.exceptions import AccessError, UserError
 from odoo.http import request, Controller, route
 
-from .api import _auth, _ok, _err, _abs, _bearer, API
+from .api import _auth, _ok, _err, _abs, _bearer, _bsig, API
 
 
 # Never surface these, whatever Odoo would technically allow the caller to read.
@@ -112,6 +112,12 @@ REGISTRY = {
         'model': 'permission.request', 'icon': '🕒', 'ar': 'الاستئذانات', 'en': 'Permissions',
         'order': 'id desc', 'search': ['name', 'employee_id.name'],
         'title': 'name', 'subtitle': 'employee_id', 'amount': None, 'date': 'create_date', 'state': 'state',
+    },
+    'extra_work': {
+        'model': 'care.extra.work', 'icon': '⏱️', 'ar': 'العمل الإضافي', 'en': 'Extra work',
+        'order': 'id desc', 'search': ['name', 'employee_id.name', 'project_id.name'],
+        'title': 'name', 'subtitle': 'project_id', 'amount': None,
+        'date': 'date_from', 'state': 'state',
     },
     'leaves': {
         'model': 'hr.leave', 'icon': '🌴', 'ar': 'الإجازات', 'en': 'Time off',
@@ -234,6 +240,43 @@ REGISTRY = {
         'title': 'employee_id', 'subtitle': 'passport_no', 'amount': None,
         'date': 'expiry_date', 'state': 'state',
     },
+    'passport_req': {
+        'model': 'care.passport.request', 'icon': '🛂', 'ar': 'طلب سحب الجواز', 'en': 'Passport withdrawal',
+        'order': 'id desc',
+        'search': ['name', 'employee_id.name', 'employee_id.barcode', 'passport_no', 'department_id.name'],
+        'title': 'employee_id', 'subtitle': 'reason', 'amount': None,
+        'date': 'request_date', 'state': 'state',
+        'fields': ['employee_id', 'passport_id', 'reason', 'request_date', 'expected_return',
+                   'recipient_name', 'note', 'state'],
+        'edit': ['reason', 'expected_return', 'recipient_name', 'note'],
+    },
+    'absence': {
+        'model': 'hr.action.absence', 'icon': '🚫', 'ar': 'الغياب', 'en': 'Absence',
+        'order': 'id desc',
+        'search': ['employee_id.name', 'employee_barcode', 'department_id.name'],
+        'title': 'employee_id', 'subtitle': 'case_type', 'amount': None,
+        'date': 'absence_date', 'state': 'state',
+        'fields': ['employee_id', 'case_type', 'absence_date', 'absence_reason', 'work_location', 'state'],
+        'edit': ['case_type', 'absence_date', 'absence_reason', 'work_location'],
+    },
+    'absconding': {
+        'model': 'care.absconding.report', 'icon': '🏃', 'ar': 'بلاغات الهروب والتغيب', 'en': 'Absconding reports',
+        'order': 'id desc',
+        'search': ['name', 'employee_id.name', 'employee_id.barcode', 'employee_id.department_id.name'],
+        'title': 'employee_id', 'subtitle': 'case_type', 'amount': None,
+        'date': 'start_date', 'state': 'state',
+        'fields': ['employee_id', 'report_type', 'case_type', 'start_date', 'end_date', 'risk', 'note', 'state'],
+        'edit': ['report_type', 'case_type', 'start_date', 'end_date', 'note'],
+    },
+    'bankcard': {
+        'model': 'care.bank.card.request', 'icon': '💳', 'ar': 'طلب كارت بنك', 'en': 'Bank card request',
+        'order': 'id desc',
+        'search': ['name', 'employee_id.name', 'employee_id.barcode', 'employee_id.department_id.name'],
+        'title': 'employee_id', 'subtitle': 'request_type', 'amount': None,
+        'date': 'request_date', 'state': 'state',
+        'fields': ['employee_id', 'request_type', 'reason', 'reason_other', 'account_number', 'note', 'state'],
+        'edit': ['request_type', 'reason', 'reason_other', 'account_number', 'note'],
+    },
     'legal': {
         'model': 'hr.lawsuit', 'icon': '⚖️', 'ar': 'القضايا القانونية', 'en': 'Legal cases',
         'order': 'id desc', 'search': ['name', 'ref_no', 'court_name', 'employee_id.name'],
@@ -291,6 +334,28 @@ REGISTRY = {
 # `states` gates when the button shows; empty = always. Execution uses the
 # caller's env, so Odoo still refuses if they lack write access.
 ACTIONS = {
+    'hr.employee.resignation': [
+        {'key': 'submit', 'method': 'action_submit', 'ar': 'تقديم الطلب', 'en': 'Submit',
+         'states': ['draft'], 'style': 'primary'},
+        {'key': 'hr_approve', 'method': 'action_hr_approve', 'ar': 'اعتماد الموارد البشرية', 'en': 'HR approve',
+         'states': ['submit'], 'style': 'primary'},
+        {'key': 'fin_approve', 'method': 'action_finance_approve', 'ar': 'اعتماد المالية', 'en': 'Finance approve',
+         'states': ['hr_dept'], 'style': 'primary'},
+        {'key': 'done', 'method': 'action_resignation_done', 'ar': 'إنهاء', 'en': 'Done',
+         'states': ['finance_dept'], 'style': 'primary', 'confirm': True},
+        {'key': 'refuse', 'method': 'action_resignation_refuse', 'ar': 'رفض', 'en': 'Refuse',
+         'states': ['submit', 'hr_dept', 'finance_dept'], 'style': 'danger', 'confirm': True},
+        {'key': 'cancel', 'method': 'action_set_to_draft', 'ar': 'سحب / إلغاء', 'en': 'Withdraw',
+         'states': ['submit', 'hr_dept', 'finance_dept', 'refuse'], 'style': 'plain', 'confirm': True},
+    ],
+    'employee.shift.request': [
+        {'key': 'cancel', 'method': 'action_cancel', 'ar': 'إلغاء الطلب', 'en': 'Cancel request',
+         'states': ['draft', 'sent', 'confirm', 'approval_1', 'approval_2', 'approval_3',
+                    'refuse_1', 'refuse_2', 'refuse_3', 'hr_review', 'hr_refuse'],
+         'style': 'danger', 'confirm': True},
+        {'key': 'draft', 'method': 'action_set_to_draft', 'ar': 'إعادة لمسودة', 'en': 'Reset to draft',
+         'states': ['cancel', 'hr_refuse', 'refuse_1', 'refuse_2', 'refuse_3'], 'style': 'plain'},
+    ],
     'purchases': [
         {'key': 'confirm', 'method': 'button_confirm', 'ar': 'تأكيد الطلب', 'en': 'Confirm order',
          'states': ['draft', 'sent', 'to approve'], 'style': 'primary'},
@@ -531,6 +596,21 @@ REPORTS = {
     'payslips': [
         {'report': 'hr_payroll.report_payslip_lang', 'ar': 'قسيمة الراتب', 'en': 'Payslip', 'type': 'pdf'},
     ],
+    'hr.employee.resignation': [
+        {'report': 'care_reports.report_resignation_submit', 'ar': 'طلب الاستقالة', 'en': 'Resignation request', 'type': 'pdf'},
+    ],
+    'hr.action.leave.return': [
+        {'report': 'care_hr.action_leave_return_report', 'ar': 'نموذج العودة من إجازة', 'en': 'Leave return', 'type': 'pdf'},
+        {'report': 'care_hr.action_leave_return_header_report', 'ar': 'العودة من إجازة (بترويسة)', 'en': 'Leave return (header)', 'type': 'pdf'},
+    ],
+    'hr.action.joining': [
+        {'report': 'care_hr.action_joining_report', 'ar': 'نموذج الالتحاق', 'en': 'Joining form', 'type': 'pdf'},
+        {'report': 'care_hr.action_joining_header_report', 'ar': 'الالتحاق (بترويسة)', 'en': 'Joining (header)', 'type': 'pdf'},
+    ],
+    'hr.action.absence': [
+        {'report': 'care_hr.action_absence_report', 'ar': 'نموذج الغياب', 'en': 'Absence form', 'type': 'pdf'},
+        {'report': 'care_hr.action_absence_header_report', 'ar': 'الغياب (بترويسة)', 'en': 'Absence (header)', 'type': 'pdf'},
+    ],
 }
 
 
@@ -572,8 +652,8 @@ EMP_GROUPS = [
 ]
 
 
-# ترجمة عربية لتسميات الحقول القياسية (ترجمات hr/base غير محمّلة، فتظهر إنجليزية
-# في تطبيق الإدارة). تُطبَّق فقط حين تكون لغة التطبيق عربية.
+# Arabic translation for standard field labels (hr/base translations aren't loaded, so they show in English
+# in the management app). Applied only when the app language is Arabic.
 _FIELD_AR = {
     'name': 'الاسم', 'display_name': 'الاسم', 'work_phone': 'هاتف العمل', 'mobile_phone': 'الجوال',
     'work_email': 'بريد العمل', 'job_title': 'المسمى الوظيفي', 'job_id': 'الوظيفة', 'department_id': 'القسم',
@@ -585,7 +665,7 @@ _FIELD_AR = {
     'resource_calendar_id': 'ساعات العمل', 'tz': 'المنطقة الزمنية', 'employee_type': 'نوع الموظف',
     'pin': 'رمز الدخول', 'barcode': 'الباركود', 'children': 'عدد الأطفال', 'emergency_contact': 'شخص للطوارئ',
     'emergency_phone': 'هاتف الطوارئ', 'km_home_work': 'المسافة (كم)', 'study_field': 'التخصص',
-    'study_school': 'الجامعة/المدرسة', 'certificate': 'المؤهل', 'address_home_id': 'العنوان',
+    'study_school': 'الجامعة/المدرسة', 'certificate': 'المؤهل', 'address_home_id': 'Title',
     'private_email': 'البريد الشخصي', 'private_phone': 'الهاتف الشخصي', 'bank_account_id': 'الحساب البنكي',
     'active': 'نشط', 'state': 'الحالة', 'registration_number': 'الرقم الوظيفي',
     'departure_reason_id': 'سبب المغادرة', 'departure_date': 'تاريخ المغادرة', 'first_contract_date': 'تاريخ أول عقد',
@@ -688,6 +768,31 @@ EMP_CREATE_SPECS = {
         {'name': 'frequency', 'ar': 'التكرار', 'en': 'Frequency', 'type': 'selection', 'required': True},
         {'name': 'date', 'ar': 'التاريخ', 'en': 'Date', 'type': 'date', 'required': True},
     ]},
+    'care.passport.request': {'ar': 'طلب سحب جواز', 'en': 'Passport withdrawal', 'sudo': True, 'fields': [
+        {'name': 'reason', 'ar': 'السبب', 'en': 'Reason', 'type': 'selection', 'required': True},
+        {'name': 'expected_return', 'ar': 'تاريخ الإرجاع المتوقع', 'en': 'Expected return', 'type': 'date', 'required': False},
+        {'name': 'recipient_name', 'ar': 'المستلم', 'en': 'Recipient', 'type': 'char', 'required': False},
+        {'name': 'note', 'ar': 'ملاحظات', 'en': 'Notes', 'type': 'text', 'required': False},
+    ]},
+    'hr.action.absence': {'ar': 'تسجيل غياب', 'en': 'Absence', 'sudo': True, 'fields': [
+        {'name': 'absence_date', 'ar': 'تاريخ الغياب', 'en': 'Absence date', 'type': 'date', 'required': True},
+        {'name': 'case_type', 'ar': 'نوع الغياب', 'en': 'Type', 'type': 'selection', 'required': False},
+        {'name': 'absence_reason', 'ar': 'سبب الغياب', 'en': 'Reason', 'type': 'text', 'required': True},
+        {'name': 'work_location', 'ar': 'موقع العمل', 'en': 'Work location', 'type': 'char', 'required': False},
+    ]},
+    'care.absconding.report': {'ar': 'بلاغ هروب / تغيب', 'en': 'Absconding report', 'sudo': True, 'fields': [
+        {'name': 'report_type', 'ar': 'نوع البلاغ', 'en': 'Report type', 'type': 'selection', 'required': True},
+        {'name': 'start_date', 'ar': 'تاريخ البدء', 'en': 'Start date', 'type': 'date', 'required': True},
+        {'name': 'end_date', 'ar': 'تاريخ الانتهاء', 'en': 'End date', 'type': 'date', 'required': False},
+        {'name': 'note', 'ar': 'ملاحظات', 'en': 'Notes', 'type': 'text', 'required': False},
+    ]},
+    'care.bank.card.request': {'ar': 'طلب كارت بنك', 'en': 'Bank card request', 'sudo': True, 'fields': [
+        {'name': 'request_type', 'ar': 'نوع الطلب', 'en': 'Request type', 'type': 'selection', 'required': True},
+        {'name': 'reason', 'ar': 'السبب', 'en': 'Reason', 'type': 'selection', 'required': False},
+        {'name': 'reason_other', 'ar': 'سبب آخر', 'en': 'Other reason', 'type': 'char', 'required': False},
+        {'name': 'account_number', 'ar': 'رقم الحساب (للإلغاء)', 'en': 'Account number', 'type': 'char', 'required': False},
+        {'name': 'note', 'ar': 'ملاحظات', 'en': 'Notes', 'type': 'text', 'required': False},
+    ]},
     'care.loan': {'ar': 'سلفة / قرض جديد', 'en': 'New loan / advance', 'fields': [
         {'name': 'loan_type', 'ar': 'النوع', 'en': 'Type', 'type': 'selection', 'required': True},
         {'name': 'amount', 'ar': 'المبلغ', 'en': 'Amount', 'type': 'float', 'required': True},
@@ -702,8 +807,11 @@ EMP_CREATE_SPECS = {
     ]},
     'care.eos': {'ar': 'إنهاء خدمة', 'en': 'End of service', 'fields': [
         {'name': 'reason', 'ar': 'السبب', 'en': 'Reason', 'type': 'selection', 'required': True},
-        {'name': 'last_working_day', 'ar': 'آخر يوم عمل', 'en': 'Last working day', 'type': 'date', 'required': True},
-    ]},
+        {'name': 'apply_notice', 'ar': 'تطبيق فترة الإنذار', 'en': 'Apply notice period', 'type': 'bool', 'default': True},
+        {'name': 'notice_start_date', 'ar': 'تاريخ بدء الإنذار', 'en': 'Notice start date', 'type': 'date', 'required': False, 'default_today': True, 'show_if': {'apply_notice': True}},
+        {'name': 'notice_days', 'ar': 'فترة الإنذار (أيام)', 'en': 'Notice days', 'type': 'integer', 'required': False, 'default': 90, 'show_if': {'apply_notice': True}},
+        {'name': 'last_working_day', 'ar': 'آخر يوم عمل', 'en': 'Last working day', 'type': 'date', 'required': True, 'show_if': {'apply_notice': False}},
+    ], 'notice_preview': {'start': 'notice_start_date', 'days': 'notice_days', 'toggle': 'apply_notice', 'result_ar': 'آخر يوم عمل المحتسب', 'result_en': 'Computed last working day'}},
     'care.custody': {'ar': 'عهدة جديدة', 'en': 'New custody', 'fields': [
         {'name': 'item_type', 'ar': 'نوع العهدة', 'en': 'Item type', 'type': 'selection', 'required': True},
         {'name': 'description', 'ar': 'الوصف', 'en': 'Description', 'type': 'char', 'required': True},
@@ -716,6 +824,95 @@ EMP_CREATE_SPECS = {
     'penalty.request': {'ar': 'جزاء جديد', 'en': 'New penalty', 'fields': [
         {'name': 'penalty_type', 'ar': 'نوع الجزاء', 'en': 'Penalty type', 'type': 'selection', 'required': True},
         {'name': 'reason', 'ar': 'السبب', 'en': 'Reason', 'type': 'text', 'required': True},
+    ]},
+    # ===== Worker procedures (matching the project manager portal -- created with sudo permission) =====
+    'hr.leave': {'ar': 'إجازة', 'en': 'Leave', 'sudo': True, 'fields': [
+        {'name': 'holiday_status_id', 'ar': 'نوع الإجازة', 'en': 'Leave type', 'type': 'many2one', 'comodel': 'hr.leave.type', 'required': True},
+        {'name': 'request_date_from', 'ar': 'من', 'en': 'From', 'type': 'date', 'required': True},
+        {'name': 'request_date_to', 'ar': 'إلى', 'en': 'To', 'type': 'date', 'required': True},
+        {'name': 'name', 'ar': 'السبب', 'en': 'Reason', 'type': 'text', 'required': False},
+    ]},
+    'hr.action.leave.return': {'ar': 'عودة من إجازة', 'en': 'Leave return', 'sudo': True, 'fields': [
+        {'name': 'return_to_country_date', 'ar': 'تاريخ العودة للبلاد', 'en': 'Return to country date', 'type': 'date', 'required': False},
+        {'name': 'start_work_date', 'ar': 'تاريخ مباشرة العمل', 'en': 'Work start date', 'type': 'date', 'required': True},
+        {'name': 'notes', 'ar': 'ملاحظات', 'en': 'Notes', 'type': 'text', 'required': False},
+    ], 'edit': ['return_to_country_date', 'start_work_date', 'notes'], 'edit_draft_only': True},
+    'hr.action.joining': {'ar': 'التحاق', 'en': 'Joining', 'sudo': True, 'fields': [
+        {'name': 'join_date', 'ar': 'تاريخ الالتحاق', 'en': 'Joining date', 'type': 'date', 'required': True},
+    ], 'edit': ['join_date'], 'edit_draft_only': True},
+    'hr.action.absence': {'ar': 'غياب', 'en': 'Absence', 'sudo': True, 'fields': [
+        {'name': 'case_type', 'ar': 'نوع الغياب', 'en': 'Absence type', 'type': 'selection', 'required': False},
+        {'name': 'absence_date', 'ar': 'تاريخ الغياب', 'en': 'Absence date', 'type': 'date', 'required': True},
+        {'name': 'absence_reason', 'ar': 'سبب الغياب', 'en': 'Absence reason', 'type': 'text', 'required': True},
+    ], 'edit': ['case_type', 'absence_date', 'absence_reason'], 'edit_draft_only': True},
+    'hr.action.clearance': {'ar': 'إخلاء طرف', 'en': 'Clearance', 'sudo': True, 'fields': []},
+    'employee.shift.request': {'ar': 'نقل / تكليف', 'en': 'Transfer', 'sudo': True, 'fields': [
+        {'name': 'new_department', 'ar': 'القسم الجديد', 'en': 'New department', 'type': 'many2one', 'comodel': 'hr.department', 'required': True},
+        {'name': 'shift_type', 'ar': 'نوع النقل', 'en': 'Transfer type', 'type': 'selection', 'required': True},
+        {'name': 'transfer_date', 'ar': 'تاريخ النقل', 'en': 'Transfer date', 'type': 'date', 'required': False},
+    ], 'edit': ['new_department', 'shift_type', 'transfer_date'], 'edit_draft_only': True,
+       'notices': [
+           {'when': {'shift_type': 'permanent'}, 'style': 'warn',
+            'ar': 'نقل دائم: يُغيّر إدارة/مشروع العامل. ملاحظة: البدلات الخاصة بالمشروع ستتوقف تلقائياً عند اعتماد النقل الدائم، ويراجع المعتمدون أثر الراتب والبدلات في المشروع الجديد.',
+            'en': "Permanent transfer: changes the worker's department/project. Note: project-specific allowances stop automatically upon approval; approvers review the salary/allowance impact in the new project."},
+           {'when': {'shift_type': 'additional'}, 'style': 'info',
+            'ar': 'تكليف إضافي: يبقى العامل في إدارته الأصلية، ويعمل إضافياً في إدارة/مشروع آخر. تُضاف قيمة التكليف إلى راتب الشهر تلقائياً عبر إسناد المشروع (لا يُحرّك إدارة العامل ولا يوقف بدلاته).',
+            'en': "Additional assignment: the worker stays in their original department and works additionally in another department/project. The assignment value is added to the month's salary automatically via project assignment (does not move the worker's department or stop their allowances)."},
+       ]},
+    'care.suspension.request': {'ar': 'إيقاف عن العمل', 'en': 'Work suspension', 'sudo': True, 'fields': [
+        {'name': 'project_id', 'ar': 'المشروع', 'en': 'Project', 'type': 'many2one', 'comodel': 'project.project', 'required': False},
+        {'name': 'reason', 'ar': 'السبب', 'en': 'Reason', 'type': 'selection', 'required': False},
+        {'name': 'other_reason', 'ar': 'سبب آخر', 'en': 'Other reason', 'type': 'char', 'required': False},
+        {'name': 'date', 'ar': 'التاريخ', 'en': 'Date', 'type': 'date', 'required': False},
+        {'name': 'note', 'ar': 'تفاصيل', 'en': 'Details', 'type': 'text', 'required': False},
+    ]},
+    'care.resume.request': {'ar': 'مباشرة العمل بعد التوقف', 'en': 'Resume work', 'sudo': True, 'autosubmit': True, 'fields': [
+        {'name': 'date', 'ar': 'تاريخ المباشرة', 'en': 'Resume date', 'type': 'date', 'required': False},
+        {'name': 'note', 'ar': 'تفاصيل / ملاحظات', 'en': 'Details / notes', 'type': 'text', 'required': False},
+    ], 'edit': ['date', 'note'], 'edit_draft_only': True},
+    'care.worker.document': {'ar': 'وثيقة عامل', 'en': 'Worker document', 'sudo': True, 'fields': [
+        {'name': 'type_id', 'ar': 'نوع الوثيقة', 'en': 'Document type', 'type': 'many2one', 'comodel': 'care.worker.document.type', 'required': True},
+    ]},
+    'care.document.request': {'ar': 'طلب مستند', 'en': 'Document request', 'sudo': True, 'fields': [
+        {'name': 'type_id', 'ar': 'نوع الوثيقة', 'en': 'Document type', 'type': 'many2one', 'comodel': 'care.worker.document.type', 'required': True},
+    ]},
+    'hr.employee.resignation': {'ar': 'استقالة', 'en': 'Resignation', 'sudo': True, 'fields': [
+        {'name': 'request_date', 'ar': 'تاريخ طلب الاستقالة', 'en': 'Request date', 'type': 'date', 'required': False, 'default_today': True},
+        {'name': 'resignation_type', 'ar': 'نوع الاستقالة', 'en': 'Resignation type', 'type': 'selection', 'required': False},
+        {'name': 'apply_notice', 'ar': 'تطبيق فترة الإنذار', 'en': 'Apply notice period', 'type': 'bool', 'default': True},
+        {'name': 'notice_start_date', 'ar': 'تاريخ بدء الإنذار', 'en': 'Notice start date', 'type': 'date', 'required': False, 'default_today': True, 'show_if': {'apply_notice': True}},
+        {'name': 'notice_days', 'ar': 'فترة الإنذار (أيام)', 'en': 'Notice days', 'type': 'integer', 'required': False, 'default': 90, 'show_if': {'apply_notice': True}},
+        {'name': 'leave_date', 'ar': 'آخر يوم عمل (تاريخ المغادرة)', 'en': 'Last working day', 'type': 'date', 'required': True, 'show_if': {'apply_notice': False}},
+        {'name': 'reason', 'ar': 'السبب', 'en': 'Reason', 'type': 'text', 'required': False},
+    ], 'edit': ['request_date', 'leave_date', 'resignation_type', 'reason', 'apply_notice', 'notice_start_date', 'notice_days'], 'edit_draft_only': True,
+       'notice_preview': {'start': 'notice_start_date', 'days': 'notice_days', 'toggle': 'apply_notice', 'result_ar': 'آخر يوم عمل المحتسب', 'result_en': 'Computed last working day'}},
+    'care.extra.work': {'ar': 'طلب عمل إضافي', 'en': 'Extra work', 'sudo': True, 'autosubmit': True, 'fields': [
+        {'name': 'project_id', 'ar': 'المشروع المستفيد', 'en': 'Beneficiary project', 'type': 'many2one', 'comodel': 'project.project', 'required': True},
+        {'name': 'duration_type', 'ar': 'نوع المدة', 'en': 'Duration type', 'type': 'selection', 'required': False},
+        {'name': 'comp_type', 'ar': 'طريقة التعويض', 'en': 'Compensation type', 'type': 'selection', 'required': True},
+        {'name': 'date_from', 'ar': 'من تاريخ (للمدة المحدّدة)', 'en': 'Date from', 'type': 'date', 'required': False},
+        {'name': 'date_to', 'ar': 'إلى تاريخ (للمدة المحدّدة)', 'en': 'Date to', 'type': 'date', 'required': False},
+        {'name': 'hourly_rate', 'ar': 'أجر الساعة', 'en': 'Hourly rate', 'type': 'float', 'required': False},
+        {'name': 'est_hours', 'ar': 'تقدير الساعات', 'en': 'Estimated hours', 'type': 'float', 'required': False},
+        {'name': 'multiplier', 'ar': 'معامل الإضافي', 'en': 'Multiplier', 'type': 'selection', 'required': False},
+        {'name': 'fixed_amount', 'ar': 'المبلغ الثابت', 'en': 'Fixed amount', 'type': 'float', 'required': False},
+        {'name': 'note', 'ar': 'سبب التكليف / ملاحظات', 'en': 'Reason / notes', 'type': 'text', 'required': False},
+    ], 'edit': ['project_id', 'duration_type', 'comp_type', 'date_from', 'date_to', 'hourly_rate', 'est_hours',
+                'multiplier', 'fixed_amount', 'note'], 'edit_draft_only': True},
+    'exit.interview': {'ar': 'مقابلة إنهاء خدمة', 'en': 'Exit interview', 'sudo': True, 'fields': [
+        {'name': 'date', 'ar': 'التاريخ', 'en': 'Date', 'type': 'date', 'required': False},
+        {'name': 'resignation_date', 'ar': 'تاريخ الاستقالة', 'en': 'Resignation date', 'type': 'date', 'required': False},
+        {'name': 'last_working_day', 'ar': 'آخر يوم عمل', 'en': 'Last working day', 'type': 'date', 'required': False},
+    ]},
+    # Resignation withdrawal: the system picks the last active resignation automatically, and it's submitted for approval immediately
+    'care.resignation.withdrawal': {'ar': 'عدول عن استقالة', 'en': 'Resignation withdrawal',
+                                    'sudo': True, 'autosubmit': True, 'fields': [
+        {'name': 'reason', 'ar': 'سبب العدول', 'en': 'Withdrawal reason', 'type': 'text', 'required': True},
+    ]},
+    # EOS withdrawal: the system picks the last active settlement automatically, and it's submitted for approval immediately
+    'care.eos.withdrawal': {'ar': 'عدول عن إنهاء خدمات', 'en': 'EOS withdrawal',
+                            'sudo': True, 'autosubmit': True, 'fields': [
+        {'name': 'reason', 'ar': 'سبب العدول', 'en': 'Withdrawal reason', 'type': 'text', 'required': True},
     ]},
 }
 
@@ -745,6 +942,21 @@ class ManagementApi(Controller):
             ('Content-Type', 'text/html; charset=utf-8'),
             ('Cache-Control', 'public, max-age=300')])
 
+    @route(['/payroll-blueprint', '/care/payroll-blueprint'], type='http', auth='public',
+           methods=['GET'], csrf=False)
+    def payroll_blueprint_page(self, **kw):
+        """صفحة عامة قابلة للمشاركة: المخطط الكامل لمديول الرواتب (من الألف للياء)."""
+        import os
+        path = os.path.join(os.path.dirname(__file__), '..', 'static', 'payroll-blueprint.html')
+        try:
+            with open(path, encoding='utf-8') as f:
+                html = f.read()
+        except Exception:
+            return request.not_found()
+        return request.make_response(html, headers=[
+            ('Content-Type', 'text/html; charset=utf-8'),
+            ('Cache-Control', 'public, max-age=300')])
+
     def _spec(self, key):
         return REGISTRY.get(key)
 
@@ -760,8 +972,6 @@ class ManagementApi(Controller):
         """Actions available on THIS record for THIS user."""
         out = []
         defs = ACTIONS.get(key) or []
-        if not defs:
-            return out
         # no write access → offer nothing rather than fail on tap
         if not spec.get('sudo'):
             try:
@@ -776,12 +986,49 @@ class ManagementApi(Controller):
                 continue
             out.append({'key': a['key'], 'ar': a['ar'], 'en': a['en'],
                         'style': a.get('style', 'plain'), 'confirm': bool(a.get('confirm'))})
+        # Unified pattern: a "withdraw/cancel" button for any section of the worker file as long as the request isn't approved
+        if (key in self._EMP_SUB and key not in self._EMP_READONLY
+                and not any(o['key'] == 'cancel' for o in out)
+                and st in self._EMP_EDIT_STATES
+                and (any(hasattr(rec, m) for m in self._EMP_CANCEL_METHODS)
+                     or st in ('draft', 'new') or not st)):
+            out.append({'key': 'cancel', 'ar': 'سحب / إلغاء', 'en': 'Withdraw',
+                        'style': 'danger', 'confirm': True})
         return out
+
+    def _mask_set(self, env, model_name):
+        """أسماء الحقول المخفية عن المستخدم الحالي (أقنعة care_access_hub منظومة الصلاحيات).
+        تُحسب بالمستخدم الحقيقي (غير sudo) وتُخزَّن مؤقّتًا لكل (مستخدم، موديل) في الطلب."""
+        cache = getattr(self, '_ah_cache', None)
+        if cache is None:
+            cache = self._ah_cache = {}
+        k = (env.uid, model_name)
+        if k not in cache:
+            s = set()
+            try:
+                M = env[model_name]
+                if hasattr(M, '_ah_hidden_fields'):
+                    s = M._ah_hidden_fields() or set()
+            except Exception:
+                s = set()
+            cache[k] = s
+        return cache[k]
+
+    def _is_masked(self, rec, fname):
+        """هل الحقل مقنّع عن المستخدم الحقيقي؟ (يتجاوز الأدمن/النظام تلقائيًّا داخل _ah_hidden_fields)."""
+        try:
+            if rec.env.su:
+                return False  # التفصيل يُنقّي القائمة مسبقًا للسجلّات المرفوعة بـsudo
+            return fname in self._mask_set(rec.env, rec._name)
+        except Exception:
+            return False
 
     def _val(self, rec, fname):
         """Read a field for display, tolerating missing fields across versions."""
         if not fname or fname not in rec._fields:
             return None
+        if self._is_masked(rec, fname):
+            return None  # صلاحيات منظومة الصلاحيات: حقل حسّاس مخفي عن مسمّى هذا المستخدم
         v = rec[fname]
         f = rec._fields[fname]
         if f.type == 'many2one':
@@ -800,6 +1047,8 @@ class ManagementApi(Controller):
     def _raw_edit_val(self, rec, fname):
         """The stored value for an editable field — an id for m2o, a string for
         dates — so the app pre-fills the form correctly."""
+        if self._is_masked(rec, fname):
+            return None  # حقل مقنّع: لا يُكشف للتعديل عبر التطبيق
         f = rec._fields[fname]
         v = rec[fname]
         if f.type == 'many2one':
@@ -891,11 +1140,21 @@ class ManagementApi(Controller):
     # avoid duplication. Still fully reachable via /management/<key>/list.
     _EMP_SUB = {
         'leaves', 'hr_allowances', 'hr_bonuses', 'hr_loans', 'hr_penalties',
-        'hr_eos', 'hr_custody', 'hr_permissions', 'documents', 'correspondence',
-        'passports', 'recruitment',
+        'hr_eos', 'hr_custody', 'hr_permissions', 'extra_work', 'documents', 'correspondence',
+        'passports', 'passport_req', 'absence', 'absconding', 'bankcard', 'recruitment',
     }
-    # Payroll sub-systems grouped under a single «الرواتب» parent tile.
+    # Payroll sub-systems grouped under a single "Payroll" parent tile.
     _PAYROLL_SUB = {'payslips', 'payroll'}
+
+    # ===== Unified "approved" pattern for the worker file icons =====
+    # States in which the request is considered "not approved" -> editing and cancellation are allowed.
+    _EMP_EDIT_STATES = {'draft', 'new', 'sent', 'submit', 'submitted', 'to_submit',
+                        'confirm', 'to approve', 'pending', 'hr_review', 'request'}
+    # Cancellation/withdrawal methods (the first available one is used).
+    _EMP_CANCEL_METHODS = ('action_cancel', 'action_set_to_draft', 'button_cancel',
+                           'action_refuse', 'action_reject', 'action_draft')
+    # Read-only sections (no editing/cancellation from the app -- specific to HR).
+    _EMP_READONLY = {'documents', 'passports'}
 
     # ---- which systems does THIS user actually have? ----------------------
     @route(API + '/management/apps', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
@@ -904,12 +1163,39 @@ class ManagementApi(Controller):
         if not env:
             return _err('غير مصرّح', 401)
         access = self._user_access(env)
+
+        # ---- Collections card + "dedicated collector" status ----
+        # The dedicated collector (a member of the collectors group and not a system admin) sees the
+        # Collections icon alone, without any other icon in the management app grid.
+        coll_tile = None
+        is_collector = env.user.has_group('care_collections.group_collector')
+        is_finance = env.user.has_group('care_collections.group_collection_finance')
+        is_sys = env.user.has_group('base.group_system') or env.user.has_group('base.group_erp_manager')
+        if is_collector or is_finance:
+            try:
+                dom = [('state', '=', 'invoiced'), ('collection_open', '=', True)]
+                is_coll_mgr = env.user.has_group('care_collections.group_collection_manager')
+                # Finance, the manager, and the admin see all invoices; the collector only their invoices
+                if not (is_coll_mgr or is_sys or is_finance):
+                    dom.append(('collector_id', '=', env.uid))
+                RI = env['request.invoice']
+                ccount = RI.search_count(dom)
+                cpending = RI.search_count(dom + [('is_overdue', '=', True)])
+                coll_tile = {'key': 'collections', 'icon': '💰', 'ar': 'التحصيل',
+                             'en': 'Collections', 'count': ccount, 'pending': cpending,
+                             'native': 'collections', 'readonly': (is_finance and not is_collector and not is_sys)}
+            except Exception:
+                coll_tile = None
+        # The collector/finance who isn't a system admin: the Collections icon alone
+        if (is_collector or is_finance) and not is_sys and coll_tile is not None:
+            return _ok([coll_tile])
+
         out = []
         for key, spec in REGISTRY.items():
             if key in self._EMP_SUB:
                 continue  # surfaced inside the Employees icon instead
             if key in self._PAYROLL_SUB:
-                continue  # surfaced inside the «الرواتب» parent tile instead
+                continue  # surfaced inside the "Payroll" parent tile instead
             if key == 'bio_devices':
                 continue  # surfaced inside the Attendance icon instead
             if key in access['hidden']:
@@ -931,7 +1217,7 @@ class ManagementApi(Controller):
                 continue
             out.append({'key': key, 'icon': spec['icon'], 'ar': spec['ar'], 'en': spec['en'],
                         'count': count, 'pending': pending})
-        # synthetic «الرواتب» parent tile (opens a hub of payslips + batches)
+        # synthetic "Payroll" parent tile (opens a hub of payslips + batches)
         if 'payslips' not in access['hidden'] and self._can(env, REGISTRY['payslips']):
             try:
                 Slip = self._model(env, REGISTRY['payslips'])
@@ -941,6 +1227,9 @@ class ManagementApi(Controller):
                             'count': pcount, 'pending': ppend})
             except Exception:
                 pass
+        # The Collections card for managers/admins within the general grid
+        if coll_tile is not None and 'collections' not in access['hidden']:
+            out.append(coll_tile)
         return _ok(out)
 
     # ---- counts for the Employees sub-module icon row (feeds red badges) ---
@@ -951,9 +1240,10 @@ class ManagementApi(Controller):
             return _err('غير مصرّح', 401)
         access = self._user_access(env)
         # the ordered keys shown under the Employees icon
-        keys = ['attendance', 'leaves', 'hr_allowances', 'hr_loans', 'hr_bonuses',
+        keys = ['attendance', 'leaves', 'extra_work', 'hr_allowances', 'hr_loans', 'hr_bonuses',
                 'hr_penalties', 'hr_eos', 'hr_permissions', 'hr_custody',
-                'documents', 'correspondence', 'passports', 'recruitment']
+                'documents', 'correspondence', 'passports', 'passport_req',
+                'absence', 'absconding', 'bankcard', 'recruitment']
         out = {}
         for key in keys:
             spec = REGISTRY.get(key)
@@ -1304,7 +1594,7 @@ class ManagementApi(Controller):
             'leaves': [('الموظف', 'Employee', m2o('employee_id')), ('النوع', 'Type', m2o('holiday_status_id')),
                        ('الأيام', 'Days', val('number_of_days')), ('من', 'From', dat('date_from')),
                        ('إلى', 'To', dat('date_to')), ('الحالة', 'State', sel('state'))],
-            'crm': [('العنوان', 'Title', val('name')), ('العميل', 'Customer', m2o('partner_id')),
+            'crm': [('Title', 'Title', val('name')), ('العميل', 'Customer', m2o('partner_id')),
                     ('الإيراد المتوقع', 'Expected', val('expected_revenue')), ('الاحتمالية %', 'Prob %', val('probability')),
                     ('المرحلة', 'Stage', m2o('stage_id')), ('المندوب', 'Owner', m2o('user_id'))],
             'invoices': [('الفاتورة', 'Invoice', val('name')), ('الطرف', 'Partner', m2o('partner_id')),
@@ -1323,7 +1613,7 @@ class ManagementApi(Controller):
         if key in table:
             return table[key]
         # generic fallback from the spec
-        cols = [('العنوان', 'Title', lambda r: self._val(r, spec['title']) or r.display_name)]
+        cols = [('Title', 'Title', lambda r: self._val(r, spec['title']) or r.display_name)]
         if spec.get('subtitle'):
             cols.append(('التفاصيل', 'Details', lambda r: self._val(r, spec['subtitle']) or ''))
         if spec.get('state'):
@@ -1466,6 +1756,11 @@ class ManagementApi(Controller):
                      and fname not in ('id', 'display_name', '__last_update',
                                        'create_uid', 'write_uid', 'write_date')
                      and not SENSITIVE_RE.search(fname)]
+        # صلاحيات منظومة الصلاحيات: احذف الحقول المقنّعة عن مسمّى هذا المستخدم (بالمستخدم الحقيقي
+        # حتى لو كان السجلّ يُقرأ بـsudo) — يطبّق أقنعة الباك-إند على تطبيق الإدارة.
+        _hidden = self._mask_set(env, rec._name)
+        if _hidden:
+            names = [f for f in names if f not in _hidden]
         title_f, state_f = spec.get('title'), spec.get('state')
         editset = set(spec.get('edit') or [])
         # Grouped, in a fixed professional order — parties, then money, dates,
@@ -1512,6 +1807,13 @@ class ManagementApi(Controller):
             buckets[sec]['fields'].append(meta)
         sections = [dict(v, key=k) for k, v in buckets.items() if v['fields']]
         code = self._raw_state(rec, spec)
+        # "Edit in draft only": the edit button disappears after the first action on the request
+        if spec.get('edit_draft_only') and code and code not in ('draft', 'new'):
+            editable = []
+        # Unified worker file pattern: editable as long as not approved; and documents/passports are read-only
+        if key in self._EMP_SUB:
+            if key in self._EMP_READONLY or (code and code not in self._EMP_EDIT_STATES):
+                editable = []
         payload = {
             'id': rec.id, 'title': self._val(rec, spec['title']) or rec.display_name,
             'ar': spec['ar'], 'en': spec['en'], 'icon': spec['icon'],
@@ -2140,7 +2442,7 @@ class ManagementApi(Controller):
         if p:
             add('الهاتف', 'Phone', p.phone or p.mobile, '📞')
             add('البريد', 'Email', p.email, '✉️')
-            add('العنوان', 'Address', ', '.join([x for x in [p.city, p.country_id.name if p.country_id else None] if x]) or None, '📍')
+            add('Title', 'Address', ', '.join([x for x in [p.city, p.country_id.name if p.country_id else None] if x]) or None, '📍')
         for fld, ar, en, ic in (('date_order', 'تاريخ الأمر', 'Order date', '📅'),
                                 ('invoice_date', 'تاريخ الفاتورة', 'Invoice date', '📅'),
                                 ('invoice_date_due', 'تاريخ الاستحقاق', 'Due date', '⏰'),
@@ -2181,9 +2483,9 @@ class ManagementApi(Controller):
     # ---- Fleet (vehicles) -------------------------------------------------
     def _fleet_state_color(self, name):
         n = (name or '').lower()
-        if any(k in n for k in ('sold', 'scrap', 'inactive', 'مباع', 'خردة')):
+        if any(k in n for k in ('sold', 'scrap', 'inactive', 'مباع', 'Scrap')):
             return '#DC2626'
-        if any(k in n for k in ('reserve', 'waiting', 'order', 'حجز', 'انتظار')):
+        if any(k in n for k in ('reserve', 'waiting', 'order', 'حجز', 'Waiting')):
             return '#F59E0B'
         return '#16A34A'
 
@@ -3405,6 +3707,9 @@ class ManagementApi(Controller):
         if not env:
             return request.not_found()
         spec = self._spec(key)
+        if not spec and report and key in REPORTS and key in env:
+            # A record within the worker file: the key is the model name directly (not a REGISTRY code)
+            spec = {'model': key, 'sudo': True}
         if not spec or not report:
             return request.not_found()
         # the report must be one we declared for this system (no arbitrary render)
@@ -3467,8 +3772,21 @@ class ManagementApi(Controller):
                 date = _d(rec[c])
                 break
         state = self._val(rec, 'state') if 'state' in M else None
+        # Record capabilities for the app: print the report + edit/cancel (draft only)
+        try:
+            reports = self._reports_for(rec.env, rec._name, rec.id)
+        except Exception:
+            reports = []
+        can_act = rec._name in EMP_CREATE_SPECS
+        try:
+            is_draft = self._empsub_is_draft(rec)
+        except Exception:
+            is_draft = False
         return {'id': rec.id, 'title': str(title)[:80], 'subtitle': sub,
-                'amount': amount, 'date': date, 'state': state}
+                'amount': amount, 'date': date, 'state': state,
+                'model': rec._name, 'reports': reports,
+                'can_edit': bool(can_act and is_draft),
+                'can_cancel': bool(can_act and is_draft)}
 
     @route(API + '/management/employee/<int:eid>/full', type='http', auth='public',
            methods=['GET'], csrf=False, cors='*')
@@ -3525,7 +3843,11 @@ class ManagementApi(Controller):
         for model, ar, en, icon in EMP_RELATED:
             if model not in env:
                 continue
-            M = env[model].sudo()
+            # Caller's own ACL (NOT sudo): these related models carry payroll /
+            # HR data, so record rules must apply. A caller without access to a
+            # model is skipped (AccessError) rather than being handed another
+            # employee's payslips, loans, penalties, EOS, etc.
+            M = env[model]
             ef = 'employee_id' if 'employee_id' in M._fields else (
                 'employee_ids' if 'employee_ids' in M._fields else None)
             if not ef:
@@ -3533,6 +3855,9 @@ class ManagementApi(Controller):
             try:
                 dom = [(ef, 'in', [emp.id])] if ef == 'employee_ids' else [(ef, '=', emp.id)]
                 recs = M.search(dom, limit=40)
+                recs.check_access_rule('read')
+            except AccessError:
+                continue
             except Exception:
                 continue
             if not recs:
@@ -3556,7 +3881,7 @@ class ManagementApi(Controller):
             'job': emp.job_title or None,
             'department': emp.department_id.display_name if emp.department_id else None,
             'badge': emp.barcode or None,
-            'avatar': _abs('/api/v1/pms/employee/%s/photo' % emp.id),
+            'avatar': _abs('/api/v1/pms/employee/%s/photo' % emp.id) + '?s=' + _bsig('empphoto', emp.id),
             'work_email': emp.work_email or None,
             'work_phone': emp.work_phone or emp.mobile_phone or None,
             'sections': sections,
@@ -3573,12 +3898,41 @@ class ManagementApi(Controller):
         spec = self._spec(key)
         if not spec:
             return _err('نظام غير معروف', 404)
+        if not self._can(env, spec):
+            return _err('لا تملك صلاحية على هذا النظام', 403)
         acc = self._user_access(env)
         if key in acc['hidden'] or key in acc['no_edit']:
             return _err('لا تملك صلاحية التعديل على هذا النظام', 403)
         from .api import _body
         akey = (_body() or {}).get('action')
         adef = next((a for a in (ACTIONS.get(key) or []) if a['key'] == akey), None)
+        # Unified pattern: generic cancel/withdraw for worker file sections (without a custom ACTIONS)
+        if not adef and akey == 'cancel' and key in self._EMP_SUB and key not in self._EMP_READONLY:
+            try:
+                rec = self._model(env, spec).browse(rid)
+                rec.read(['id'])
+            except Exception:
+                return _err('غير موجود أو غير مصرّح', 403)
+            st = self._raw_state(rec, spec)
+            if st and st not in self._EMP_EDIT_STATES:
+                return _err('لا يمكن الإلغاء بعد اعتماد الطلب', 422)
+            for m in self._EMP_CANCEL_METHODS:
+                if hasattr(rec, m):
+                    try:
+                        getattr(rec, m)()
+                    except AccessError:
+                        return _err('لا تملك صلاحية الإلغاء', 403)
+                    except Exception as e:
+                        return _err(str(e) or 'تعذّر الإلغاء', 422)
+                    rec.invalidate_recordset()
+                    return _ok({'id': rec.id, 'state': self._val(rec, spec.get('state'))})
+            if not st or st in ('draft', 'new'):
+                try:
+                    rec.unlink()
+                except Exception as e:
+                    return _err(str(e) or 'تعذّر الحذف', 422)
+                return _ok({'deleted': True})
+            return _err('لا يوجد إجراء إلغاء متاح', 422)
         if not adef:
             return _err('إجراء غير معروف', 422)
         try:
@@ -3627,6 +3981,10 @@ class ManagementApi(Controller):
             rec.read(['id'])
         except Exception:
             return _err('غير موجود أو غير مصرّح', 403)
+        # "Edit in draft only": editing is prevented after the first action on the request
+        if spec.get('edit_draft_only') and spec.get('state') and spec['state'] in rec._fields:
+            if (rec[spec['state']] or 'draft') not in ('draft', 'new'):
+                return _err('لا يمكن تعديل الطلب بعد تقديمه — تم تنفيذ إجراء عليه.', 422)
         vals = {}
         for fname, val in body.items():
             if fname not in editset or fname not in rec._fields:
@@ -4054,7 +4412,7 @@ class ManagementApi(Controller):
             return _err('غير موجود', 404)
         return _ok({'attachments': self._attachments_for(env, rec)})
 
-    @route(API + '/management/attachment/<int:aid>', type='http',
+    @route([API + '/management/attachment/<int:aid>', '/management/attachment/<int:aid>'], type='http',
            auth='public', methods=['GET'], csrf=False, cors='*')
     def management_attachment(self, aid, token=None, **kw):
         env = _auth()
@@ -4388,7 +4746,7 @@ class ManagementApi(Controller):
             return _err('تعذّر الحفظ: %s' % e, 422)
         return _ok({'id': po.id, 'title': po.name})
 
-    # ---- Housing «السكن» hub (hostels / rooms / beds / occupancy) ---------
+    # ---- Housing "Housing" hub (hostels / rooms / beds / occupancy) ---------
     def _housing_ok(self, env):
         return 'hostel.bed' in env and self._can(env, {'model': 'hostel.bed'})
 
@@ -4929,6 +5287,13 @@ class ManagementApi(Controller):
         return _ok({'id': rec.id, 'title': title})
 
     # ---- Employee sub-module quick-create (allowance/loan/permission/…) ----
+    @staticmethod
+    def _coerce_bool(v):
+        """تحويل قيمة قادمة من JSON إلى Boolean (يعالج النصوص false/0)."""
+        if isinstance(v, str):
+            return v.strip().lower() not in ('', 'false', '0', 'no', 'none')
+        return bool(v)
+
     def _cast_create_vals(self, Model, spec_fields, b):
         """Cast body values per field spec; return (vals, error_or_None)."""
         vals = {}
@@ -4936,7 +5301,15 @@ class ManagementApi(Controller):
             name, typ = f['name'], f['type']
             if name not in Model._fields:
                 continue
+            # Skip conditionally hidden fields (show_if not satisfied): not required and not sent
+            sif = f.get('show_if')
+            if sif and not all(self._coerce_bool(b.get(k)) == bool(val) for k, val in sif.items()):
+                continue
             v = b.get(name)
+            if typ in ('bool', 'boolean'):
+                # The boolean value is always sent (even False) -- not treated as "empty"
+                vals[name] = self._coerce_bool(v)
+                continue
             if v in (None, ''):
                 if f.get('required'):
                     return None, 'الحقل «%s» مطلوب' % f['ar']
@@ -4946,8 +5319,6 @@ class ManagementApi(Controller):
                     vals[name] = int(v)
                 elif typ in ('float', 'monetary'):
                     vals[name] = float(v)
-                elif typ == 'boolean':
-                    vals[name] = bool(v)
                 else:
                     vals[name] = v
             except (TypeError, ValueError):
@@ -4968,14 +5339,39 @@ class ManagementApi(Controller):
         for f in cs['fields']:
             if f['name'] not in Model._fields:
                 continue
-            item = {k: f[k] for k in ('name', 'ar', 'en', 'type', 'required') if k in f}
+            item = {k: f[k] for k in ('name', 'ar', 'en', 'type', 'required',
+                                      'default', 'default_today', 'show_if') if k in f}
             if f['type'] == 'selection':
                 try:
                     item['options'] = [{'v': k2, 'l': l2} for k2, l2 in Model._fields[f['name']]._description_selection(env)]
                 except Exception:
                     item['options'] = []
+            elif f['type'] == 'many2one':
+                # Displayed as a dropdown in the app (value = record id)
+                item['type'] = 'selection'
+                co = f.get('comodel')
+                try:
+                    recs = env[co].sudo().search([], limit=400) if (co and co in env) else []
+                    item['options'] = [{'v': r.id, 'l': r.display_name} for r in recs]
+                except Exception:
+                    item['options'] = []
             out.append(item)
-        return _ok({'model': model, 'ar': cs['ar'], 'en': cs['en'], 'fields': out})
+        resp = {'model': model, 'ar': cs['ar'], 'en': cs['en'], 'fields': out}
+        if cs.get('notice_preview'):
+            resp['notice_preview'] = cs['notice_preview']
+        if cs.get('notices'):
+            resp['notices'] = cs['notices']
+        # الإدارة الحالية للعامل (تظهر للمستخدم تلقائياً عند توفّر employee_id)
+        eid = kw.get('employee_id')
+        if eid and 'current_department' in Model._fields:
+            try:
+                emp = env['hr.employee'].sudo().browse(int(eid))
+                if emp.exists() and emp.department_id:
+                    resp['current_info'] = {'ar': 'الإدارة الحالية', 'en': 'Current Department',
+                                            'value': emp.department_id.name}
+            except (TypeError, ValueError):
+                pass
+        return _ok(resp)
 
     @route(API + '/management/emp-sub/create', type='http', auth='public',
            methods=['POST'], csrf=False, cors='*')
@@ -4991,15 +5387,25 @@ class ManagementApi(Controller):
             return _err('غير متاح', 404)
         if not b.get('employee_id'):
             return _err('الموظف مطلوب', 422)
-        Model = env[model]
-        try:
-            Model.check_access_rights('create', raise_exception=True)
-        except Exception:
-            return _err('لا تملك صلاحية الإنشاء', 403)
+        use_sudo = bool(cs.get('sudo'))
+        Model = env[model].sudo() if use_sudo else env[model]
+        if not use_sudo:
+            try:
+                Model.check_access_rights('create', raise_exception=True)
+            except Exception:
+                return _err('لا تملك صلاحية الإنشاء', 403)
         vals, err = self._cast_create_vals(Model, cs['fields'], b)
         if err:
             return _err(err, 422)
         vals['employee_id'] = int(b['employee_id'])
+        # الإدارة الحالية للعامل تُضبط تلقائياً (لا يُشغَّل onchange عبر الـAPI)
+        if 'current_department' in Model._fields:
+            emp = env['hr.employee'].sudo().browse(int(b['employee_id']))
+            if emp.department_id:
+                vals.setdefault('current_department', emp.department_id.id)
+        vals.update(cs.get('fixed') or {})
+        if cs.get('autosubmit'):
+            Model = Model.with_context(portal_submit=True)
         try:
             rec = Model.create(vals)
         except AccessError:
@@ -5007,6 +5413,76 @@ class ManagementApi(Controller):
         except Exception as e:
             return _err('تعذّر الإنشاء: %s' % e, 422)
         return _ok({'id': rec.id, 'title': rec.display_name})
+
+    @staticmethod
+    def _empsub_is_draft(rec):
+        """هل السجل ما زال مسودة (لم يُقدَّم)؟ يسمح بالتعديل/الإلغاء فقط حينها."""
+        if 'state' not in rec._fields:
+            return True
+        return rec.state in ('draft', 'new', False, None)
+
+    @route(API + '/management/emp-sub/edit', type='http', auth='public',
+           methods=['POST'], csrf=False, cors='*')
+    def management_empsub_edit(self, **kw):
+        """تعديل سجل عامل طالما كان مسودة ولم يُقدَّم (نفس حقول الإنشاء)."""
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        from .api import _body
+        b = _body() or {}
+        model = b.get('model')
+        cs = EMP_CREATE_SPECS.get(model)
+        if not cs or model not in env or not b.get('id'):
+            return _err('غير متاح', 404)
+        Model = env[model].sudo() if cs.get('sudo') else env[model]
+        rec = Model.browse(int(b['id'])).exists()
+        if not rec:
+            return _err('غير موجود', 404)
+        if not self._empsub_is_draft(rec):
+            return _err('لا يمكن التعديل بعد تقديم الطلب', 422)
+        vals, err = self._cast_create_vals(Model, cs['fields'], b)
+        if err:
+            return _err(err, 422)
+        try:
+            rec.write(vals)
+        except AccessError:
+            return _err('لا تملك صلاحية التعديل', 403)
+        except Exception as e:
+            return _err('تعذّر التعديل: %s' % e, 422)
+        return _ok({'id': rec.id, 'title': rec.display_name})
+
+    @route(API + '/management/emp-sub/cancel', type='http', auth='public',
+           methods=['POST'], csrf=False, cors='*')
+    def management_empsub_cancel(self, **kw):
+        """إلغاء/حذف سجل عامل طالما كان مسودة ولم يُقدَّم."""
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        from .api import _body
+        b = _body() or {}
+        model = b.get('model')
+        cs = EMP_CREATE_SPECS.get(model)
+        if not cs or model not in env or not b.get('id'):
+            return _err('غير متاح', 404)
+        Model = env[model].sudo() if cs.get('sudo') else env[model]
+        rec = Model.browse(int(b['id'])).exists()
+        if not rec:
+            return _err('غير موجود', 404)
+        if not self._empsub_is_draft(rec):
+            return _err('لا يمكن الإلغاء بعد تقديم الطلب', 422)
+        try:
+            # If the model has a "canceled/rejected" state we use it, otherwise we delete the draft
+            sel = dict(rec._fields['state'].selection) if 'state' in rec._fields else {}
+            cancel_state = next((s for s in ('cancel', 'cancelled', 'refuse', 'rejected') if s in sel), None)
+            if cancel_state:
+                rec.write({'state': cancel_state})
+                return _ok({'id': rec.id, 'cancelled': True, 'deleted': False})
+            rec.unlink()
+            return _ok({'deleted': True, 'cancelled': True})
+        except AccessError:
+            return _err('لا تملك صلاحية الإلغاء', 403)
+        except Exception as e:
+            return _err('تعذّر الإلغاء: %s' % e, 422)
 
     # ---- Access administration (managers configure per-user permissions) ---
     @route(API + '/management/access/meta', type='http', auth='public',
@@ -5077,7 +5553,7 @@ class ManagementApi(Controller):
         return _ok({'saved': True, 'user_id': uid})
 
     # ---- Approvals inbox: records awaiting THIS user's action -------------
-    # The featured "الاعتمادات" tile. Genuine "needs me" signals only:
+    # The featured "Approvals" tile. Genuine "needs me" signals only:
     #   • Odoo activities assigned to me (covers leave/expense/PO approvers,
     #     to-approve routing, follow-ups) — grouped by the record's model.
     #   • approval.request where I'm a still-pending approver.
