@@ -246,6 +246,8 @@ class _ExtraWorkScreenState extends State<ExtraWorkScreen> {
         _kv(Icons.event_rounded, tr('تاريخ البدء', 'Start date'), '${r['date_from'] ?? '—'}'),
         if ((r['date_to'] ?? '').toString().isNotEmpty)
           _kv(Icons.event_available_rounded, tr('تاريخ الانتهاء', 'End date'), '${r['date_to']}'),
+        if ((r['time_window'] ?? '').toString().isNotEmpty)
+          _kv(Icons.schedule_rounded, tr('التوقيت', 'Time'), '${r['time_window']}'),
         _kv(Icons.payments_rounded, tr('التعويض', 'Compensation'),
             '${r['comp']} · ${(r['cost'] as num?)?.toStringAsFixed(1) ?? ''} ${r['currency'] ?? ''}'),
         if (pending)
