@@ -12,3 +12,7 @@ access_care_snapshot_line_mgr,care.access.snapshot.line manager,model_care_acces
 access_care_audit_mgr,care.access.audit manager,model_care_access_audit,care_access_hub.group_access_manager,1,1,1,0
 access_care_audit_user,care.access.audit user,model_care_access_audit,base.group_user,1,0,0,0
 access_care_learn_wizard,care.access.learn.wizard,model_care_access_learn_wizard,care_access_hub.group_access_manager,1,1,1,1
+access_notify_channel_mgr,care.access.notify.channel manager,model_care_access_notify_channel,care_access_hub.group_access_manager,1,1,1,1
+access_notify_channel_user,care.access.notify.channel user,model_care_access_notify_channel,base.group_user,1,0,0,0
+access_notify_optout_own,care.access.notify.optout own,model_care_access_notify_optout,base.group_user,1,1,1,1
+access_notify_optout_mgr,care.access.notify.optout mgr,model_care_access_notify_optout,care_access_hub.group_access_manager,1,1,1,1

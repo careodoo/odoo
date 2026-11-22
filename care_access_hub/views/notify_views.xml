@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- إعداد الإدارة: قناة الإشعار لكل نوع اعتماد + الإلزامي -->
+    <record id="view_notify_channel_tree" model="ir.ui.view">
+        <field name="name">care.access.notify.channel.tree</field>
+        <field name="model">care.access.notify.channel</field>
+        <field name="arch" type="xml">
+            <tree string="قنوات الإشعار" editable="bottom" create="false">
+                <field name="sequence" widget="handle"/>
+                <field name="icon" readonly="1"/>
+                <field name="name" readonly="1"/>
+                <field name="key" readonly="1" optional="hide"/>
+                <field name="channel"/>
+                <field name="mandatory" widget="boolean_toggle"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_notify_channel_search" model="ir.ui.view">
+        <field name="name">care.access.notify.channel.search</field>
+        <field name="model">care.access.notify.channel</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <filter name="f_mandatory" string="إلزامي" domain="[('mandatory','=',True)]"/>
+                <filter name="f_email" string="بريد" domain="[('channel','=','email')]"/>
+                <filter name="f_push" string="فوري" domain="[('channel','=','push')]"/>
+                <filter name="f_none" string="بلا" domain="[('channel','=','none')]"/>
+                <group expand="0" string="تجميع">
+                    <filter name="g_channel" string="القناة" context="{'group_by':'channel'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_notify_channels" model="ir.actions.act_window">
+        <field name="name">إشعارات الاعتماد (الإدارة)</field>
+        <field name="res_model">care.access.notify.channel</field>
+        <field name="view_mode">tree</field>
+        <field name="search_view_id" ref="view_notify_channel_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiley_face">لا توجد قنوات بعد</p>
+            <p>اضغط «🔄 مزامنة من مركز الموافقات» لتوليد قناة لكل نوع اعتماد، ثم اختر القناة وعلّم الإلزامي.</p>
+        </field>
+    </record>
+
+    <record id="action_notify_sync_srv" model="ir.actions.server">
+        <field name="name">🔄 مزامنة من مركز الموافقات</field>
+        <field name="model_id" ref="model_care_access_notify_channel"/>
+        <field name="state">code</field>
+        <field name="code">n = env['care.access.notify.channel'].sync_from_registry()
+action = {'type': 'ir.actions.client', 'tag': 'display_notification',
+          'params': {'title': 'مزامنة الإشعارات',
+                     'message': 'أُضيف %s نوع اعتماد جديد.' % n, 'type': 'success', 'sticky': False,
+                     'next': {'type': 'ir.actions.act_window', 'res_model': 'care.access.notify.channel',
+                              'view_mode': 'tree', 'views': [(False, 'tree')]}}}</field>
+    </record>
+
+    <!-- قائمة الإشعارات تحت منظومة الصلاحيات -->
+    <menuitem id="menu_notify_root" name="🔔 الإشعارات"
+              parent="menu_access_hub_root" sequence="30"/>
+    <menuitem id="menu_notify_sync" name="🔄 مزامنة من المركز"
+              parent="menu_notify_root" action="action_notify_sync_srv" sequence="5"/>
+    <menuitem id="menu_notify_channels" name="قنوات الإشعار"
+              parent="menu_notify_root" action="action_notify_channels" sequence="10"/>
+</odoo>

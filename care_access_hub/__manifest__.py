@@ -16,6 +16,7 @@
         'views/res_config_settings_views.xml',
         'views/menu.xml',
         'views/migration_views.xml',
+        'views/notify_views.xml',
     ],
     'installable': True,
     'application': True,
