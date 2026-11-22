@@ -37,11 +37,14 @@
                     </div>
                     <group>
                         <group string="الطلب">
-                            <field name="user_id" options="{'no_create': True}"
+                            <field name="allowed_user_ids" invisible="1"/>
+                            <field name="user_id" options="{'no_create': True, 'no_open': True}"
                                    readonly="state != 'draft'"/>
                             <field name="department_id"/>
                             <field name="requester_id"/>
                             <field name="request_type" readonly="state != 'draft'"/>
+                            <field name="access_level" widget="radio" options="{'horizontal': True}"
+                                   readonly="state != 'draft'"/>
                         </group>
                         <group string="المدّة">
                             <field name="duration_type" widget="radio"

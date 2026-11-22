@@ -16,8 +16,14 @@ class CareAccessRequest(models.Model):
     requester_id = fields.Many2one('res.users', string='مُقدّم الطلب', required=True,
                                    default=lambda s: s.env.user, readonly=True, tracking=True)
     user_id = fields.Many2one('res.users', string='المستخدم المستهدف', required=True,
-                              domain=[('share', '=', False)], tracking=True,
-                              help='المستخدم الذي ستُمنح له الصلاحية.')
+                              domain="[('id', 'in', allowed_user_ids)]", tracking=True,
+                              help='المستخدم الذي ستُمنح له الصلاحية (أنت أو أحد موظفيك فقط).')
+    # القائمة المسموح بها: مُقدّم الطلب نفسه + موظفوه (org-chart + عمّال مشاريعه)
+    allowed_user_ids = fields.Many2many('res.users', 'care_access_req_allowed_rel', 'req_id', 'user_id',
+                                        compute='_compute_allowed_users', string='المستخدمون المسموح بهم')
+    # مستوى الوصول المطلوب
+    access_level = fields.Selection([('write', 'قراءة وكتابة'), ('read', 'قراءة فقط')],
+                                    string='مستوى الوصول', default='write', required=True)
     employee_id = fields.Many2one('hr.employee', related='user_id.employee_id', string='الموظف', store=True)
     department_id = fields.Many2one(related='user_id.employee_id.department_id', string='القسم', store=True)
 
@@ -66,6 +72,30 @@ class CareAccessRequest(models.Model):
     _ESIGN_APPROVE = ('مدير الصلاحيات', 'Access Manager')
 
     # ---------------- حسابات ----------------
+    @api.depends('requester_id')
+    def _compute_allowed_users(self):
+        """المستخدمون الذين يجوز للمُقدّم طلب صلاحية لهم: هو نفسه + موظفوه
+        (تسلسل التنظيم child_of + عمّال أقسام مشاريعه إن كان مدير مشروع). مدير النظام = الكل."""
+        Emp = self.env['hr.employee'].sudo()
+        Proj = self.env['project.project'].sudo()
+        has_pms_dept = 'pms_department_id' in Proj._fields
+        for r in self:
+            req = r.requester_id or self.env.user
+            if req.has_group('base.group_system') or req.has_group('care_access_hub.group_access_manager'):
+                # المدير/مدير الصلاحيات: كل المستخدمين الداخليين
+                r.allowed_user_ids = self.env['res.users'].sudo().search([('share', '=', False)])
+                continue
+            users = req  # هو نفسه
+            emps = Emp.browse()
+            if req.employee_id:
+                emps |= Emp.search([('id', 'child_of', req.employee_id.id)])
+            projs = Proj.search([('user_id', '=', req.id)])
+            dept_ids = projs.mapped('pms_department_id').ids if has_pms_dept else []
+            if dept_ids:
+                emps |= Emp.search([('department_id', 'child_of', dept_ids)])
+            users |= emps.mapped('user_id')
+            r.allowed_user_ids = users
+
     @api.depends('request_type', 'role_ids', 'group_ids', 'menu_ids', 'duration_type', 'date_to')
     def _compute_summary(self):
         for r in self:

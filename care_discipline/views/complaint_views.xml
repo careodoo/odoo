@@ -31,8 +31,11 @@
                             invisible="state != 'applied'"
                             groups="care_discipline.group_discipline_hr"/>
                     <button name="action_reject" type="object" string="رفض"
-                            invisible="state in ('draft', 'applied', 'closed', 'rejected')"
+                            invisible="state in ('draft', 'applied', 'closed', 'rejected', 'cancelled')"
                             confirm="رفض الشكوى وإنهاء المسار؟"/>
+                    <button name="action_cancel" type="object" string="🚫 إلغاء (سحب)"
+                            invisible="state in ('applied', 'closed', 'rejected', 'cancelled')"
+                            confirm="إلغاء/سحب الشكوى؟ ستصبح حالتها «ملغاة»."/>
                     <field name="state" widget="statusbar" nolabel="1"
                            statusbar_visible="draft,submitted,manager_approved,hr_review,legal_review,penalty_decided,applied,closed"/>
                 </header>

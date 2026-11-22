@@ -106,6 +106,7 @@ class CareComplaint(models.Model):
         ('applied', 'طُبّق الجزاء'),
         ('closed', 'مُغلقة'),
         ('rejected', 'مرفوضة'),
+        ('cancelled', 'ملغاة'),
     ], string='الحالة', default='draft', tracking=True, copy=False, index=True)
     reject_reason = fields.Char(string='سبب الرفض', readonly=True, copy=False)
     company_id = fields.Many2one('res.company', default=lambda s: s.env.company)
@@ -356,6 +357,19 @@ class CareComplaint(models.Model):
     def action_reject(self):
         for r in self:
             r.state = 'rejected'
+
+    def action_cancel(self):
+        """إلغاء/سحب الشكوى من مُقدّمها (أو مدير النظام) قبل التطبيق — حالة «ملغاة» مستقلّة عن «مرفوضة»."""
+        for r in self:
+            if r.state in ('applied', 'closed'):
+                raise UserError(_('لا يمكن إلغاء شكوى طُبّق جزاؤها أو أُغلقت.'))
+            # الإلغاء حقّ مُقدّم الشكوى (سحبها) أو مدير النظام/الموارد البشرية
+            if (r.complainant_id and r.env.user != r.complainant_id
+                    and not r.env.user.has_group('base.group_system')
+                    and not r.env.user.has_group('care_discipline.group_discipline_hr')):
+                raise UserError(_('الإلغاء حقّ مُقدّم الشكوى أو الموارد البشرية.'))
+            r.state = 'cancelled'
+            r.message_post(body=_('🚫 أُلغيت الشكوى (سُحبت) %s.') % r.name)
 
     def action_print_report(self):
         """طباعة «القرار التأديبي» (بعد قرار الإدارة القانونية)."""
