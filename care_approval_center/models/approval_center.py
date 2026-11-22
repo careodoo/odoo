@@ -261,6 +261,10 @@ REGISTRY = [
      'pending': ['submitted'], 'approve': 'action_approve', 'reject': 'action_reject',
      'groups': ['care_staff_requests.group_housing_admin', 'hr.group_hr_manager'],
      'module': 'طلبات السكن', 'icon': '🏠', 'color': '#7a5bbf'},
+    {'key': 'access_req', 'model': 'care.access.request', 'state_field': 'state',
+     'pending': ['submitted'], 'approve': 'action_approve', 'reject': 'action_reject',
+     'groups': ['care_access_hub.group_access_manager'],
+     'module': 'طلب إضافة صلاحية', 'icon': '🗝️', 'color': '#1b3a6b'},
 ]
 
 

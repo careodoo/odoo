@@ -46,5 +46,19 @@
             <field name="domain_force">['|', ('delegation_id.delegator_id', '=', user.id), ('delegation_id.delegate_id', '=', user.id)]</field>
         </record>
 
+        <!-- طلبات الصلاحية: المستخدم يرى طلباته (قدّمها أو هو هدفها)، المدير يرى الكل -->
+        <record id="rule_access_request_own" model="ir.rule">
+            <field name="name">طلبات صلاحيتي</field>
+            <field name="model_id" ref="model_care_access_request"/>
+            <field name="groups" eval="[(4, ref('base.group_user'))]"/>
+            <field name="domain_force">['|', ('requester_id', '=', user.id), ('user_id', '=', user.id)]</field>
+        </record>
+        <record id="rule_access_request_mgr" model="ir.rule">
+            <field name="name">طلبات الصلاحية: المدير يرى الكل</field>
+            <field name="model_id" ref="model_care_access_request"/>
+            <field name="groups" eval="[(4, ref('group_access_manager'))]"/>
+            <field name="domain_force">[(1, '=', 1)]</field>
+        </record>
+
     </data>
 </odoo>

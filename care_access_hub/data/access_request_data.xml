@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <record id="seq_access_request" model="ir.sequence">
+            <field name="name">طلب إضافة صلاحية</field>
+            <field name="code">care.access.request</field>
+            <field name="prefix">AR/%(year)s/</field>
+            <field name="padding">4</field>
+            <field name="company_id" eval="False"/>
+        </record>
+
+        <!-- كرون: سحب الصلاحيات المؤقّتة المنتهية تلقائيًّا (يوميًّا) -->
+        <record id="cron_access_request_revoke" model="ir.cron">
+            <field name="name">CARE: سحب الصلاحيات المؤقّتة المنتهية</field>
+            <field name="model_id" ref="model_care_access_request"/>
+            <field name="state">code</field>
+            <field name="code">model.cron_revoke_expired()</field>
+            <field name="interval_number">1</field>
+            <field name="interval_type">days</field>
+            <field name="numbercall">-1</field>
+            <field name="active" eval="True"/>
+        </record>
+    </data>
+</odoo>

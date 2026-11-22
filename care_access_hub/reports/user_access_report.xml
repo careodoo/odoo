@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="action_report_user_access" model="ir.actions.report">
+        <field name="name">تقرير صلاحيات المستخدم</field>
+        <field name="model">res.users</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">care_access_hub.report_user_access</field>
+        <field name="report_file">care_access_hub.report_user_access</field>
+        <field name="paperformat_id" ref="care_report_layout.paperformat_care_doc"/>
+        <field name="groups_id" eval="[(4, ref('care_access_hub.group_access_manager'))]"/>
+    </record>
+
+    <template id="report_user_access">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="doc">
+                <t t-set="o" t-value="doc.sudo()"/>
+                <t t-set="company" t-value="o.company_id or env.company"/>
+                <t t-set="d" t-value="o._access_report()"/>
+                <t t-set="record_title">تقرير صلاحيات المستخدم</t>
+                <t t-set="record_title_en">USER ACCESS REPORT</t>
+                <t t-call="care_report_layout.external_layout_care">
+                    <div class="page" style="font-family:'Cairo','DejaVu Sans',Arial,sans-serif;color:#111;font-size:12px;line-height:1.75" dir="rtl">
+
+                        <!-- الهوية -->
+                        <table width="100%" style="border-collapse:collapse;margin:4px 0 14px">
+                            <tr>
+                                <td style="border:1px solid #1b3a6b;padding:7px 10px;width:28%;font-weight:700;text-align:right;background:#eef2f8">المستخدم</td>
+                                <td style="border:1px solid #1b3a6b;padding:7px 10px;font-weight:700"><t t-esc="o.name"/></td>
+                                <td style="border:1px solid #1b3a6b;padding:7px 10px;width:22%;font-weight:700;text-align:right;background:#eef2f8">الدخول</td>
+                                <td style="border:1px solid #1b3a6b;padding:7px 10px"><span style="direction:ltr;unicode-bidi:embed"><t t-esc="o.login"/></span></td>
+                            </tr>
+                            <tr>
+                                <td style="border:1px solid #1b3a6b;padding:7px 10px;font-weight:700;text-align:right;background:#eef2f8">الموظف</td>
+                                <td style="border:1px solid #1b3a6b;padding:7px 10px"><t t-esc="o.employee_id.name or '—'"/></td>
+                                <td style="border:1px solid #1b3a6b;padding:7px 10px;font-weight:700;text-align:right;background:#eef2f8">الشركة</td>
+                                <td style="border:1px solid #1b3a6b;padding:7px 10px"><t t-esc="company.name"/></td>
+                            </tr>
+                            <tr>
+                                <td style="border:1px solid #1b3a6b;padding:7px 10px;font-weight:700;text-align:right;background:#eef2f8">عدد المجموعات الفعلية</td>
+                                <td style="border:1px solid #1b3a6b;padding:7px 10px;font-weight:700;color:#b0343f"><t t-esc="d['group_count']"/></td>
+                                <td style="border:1px solid #1b3a6b;padding:7px 10px;font-weight:700;text-align:right;background:#eef2f8">تاريخ التقرير</td>
+                                <td style="border:1px solid #1b3a6b;padding:7px 10px"><span t-esc="context_timestamp(datetime.datetime.now()).strftime('%Y/%m/%d %H:%M')"/></td>
+                            </tr>
+                        </table>
+
+                        <!-- المسمّيات الوظيفية -->
+                        <h3 style="background:#1b3a6b;color:#fff;padding:5px 10px;margin:14px 0 6px;font-size:13px">المسمّيات الوظيفية</h3>
+                        <table width="100%" style="border-collapse:collapse" t-if="d['roles']">
+                            <tr style="background:#eef2f8">
+                                <th style="border:1px solid #1b3a6b;padding:5px 8px;text-align:right">المسمّى</th>
+                                <th style="border:1px solid #1b3a6b;padding:5px 8px;width:22%">الطبقة</th>
+                                <th style="border:1px solid #1b3a6b;padding:5px 8px;width:22%">نطاق البيانات</th>
+                                <th style="border:1px solid #1b3a6b;padding:5px 8px;width:14%">اعتماد</th>
+                            </tr>
+                            <tr t-foreach="d['roles']" t-as="r">
+                                <td style="border:1px solid #cbd5e1;padding:5px 8px;font-weight:700"><t t-esc="r['name']"/></td>
+                                <td style="border:1px solid #cbd5e1;padding:5px 8px;text-align:center"><t t-esc="r['tier']"/></td>
+                                <td style="border:1px solid #cbd5e1;padding:5px 8px;text-align:center"><t t-esc="r['scope']"/></td>
+                                <td style="border:1px solid #cbd5e1;padding:5px 8px;text-align:center"><t t-esc="'نعم' if r['approve'] else '—'"/></td>
+                            </tr>
+                        </table>
+                        <p t-else="" style="color:#64748b">لا مسمّيات مُسنَدة.</p>
+
+                        <!-- الشركات -->
+                        <h3 style="background:#1b3a6b;color:#fff;padding:5px 10px;margin:14px 0 6px;font-size:13px">نطاق الشركات</h3>
+                        <p><t t-esc="'، '.join(d['companies']) or '—'"/></p>
+
+                        <!-- صلاحيات الاعتماد -->
+                        <h3 style="background:#1b3a6b;color:#fff;padding:5px 10px;margin:14px 0 6px;font-size:13px">صلاحيات الاعتماد (معتمِد في)</h3>
+                        <table width="100%" style="border-collapse:collapse" t-if="d['approvals']">
+                            <tr style="background:#eef2f8">
+                                <th style="border:1px solid #1b3a6b;padding:5px 8px;text-align:right">نوع الاعتماد</th>
+                                <th style="border:1px solid #1b3a6b;padding:5px 8px;width:30%">المرحلة</th>
+                                <th style="border:1px solid #1b3a6b;padding:5px 8px;width:22%">النمط</th>
+                            </tr>
+                            <tr t-foreach="d['approvals']" t-as="a">
+                                <td style="border:1px solid #cbd5e1;padding:5px 8px"><t t-esc="a['type']"/></td>
+                                <td style="border:1px solid #cbd5e1;padding:5px 8px;text-align:center"><t t-esc="a['stage']"/></td>
+                                <td style="border:1px solid #cbd5e1;padding:5px 8px;text-align:center"><t t-esc="a['mode']"/></td>
+                            </tr>
+                        </table>
+                        <p t-else="" style="color:#64748b">لا صلاحيات اعتماد.</p>
+
+                        <!-- صلاحيات أودو الفعلية (مجمّعة بالتصنيف) -->
+                        <h3 style="background:#1b3a6b;color:#fff;padding:5px 10px;margin:14px 0 6px;font-size:13px">صلاحيات أودو الفعلية (حسب التصنيف)</h3>
+                        <table width="100%" style="border-collapse:collapse">
+                            <tr t-foreach="d['groups_by_cat']" t-as="c">
+                                <td style="border:1px solid #cbd5e1;padding:5px 8px;width:26%;font-weight:700;text-align:right;background:#f8fafc;vertical-align:top"><t t-esc="c['cat']"/></td>
+                                <td style="border:1px solid #cbd5e1;padding:5px 8px"><t t-esc="'، '.join(c['groups'])"/></td>
+                            </tr>
+                        </table>
+
+                        <!-- القوائم المخفية + الحقول المخفية -->
+                        <t t-if="d['menu_hides']">
+                            <h3 style="background:#8a3b8a;color:#fff;padding:5px 10px;margin:14px 0 6px;font-size:13px">القوائم المخفية</h3>
+                            <p><t t-esc="'  |  '.join(d['menu_hides'])"/></p>
+                        </t>
+                        <t t-if="d['field_masks']">
+                            <h3 style="background:#8a3b8a;color:#fff;padding:5px 10px;margin:14px 0 6px;font-size:13px">الحقول المخفية (قناع المسمّى)</h3>
+                            <p><t t-esc="'  |  '.join(d['field_masks'])"/></p>
+                        </t>
+
+                        <!-- التفويضات -->
+                        <t t-if="d['deleg_given'] or d['deleg_recv']">
+                            <h3 style="background:#017e84;color:#fff;padding:5px 10px;margin:14px 0 6px;font-size:13px">التفويضات</h3>
+                            <table width="100%" style="border-collapse:collapse" t-if="d['deleg_given']">
+                                <tr style="background:#eef2f8"><th colspan="4" style="border:1px solid #017e84;padding:4px 8px;text-align:right">تفويضات مُنحها</th></tr>
+                                <tr t-foreach="d['deleg_given']" t-as="g">
+                                    <td style="border:1px solid #cbd5e1;padding:4px 8px">إلى: <t t-esc="g['to']"/></td>
+                                    <td style="border:1px solid #cbd5e1;padding:4px 8px;text-align:center"><t t-esc="g['scope']"/></td>
+                                    <td style="border:1px solid #cbd5e1;padding:4px 8px;text-align:center">حتى <t t-esc="g['to_date']"/></td>
+                                    <td style="border:1px solid #cbd5e1;padding:4px 8px;text-align:center"><t t-esc="g['state']"/></td>
+                                </tr>
+                            </table>
+                            <table width="100%" style="border-collapse:collapse;margin-top:6px" t-if="d['deleg_recv']">
+                                <tr style="background:#eef2f8"><th colspan="4" style="border:1px solid #017e84;padding:4px 8px;text-align:right">تفويضات تلقّاها</th></tr>
+                                <tr t-foreach="d['deleg_recv']" t-as="g">
+                                    <td style="border:1px solid #cbd5e1;padding:4px 8px">من: <t t-esc="g['from_user']"/></td>
+                                    <td style="border:1px solid #cbd5e1;padding:4px 8px;text-align:center"><t t-esc="g['scope']"/></td>
+                                    <td style="border:1px solid #cbd5e1;padding:4px 8px;text-align:center">حتى <t t-esc="g['to_date']"/></td>
+                                    <td style="border:1px solid #cbd5e1;padding:4px 8px;text-align:center"><t t-esc="g['state']"/></td>
+                                </tr>
+                            </table>
+                        </t>
+
+                        <!-- إشعارات الاعتماد -->
+                        <t t-if="d['notify']">
+                            <h3 style="background:#e08a00;color:#fff;padding:5px 10px;margin:14px 0 6px;font-size:13px">إشعارات الاعتماد المُفعّلة</h3>
+                            <table width="100%" style="border-collapse:collapse">
+                                <tr style="background:#eef2f8">
+                                    <th style="border:1px solid #e08a00;padding:4px 8px;text-align:right">نوع الاعتماد</th>
+                                    <th style="border:1px solid #e08a00;padding:4px 8px;width:40%">القنوات</th>
+                                </tr>
+                                <tr t-foreach="d['notify']" t-as="n">
+                                    <td style="border:1px solid #cbd5e1;padding:4px 8px"><t t-esc="n['name']"/><t t-if="n['mandatory']"> 🔒</t></td>
+                                    <td style="border:1px solid #cbd5e1;padding:4px 8px;text-align:center"><t t-esc="n['channels']"/></td>
+                                </tr>
+                            </table>
+                        </t>
+
+                        <!-- خانة الموافقة والاعتماد -->
+                        <h3 style="background:#111;color:#fff;padding:5px 10px;margin:22px 0 6px;font-size:13px">الموافقة والاعتماد</h3>
+                        <table width="100%" style="border-collapse:separate;border-spacing:10px;margin-top:8px;table-layout:fixed"><tr>
+                            <t t-call="care_esignature.esign_box"><t t-set="role">المستخدم (إقرار)</t><t t-set="role_en">User</t><t t-set="name" t-value="o.name or ''"/><t t-set="sig" t-value="o.env['care.esignature'].for_role(o._name, o.id, 'المستخدم')"/><t t-set="w">50%</t></t>
+                            <t t-call="care_esignature.esign_box"><t t-set="role">مدير الصلاحيات (اعتماد)</t><t t-set="role_en">Access Manager</t><t t-set="name" t-value="env.user.name or ''"/><t t-set="sig" t-value="o.env['care.esignature'].for_role(o._name, o.id, 'مدير الصلاحيات')"/><t t-set="w">50%</t></t>
+                        </tr></table>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+</odoo>

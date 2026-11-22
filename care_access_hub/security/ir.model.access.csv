@@ -1,8 +1,6 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
 access_care_job_role_user,care.job.role user,model_care_job_role,base.group_user,1,0,0,0
 access_care_job_role_manager,care.job.role manager,model_care_job_role,care_access_hub.group_access_manager,1,1,1,1
-access_care_role_perm_user,care.role.perm user,model_care_role_perm,base.group_user,1,0,0,0
-access_care_role_perm_manager,care.role.perm manager,model_care_role_perm,care_access_hub.group_access_manager,1,1,1,1
 access_care_approval_type_user,care.approval.type user,model_care_approval_type,base.group_user,1,0,0,0
 access_care_approval_type_manager,care.approval.type manager,model_care_approval_type,care_access_hub.group_access_manager,1,1,1,1
 access_care_approval_stage_user,care.approval.stage user,model_care_approval_stage,base.group_user,1,0,0,0
@@ -14,12 +12,8 @@ access_care_audit_user,care.access.audit user,model_care_access_audit,base.group
 access_care_learn_wizard,care.access.learn.wizard,model_care_access_learn_wizard,care_access_hub.group_access_manager,1,1,1,1
 access_notify_channel_mgr,care.access.notify.channel manager,model_care_access_notify_channel,care_access_hub.group_access_manager,1,1,1,1
 access_notify_channel_user,care.access.notify.channel user,model_care_access_notify_channel,base.group_user,1,0,0,0
-access_notify_optout_own,care.access.notify.optout own,model_care_access_notify_optout,base.group_user,1,1,1,1
-access_notify_optout_mgr,care.access.notify.optout mgr,model_care_access_notify_optout,care_access_hub.group_access_manager,1,1,1,1
 access_notify_pref_own,care.user.notify.pref own,model_care_user_notify_pref,base.group_user,1,1,1,1
 access_notify_pref_mgr,care.user.notify.pref mgr,model_care_user_notify_pref,care_access_hub.group_access_manager,1,1,1,1
-access_menu_access_user,care.menu.access user,model_care_menu_access,base.group_user,1,0,0,0
-access_menu_access_mgr,care.menu.access mgr,model_care_menu_access,care_access_hub.group_access_manager,1,1,1,1
 access_delegation_own,care.user.delegation own,model_care_user_delegation,base.group_user,1,1,1,1
 access_delegation_mgr,care.user.delegation mgr,model_care_user_delegation,care_access_hub.group_access_manager,1,1,1,1
 access_delegation_line_own,care.user.delegation.line own,model_care_user_delegation_line,base.group_user,1,1,1,1
@@ -28,3 +22,5 @@ access_role_model_perm_mgr,care.role.model.perm mgr,model_care_role_model_perm,c
 access_role_model_perm_user,care.role.model.perm user,model_care_role_model_perm,base.group_user,1,0,0,0
 access_role_field_mask_mgr,care.role.field.mask mgr,model_care_role_field_mask,care_access_hub.group_access_manager,1,1,1,1
 access_role_field_mask_user,care.role.field.mask user,model_care_role_field_mask,base.group_user,1,0,0,0
+access_access_request_user,care.access.request user,model_care_access_request,base.group_user,1,1,1,0
+access_access_request_mgr,care.access.request mgr,model_care_access_request,care_access_hub.group_access_manager,1,1,1,1

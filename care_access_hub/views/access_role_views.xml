@@ -114,14 +114,6 @@
                                 </tree>
                             </field>
                         </page>
-                        <page string="مصفوفة المناطق" name="perms">
-                            <field name="perm_line_ids">
-                                <tree string="مصفوفة الصلاحيات" editable="bottom">
-                                    <field name="area"/>
-                                    <field name="level"/>
-                                </tree>
-                            </field>
-                        </page>
                         <page string="صلاحيات القوائم (إخفاء)" name="menus">
                             <div class="alert alert-info" role="alert">
                                 القوائم المختارة هنا تُخفى عن مستخدمي هذا المسمّى (تُخفى فعليًّا فقط إن أخفتها كل مسمّيات المستخدم). يوحّد وظيفة إخفاء القوائم داخل النظام.

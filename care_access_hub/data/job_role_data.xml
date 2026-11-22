@@ -404,26 +404,5 @@
             <field name="description">مندوب مبيعات/تطوير أعمال.</field>
         </record>
 
-        <!-- ==================== Approval Types (no model_id) ==================== -->
-        <record id="atype_1" model="care.approval.type">
-            <field name="name">العمل الإضافي</field>
-            <field name="state_field">state</field>
-        </record>
-
-        <record id="atype_2" model="care.approval.type">
-            <field name="name">أمر الشراء</field>
-            <field name="state_field">state</field>
-        </record>
-
-        <record id="atype_3" model="care.approval.type">
-            <field name="name">طلب الإجازة</field>
-            <field name="state_field">state</field>
-        </record>
-
-        <record id="atype_4" model="care.approval.type">
-            <field name="name">محضر استلام سيارة</field>
-            <field name="state_field">state</field>
-        </record>
-
     </data>
 </odoo>

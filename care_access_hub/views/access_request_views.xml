@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_access_request_form" model="ir.ui.view">
+        <field name="name">care.access.request.form</field>
+        <field name="model">care.access.request</field>
+        <field name="arch" type="xml">
+            <form string="طلب إضافة صلاحية">
+                <header>
+                    <button name="action_submit" type="object" string="إرسال للاعتماد"
+                            class="btn-primary" invisible="state != 'draft'" icon="fa-paper-plane"/>
+                    <button name="action_approve" type="object" string="✅ اعتماد وتطبيق"
+                            class="btn-success" invisible="state != 'submitted'"
+                            groups="care_access_hub.group_access_manager"
+                            confirm="سيُعتمد الطلب ويُطبَّق على المستخدم فورًا (مع لقطة أمان). متابعة؟"/>
+                    <button name="action_reject" type="object" string="✖ رفض"
+                            class="btn-secondary" invisible="state != 'submitted'"
+                            groups="care_access_hub.group_access_manager"/>
+                    <button name="action_revoke" type="object" string="↩️ سحب الصلاحية"
+                            class="btn-warning" invisible="state != 'applied'"
+                            groups="care_access_hub.group_access_manager"
+                            confirm="سيُزال ما مُنح فعلًا لهذا المستخدم من هذا الطلب. متابعة؟"/>
+                    <button name="action_reset_draft" type="object" string="إلى مسودة"
+                            invisible="state not in ('submitted','rejected')"/>
+                    <button name="%(action_report_access_request)d" type="action" string="🖨️ طباعة"
+                            class="btn-secondary" invisible="state == 'draft'"/>
+                    <field name="state" widget="statusbar"
+                           statusbar_visible="draft,submitted,approved,applied"/>
+                </header>
+                <sheet>
+                    <widget name="web_ribbon" title="مطبّق" bg_color="text-bg-success" invisible="state != 'applied'"/>
+                    <widget name="web_ribbon" title="منتهٍ" bg_color="text-bg-secondary" invisible="state != 'expired'"/>
+                    <widget name="web_ribbon" title="مرفوض" bg_color="text-bg-danger" invisible="state != 'rejected'"/>
+                    <div class="oe_title">
+                        <label for="name"/>
+                        <h1><field name="name" readonly="1"/></h1>
+                    </div>
+                    <group>
+                        <group string="الطلب">
+                            <field name="user_id" options="{'no_create': True}"
+                                   readonly="state != 'draft'"/>
+                            <field name="department_id"/>
+                            <field name="requester_id"/>
+                            <field name="request_type" readonly="state != 'draft'"/>
+                        </group>
+                        <group string="المدّة">
+                            <field name="duration_type" widget="radio"
+                                   options="{'horizontal': True}" readonly="state != 'draft'"/>
+                            <field name="date_from" readonly="state != 'draft'"/>
+                            <field name="date_to" readonly="state != 'draft'"
+                                   invisible="duration_type != 'temporary'"
+                                   required="duration_type == 'temporary'"/>
+                        </group>
+                    </group>
+                    <group string="الصلاحية المطلوبة">
+                        <field name="role_ids" widget="many2many_tags" options="{'no_create': True}"
+                               invisible="request_type not in ('role','emergency')"
+                               readonly="state != 'draft'"
+                               string="المسمّيات"/>
+                        <field name="group_ids" widget="many2many_tags" options="{'no_create': True}"
+                               invisible="request_type not in ('group','emergency')"
+                               readonly="state != 'draft'"
+                               string="المجموعات"/>
+                        <field name="menu_ids" widget="many2many_tags" options="{'no_create': True}"
+                               invisible="request_type != 'menu_show'"
+                               readonly="state != 'draft'"
+                               string="القوائم"/>
+                        <field name="summary" readonly="1"/>
+                    </group>
+                    <group string="السبب / المبرّر">
+                        <field name="reason" nolabel="1" readonly="state != 'draft'"
+                               placeholder="لماذا تحتاج هذه الصلاحية؟ المهمّة/المشروع/المدّة..."/>
+                    </group>
+                    <group string="الاعتماد" invisible="state == 'draft'">
+                        <field name="approver_id"/>
+                        <field name="reject_reason" invisible="state != 'rejected'"/>
+                        <field name="snapshot_id" invisible="not snapshot_id"/>
+                    </group>
+                    <group string="ما مُنح فعلًا (للسحب الدقيق)" invisible="state not in ('applied','revoked','expired')">
+                        <field name="granted_role_ids" widget="many2many_tags" readonly="1"/>
+                        <field name="granted_group_ids" widget="many2many_tags" readonly="1"/>
+                        <field name="granted_menu_ids" widget="many2many_tags" readonly="1"/>
+                    </group>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_access_request_tree" model="ir.ui.view">
+        <field name="name">care.access.request.tree</field>
+        <field name="model">care.access.request</field>
+        <field name="arch" type="xml">
+            <tree string="طلبات الصلاحية"
+                  decoration-info="state == 'submitted'" decoration-success="state == 'applied'"
+                  decoration-muted="state in ('rejected','revoked','expired')">
+                <field name="name"/>
+                <field name="user_id"/>
+                <field name="request_type"/>
+                <field name="summary"/>
+                <field name="duration_type"/>
+                <field name="date_to" optional="show"/>
+                <field name="requester_id" optional="show"/>
+                <field name="approver_id" optional="hide"/>
+                <field name="state" widget="badge"
+                       decoration-info="state == 'submitted'" decoration-success="state == 'applied'"
+                       decoration-danger="state == 'rejected'"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_access_request_search" model="ir.ui.view">
+        <field name="name">care.access.request.search</field>
+        <field name="model">care.access.request</field>
+        <field name="arch" type="xml">
+            <search string="بحث طلبات الصلاحية">
+                <field name="name"/>
+                <field name="user_id"/>
+                <field name="requester_id"/>
+                <filter name="f_submitted" string="بانتظار الاعتماد" domain="[('state','=','submitted')]"/>
+                <filter name="f_applied" string="مطبّقة" domain="[('state','=','applied')]"/>
+                <filter name="f_temp" string="مؤقّتة" domain="[('duration_type','=','temporary')]"/>
+                <separator/>
+                <filter name="f_mine" string="طلباتي" domain="[('requester_id','=',uid)]"/>
+                <filter name="f_for_me" string="تخصّني" domain="[('user_id','=',uid)]"/>
+                <group expand="0" string="تجميع حسب">
+                    <filter name="g_state" string="الحالة" context="{'group_by':'state'}"/>
+                    <filter name="g_type" string="النوع" context="{'group_by':'request_type'}"/>
+                    <filter name="g_user" string="المستخدم" context="{'group_by':'user_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_access_request" model="ir.actions.act_window">
+        <field name="name">طلبات إضافة صلاحية</field>
+        <field name="res_model">care.access.request</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="view_access_request_search"/>
+        <field name="context">{'search_default_f_submitted': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">لا طلبات صلاحية بعد</p>
+            <p>يطلب المستخدم صلاحية (مسمّى/مجموعة/قائمة/طوارئ) مؤقّتة أو دائمة، فيعتمدها مدير الصلاحيات وتُطبَّق تلقائيًّا.</p>
+        </field>
+    </record>
+
+    <menuitem id="menu_access_request" name="🗝️ طلبات الصلاحية"
+              parent="menu_access_hub_root" action="action_access_request" sequence="30"/>
+
+    <!-- خدمة ذاتية: طلباتي للصلاحيات (من الملف الشخصي) -->
+    <record id="action_my_access_request" model="ir.actions.act_window">
+        <field name="name">طلب إضافة صلاحية</field>
+        <field name="res_model">care.access.request</field>
+        <field name="view_mode">form,tree</field>
+        <field name="domain">[('requester_id','=',uid)]</field>
+        <field name="target">current</field>
+        <field name="context">{'form_view_initial_mode': 'edit'}</field>
+    </record>
+
+</odoo>

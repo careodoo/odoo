@@ -24,6 +24,9 @@
                         <button name="action_preview_effective" type="object"
                                 string="معاينة الصلاحية الفعلية" class="btn-secondary ms-2"
                                 icon="fa-search"/>
+                        <button name="action_print_access" type="object"
+                                string="🖨️ تقرير الصلاحيات (PDF)" class="btn-secondary ms-2"
+                                icon="fa-file-pdf-o"/>
                     </div>
                     <separator string="🏢 نطاق الشركات"/>
                     <div>
@@ -35,6 +38,13 @@
                                 icon="fa-check"
                                 confirm="سيُضبط «الشركات المسموح بها» لهذا المستخدم من نطاق شركات مسمّياته (مع إبقاء شركته الحالية). متابعة؟"/>
                     </div>
+                    <separator string="🙈 القوائم المخفية عن هذا المستخدم"/>
+                    <div class="alert alert-info" role="alert">
+                        القوائم المحدّدة هنا <b>لن تظهر</b> لهذا المستخدم في الواجهة (دون المساس بالمجموعات).
+                        هذا هو المكان الموحّد للإخفاء لكل مستخدم — بديل شاشة «وصول القوائم» القديمة.
+                    </div>
+                    <field name="menu_hide_ids" nolabel="1" widget="many2many_tags"
+                           options="{'no_create': True}"/>
                 </page>
                 <page string="🔔 إشعارات الاعتماد" name="care_notify_prefs">
                     <div class="alert alert-info" role="alert">
@@ -101,13 +111,35 @@
         </field>
     </record>
 
-    <!-- لوحة «إشعاراتي» في التفضيلات الشخصية للمستخدم -->
+    <!-- لوحة «إشعاراتي» + الخدمة الذاتية في التفضيلات الشخصية للمستخدم -->
     <record id="view_users_pref_notify" model="ir.ui.view">
         <field name="name">res.users.preferences.notify</field>
         <field name="model">res.users</field>
         <field name="inherit_id" ref="base.view_users_form_simple_modif"/>
         <field name="arch" type="xml">
             <xpath expr="//notebook" position="inside">
+                <page string="🗝️ طلبات الصلاحية" name="my_access_requests">
+                    <div class="alert alert-info" role="alert">
+                        اطلب صلاحية إضافية لنفسك أو لزميل (مسمّى وظيفي / مجموعة دقيقة / إظهار قائمة / طوارئ) —
+                        مؤقّتة أو دائمة. يعتمدها <b>مدير الصلاحيات</b> فتُطبَّق تلقائيًّا، وتُسحب تلقائيًّا بانتهاء مدّتها.
+                    </div>
+                    <button name="%(care_access_hub.action_my_access_request)d" type="action"
+                            string="➕ طلب صلاحية جديد" class="btn-primary mb-2" icon="fa-plus"/>
+                    <field name="my_access_request_ids" nolabel="1" readonly="1">
+                        <tree create="false" delete="false"
+                              decoration-info="state == 'submitted'" decoration-success="state == 'applied'"
+                              decoration-muted="state in ('rejected','revoked','expired')">
+                            <field name="name"/>
+                            <field name="user_id"/>
+                            <field name="summary"/>
+                            <field name="duration_type"/>
+                            <field name="date_to" optional="show"/>
+                            <field name="state" widget="badge"
+                                   decoration-info="state == 'submitted'" decoration-success="state == 'applied'"
+                                   decoration-danger="state == 'rejected'"/>
+                        </tree>
+                    </field>
+                </page>
                 <page string="🔔 إشعاراتي" name="my_notify">
                     <div class="alert alert-info" role="alert">
                         تظهر هنا <b>كل أنواع الاعتماد التي تصلك إشعاراتها</b> (حسب صلاحياتك ومسمّياتك). فعّل/عطّل ما تريد.

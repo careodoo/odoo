@@ -38,7 +38,6 @@ class CareJobRole(models.Model):
         'res.groups', 'care_role_group_rel', 'role_id', 'group_id',
         string='مجموعات أودو المقابلة',
         help='المجموعات الفعلية التي يرِثها المستخدم عند إسناده لهذا المسمّى.')
-    perm_line_ids = fields.One2many('care.role.perm', 'role_id', string='مصفوفة الصلاحيات (مناطق)')
     model_perm_ids = fields.One2many('care.role.model.perm', 'role_id', string='مصفوفة الصلاحيات (مودلز)')
     menu_hide_ids = fields.Many2many('ir.ui.menu', 'care_role_menu_hide_rel', 'role_id', 'menu_id',
                                      string='القوائم المخفية (صلاحيات القوائم)')
@@ -142,27 +141,3 @@ class CareJobRole(models.Model):
             except Exception:
                 self.env.cr.rollback()
         return True
-
-
-MODULE_AREAS = [
-    ('hr', 'الموارد البشرية'), ('payroll', 'الرواتب'), ('procurement', 'المشتريات والمناقصات'),
-    ('projects', 'المشاريع'), ('fleet', 'الأسطول والكراج'), ('housing', 'السكنات'),
-    ('finance', 'المالية والقيود'), ('approvals', 'مركز الموافقات'), ('sales', 'المبيعات'),
-    ('marketing', 'التسويق'), ('legal', 'القانونية'), ('other', 'أخرى'),
-]
-
-
-class CareRolePerm(models.Model):
-    """سطر في مصفوفة الصلاحيات: المسمّى × مجال موديول → مستوى (لا شيء/قراءة/كتابة/اعتماد)."""
-    _name = 'care.role.perm'
-    _description = 'صلاحية مسمّى على موديول'
-    _order = 'role_id, area'
-
-    role_id = fields.Many2one('care.job.role', string='المسمّى', required=True, ondelete='cascade')
-    area = fields.Selection(MODULE_AREAS, string='المجال', required=True)
-    level = fields.Selection(
-        [('none', '—'), ('read', 'قراءة'), ('write', 'قراءة + كتابة'), ('approve', 'اعتماد')],
-        string='المستوى', default='none', required=True)
-
-    _sql_constraints = [('role_area_uniq', 'unique(role_id, area)',
-                         'لكل مسمّى سطر واحد لكل مجال.')]

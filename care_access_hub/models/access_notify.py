@@ -138,15 +138,3 @@ class CareUserNotifyPref(models.Model):
     use_email = fields.Boolean(string='📧 بريد', default=True)
 
     _sql_constraints = [('user_channel_uniq', 'unique(user_id, channel_id)', 'مُعرَّف مسبقًا.')]
-
-
-class CareAccessNotifyOptout(models.Model):
-    """تعطيل المستخدم لنوع إشعار غير إلزامي (من لوحته)."""
-    _name = 'care.access.notify.optout'
-    _description = 'تعطيل إشعار (تفضيل المستخدم)'
-
-    user_id = fields.Many2one('res.users', required=True, ondelete='cascade', index=True,
-                              default=lambda s: s.env.user)
-    key = fields.Char(string='نوع الاعتماد', required=True, index=True)
-
-    _sql_constraints = [('user_key_uniq', 'unique(user_id, key)', 'مُعطَّل مسبقًا.')]

@@ -10,9 +10,10 @@
         <field name="context">{'module': 'care_access_hub'}</field>
     </record>
 
-    <!-- القائمة الجذرية -->
+    <!-- القائمة الجذرية — خاصّة بمدير الصلاحيات فقط (لا تظهر لأي مستخدم آخر) -->
     <menuitem id="menu_access_hub_root"
               name="منظومة الصلاحيات"
+              groups="care_access_hub.group_access_manager"
               sequence="95"/>
 
     <menuitem id="menu_access_hub_roles"

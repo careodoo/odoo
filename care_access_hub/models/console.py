@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 # مزوّد بيانات console OWL لمنظومة الصلاحيات (واجهة مطابقة للموكاب).
 from odoo import api, models, _
+from odoo.exceptions import AccessError
 
 TIERS = [('exec', 'القيادة التنفيذية', 'C-Suite'), ('manager', 'مدراء الإدارات', 'Department Managers'),
          ('deputy', 'المساعدون والكبار', 'Deputies & Seniors'),
@@ -29,7 +30,15 @@ class CareAccessConsole(models.AbstractModel):
     _description = 'مزوّد بيانات منظومة الصلاحيات (OWL)'
 
     @api.model
+    def _check_mgr(self):
+        """لوحة الصلاحيات خاصّة بمدير المنظومة فقط — لا تُكشف لأي مستخدم آخر (ولا عبر RPC)."""
+        u = self.env.user
+        if not (u.has_group('care_access_hub.group_access_manager') or u.has_group('base.group_system')):
+            raise AccessError(_('منظومة الصلاحيات خاصّة بمدير الصلاحيات فقط.'))
+
+    @api.model
     def get_data(self):
+        self._check_mgr()
         Role = self.env['care.job.role'].sudo()
         Line = self.env['care.role.model.perm'].sudo()
         Ch = self.env['care.access.notify.channel'].sudo()
@@ -80,6 +89,7 @@ class CareAccessConsole(models.AbstractModel):
                     'stages': [{
                         'id': s.id, 'name': s.name, 'is_approval': s.is_approval,
                         'amount': s.amount_threshold or 0.0, 'mode': s.mode,
+                        'label': s.approver_label or '—',
                         'roles': [{'id': r.id, 'name': r.name} for r in s.role_ids],
                     } for s in t.stage_ids],
                 })
@@ -103,12 +113,14 @@ class CareAccessConsole(models.AbstractModel):
 
     @api.model
     def set_user_roles(self, user_id, role_ids):
+        self._check_mgr()
         self.env['res.users'].sudo().browse(int(user_id)).care_role_ids = \
             [(6, 0, [int(x) for x in role_ids])]
         return True
 
     @api.model
     def toggle_idea(self, key):
+        self._check_mgr()
         c = self.env.company
         if key in c._fields:
             val = not bool(getattr(c, key))
@@ -118,11 +130,13 @@ class CareAccessConsole(models.AbstractModel):
 
     @api.model
     def set_level(self, line_id, level):
+        self._check_mgr()
         self.env['care.role.model.perm'].sudo().browse(int(line_id)).write({'level': str(level)})
         return True
 
     @api.model
     def set_channel_flag(self, channel_id, flag, value):
+        self._check_mgr()
         fmap = {'app': 'ch_app', 'odoo': 'ch_odoo', 'email': 'ch_email'}
         if flag in fmap:
             self.env['care.access.notify.channel'].sudo().browse(int(channel_id)).write(
@@ -131,15 +145,18 @@ class CareAccessConsole(models.AbstractModel):
 
     @api.model
     def toggle_mandatory(self, channel_id):
+        self._check_mgr()
         c = self.env['care.access.notify.channel'].sudo().browse(int(channel_id))
         c.mandatory = not c.mandatory
         return c.mandatory
 
     @api.model
     def derive_all(self):
+        self._check_mgr()
         self.env['care.job.role'].sudo().cron_or_action_derive_all()
         return True
 
     @api.model
     def sync_channels(self):
+        self._check_mgr()
         return self.env['care.access.notify.channel'].sudo().sync_from_registry()

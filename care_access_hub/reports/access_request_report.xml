@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="action_report_access_request" model="ir.actions.report">
+        <field name="name">طلب إضافة صلاحية</field>
+        <field name="model">care.access.request</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">care_access_hub.report_access_request</field>
+        <field name="report_file">care_access_hub.report_access_request</field>
+        <field name="paperformat_id" ref="care_report_layout.paperformat_care_doc"/>
+        <field name="binding_model_id" ref="model_care_access_request"/>
+        <field name="binding_type">report</field>
+    </record>
+
+    <template id="report_access_request">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="doc">
+                <t t-set="o" t-value="doc.sudo()"/>
+                <t t-set="company" t-value="o.company_id or env.company"/>
+                <t t-set="record_title">طلب إضافة صلاحية</t>
+                <t t-set="record_title_en">ACCESS GRANT REQUEST</t>
+                <t t-call="care_report_layout.external_layout_care">
+                    <div class="page" style="font-family:'Cairo','DejaVu Sans',Arial,sans-serif;color:#111;font-size:13px;line-height:1.9" dir="rtl">
+                        <div style="display:flex;justify-content:space-between;font-weight:700;margin:2px 0 14px">
+                            <span>رقم الطلب: <t t-esc="o.name"/></span>
+                            <span>التاريخ: <t t-esc="o.date_from and o.date_from.strftime('%Y/%m/%d')"/></span>
+                        </div>
+                        <table width="100%" style="border-collapse:collapse;margin:6px 0 16px">
+                            <tr><td style="border:1px solid #1b3a6b;padding:7px 10px;width:32%;font-weight:700;text-align:right;background:#eef2f8">المستخدم المستهدف</td>
+                                <td style="border:1px solid #1b3a6b;padding:7px 10px;font-weight:700"><t t-esc="o.user_id.name or '—'"/></td></tr>
+                            <tr><td style="border:1px solid #1b3a6b;padding:7px 10px;font-weight:700;text-align:right;background:#eef2f8">مُقدّم الطلب</td>
+                                <td style="border:1px solid #1b3a6b;padding:7px 10px"><t t-esc="o.requester_id.name or '—'"/></td></tr>
+                            <tr><td style="border:1px solid #1b3a6b;padding:7px 10px;font-weight:700;text-align:right;background:#eef2f8">نوع الصلاحية</td>
+                                <td style="border:1px solid #1b3a6b;padding:7px 10px"><t t-esc="dict(o._fields['request_type'].selection).get(o.request_type)"/></td></tr>
+                            <tr><td style="border:1px solid #1b3a6b;padding:7px 10px;font-weight:700;text-align:right;background:#fef3c7">الصلاحية المطلوبة</td>
+                                <td style="border:1px solid #1b3a6b;padding:7px 10px;font-weight:700;background:#fef3c7"><t t-esc="o.summary or '—'"/></td></tr>
+                            <tr><td style="border:1px solid #1b3a6b;padding:7px 10px;font-weight:700;text-align:right;background:#eef2f8">المدّة</td>
+                                <td style="border:1px solid #1b3a6b;padding:7px 10px">
+                                    <t t-if="o.duration_type == 'temporary'">مؤقّتة — من <t t-esc="o.date_from and o.date_from.strftime('%Y/%m/%d')"/> إلى <t t-esc="o.date_to and o.date_to.strftime('%Y/%m/%d')"/></t>
+                                    <t t-else="">دائمة</t>
+                                </td></tr>
+                            <tr t-if="o.reason"><td style="border:1px solid #1b3a6b;padding:7px 10px;font-weight:700;text-align:right;background:#eef2f8">السبب / المبرّر</td>
+                                <td style="border:1px solid #1b3a6b;padding:7px 10px;text-align:right"><t t-esc="o.reason"/></td></tr>
+                            <tr><td style="border:1px solid #1b3a6b;padding:7px 10px;font-weight:700;text-align:right;background:#eef2f8">الحالة</td>
+                                <td style="border:1px solid #1b3a6b;padding:7px 10px"><t t-esc="dict(o._fields['state'].selection).get(o.state)"/></td></tr>
+                        </table>
+                        <table width="100%" style="border-collapse:separate;border-spacing:10px;margin-top:34px;table-layout:fixed"><tr>
+                            <t t-call="care_esignature.esign_box"><t t-set="role">مُقدّم الطلب</t><t t-set="role_en">Requester</t><t t-set="name" t-value="o.requester_id.name or ''"/><t t-set="sig" t-value="o.env['care.esignature'].for_role(o._name, o.id, 'مُقدّم الطلب')"/><t t-set="w">50%</t></t>
+                            <t t-call="care_esignature.esign_box"><t t-set="role">مدير الصلاحيات</t><t t-set="role_en">Access Manager</t><t t-set="name" t-value="o.approver_id.name or ''"/><t t-set="sig" t-value="o.env['care.esignature'].for_role(o._name, o.id, 'مدير الصلاحيات')"/><t t-set="w">50%</t></t>
+                        </tr></table>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+</odoo>

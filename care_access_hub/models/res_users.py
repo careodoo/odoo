@@ -11,15 +11,16 @@ class ResUsers(models.Model):
         'care.job.role', 'care_user_role_rel', 'user_id', 'role_id',
         string='المسمّيات الوظيفية')
     care_role_label = fields.Char(string='المسمّيات', compute='_compute_role_label')
-    # إشعارات المستخدم المُعطَّلة (من ملفه الشخصي) — لا يُمكن تعطيل الإلزامية
-    notify_disabled_ids = fields.Many2many(
-        'care.access.notify.channel', 'care_user_notify_off_rel', 'user_id', 'channel_id',
-        string='الإشعارات المُعطَّلة', domain=[('mandatory', '=', False)],
-        help='أنواع الاعتماد التي عطّلت إشعارها. الإشعارات الإلزامية 🔒 لا يمكن تعطيلها.')
     # «إشعاراتي»: الأنواع التي تصل المستخدم فعلًا (حسب صلاحياته) + تحكّمه فيها
     notify_pref_ids = fields.One2many('care.user.notify.pref', 'user_id', string='إشعاراتي')
     # «تفويضاتي»: التفويضات التي يمنحها هذا المستخدم لآخرين
     delegation_ids = fields.One2many('care.user.delegation', 'delegator_id', string='تفويضاتي')
+    # «طلبات الصلاحية»: الطلبات التي قدّمها هذا المستخدم (خدمة ذاتية من الملف الشخصي)
+    my_access_request_ids = fields.One2many('care.access.request', 'requester_id',
+                                            string='طلباتي للصلاحيات')
+    # قوائم مخفية لكل مستخدم (المكان الموحّد — بدل شاشة وصول القوائم المنفصلة)
+    menu_hide_ids = fields.Many2many('ir.ui.menu', 'care_user_menu_hide_rel', 'user_id', 'menu_id',
+                                     string='القوائم المخفية عن هذا المستخدم')
 
     def write(self, vals):
         res = super().write(vals)
@@ -33,7 +34,8 @@ class ResUsers(models.Model):
         return res
 
     def _ah_relevant_channels(self):
-        """أنواع الإشعارات التي يصلها هذا المستخدم فعلًا (هو معتمِد محتمل حسب صلاحياته/مسمّياته)."""
+        """أنواع الإشعارات التي يصلها هذا المستخدم فعلًا (هو معتمِد محتمل حسب صلاحياته/مسمّياته).
+        مُحسَّن: يجلب القنوات وأنواع الاعتماد دفعة واحدة بدل بحثٍ لكل نوع."""
         self.ensure_one()
         Center = self.env.get('care.approval.center')
         Ch = self.env['care.access.notify.channel'].sudo()
@@ -42,10 +44,24 @@ class ResUsers(models.Model):
         my_groups = set(self.groups_id.ids)
         my_roles = set(self.care_role_ids.ids)
         broad = {'base.group_user', 'base.group_portal', 'base.group_public'}
+        # جلب دفعة واحدة (أداء)
+        ch_by_key = {c.key: c for c in Ch.search([])}
         AT = self.env.get('care.approval.type')
+        type_by_model = {}
+        if AT is not None:
+            type_by_model = {t.model_name: t for t in AT.sudo().search([]) if t.model_name}
+        # ذاكرة مؤقّتة لمراجع المجموعات (xmlid → id)
+        grp_cache = {}
+
+        def _gid(xmlid):
+            if xmlid not in grp_cache:
+                g = self.env.ref(xmlid, raise_if_not_found=False)
+                grp_cache[xmlid] = g.id if g else False
+            return grp_cache[xmlid]
+
         relevant = Ch.browse()
         for e in Center.sudo()._entries():
-            ch = Ch.search([('key', '=', e.get('key'))], limit=1)
+            ch = ch_by_key.get(e.get('key'))
             ch_off = ch and not (ch.ch_app or ch.ch_odoo or ch.ch_email)
             if not ch or ch_off:
                 if not (ch and ch.mandatory):
@@ -53,20 +69,19 @@ class ResUsers(models.Model):
             # مسمّيات/مستخدمو مراحل النوع (منظومة الصلاحيات)
             has_config = False
             match = False
-            if AT is not None:
-                t = AT.sudo().search([('model_name', '=', e.get('model'))], limit=1)
-                if t:
-                    sroles = set(t.stage_ids.mapped('role_ids').ids)
-                    susers = set(t.stage_ids.mapped('extra_user_ids').ids)
-                    if sroles or susers:
-                        has_config = True
-                        match = bool(my_roles & sroles) or (self.id in susers)
+            t = type_by_model.get(e.get('model'))
+            if t:
+                sroles = set(t.stage_ids.mapped('role_ids').ids)
+                susers = set(t.stage_ids.mapped('extra_user_ids').ids)
+                if sroles or susers:
+                    has_config = True
+                    match = bool(my_roles & sroles) or (self.id in susers)
             if not has_config:
                 for g in e.get('groups') or []:
                     if g in broad:
                         continue
-                    grp = self.env.ref(g, raise_if_not_found=False)
-                    if grp and grp.id in my_groups:
+                    gid = _gid(g)
+                    if gid and gid in my_groups:
                         match = True
                         break
             if match or (ch and ch.mandatory):
@@ -234,6 +249,64 @@ class ResUsers(models.Model):
             if grps:
                 u.sudo().write({'groups_id': [(4, g.id) for g in grps]})
         return True
+
+    # ---------- بيانات تقرير صلاحيات المستخدم (احترافي + خانة اعتماد) ----------
+    def _access_report(self):
+        """يُجمّع صلاحيات المستخدم الفعلية للتقرير (مسمّيات/شركات/مجموعات/قوائم/حقول/اعتمادات/تفويضات/إشعارات)."""
+        self.ensure_one()
+        u = self.sudo()
+        # المسمّيات
+        roles = [{'name': r.name, 'tier': dict(r._fields['tier'].selection).get(r.tier, r.tier),
+                  'scope': 'كل الشركة' if r.data_scope == 'all' else 'مشاريعه فقط',
+                  'approve': r.can_approve} for r in u.care_role_ids]
+        # الشركات
+        companies = u.company_ids.mapped('name')
+        # المجموعات مجمّعة بالتصنيف
+        by_cat = {}
+        for g in u.groups_id:
+            cat = g.category_id.name or 'أخرى'
+            by_cat.setdefault(cat, []).append(g.name)
+        groups_by_cat = [{'cat': c, 'groups': sorted(v)} for c, v in sorted(by_cat.items())]
+        # القوائم المخفية
+        menu_hides = sorted(set(u.menu_hide_ids.mapped('complete_name')))
+        # الحقول المخفية (من المسمّيات)
+        Mask = self.env['care.role.field.mask'].sudo()
+        masks = Mask.search([('role_id', 'in', u.care_role_ids.ids), ('hidden', '=', True)])
+        field_masks = sorted({'%s · %s' % (m.model_name, m.field_label or m.field_name) for m in masks})
+        # صلاحيات الاعتماد (المستخدم معتمِد في مراحل هذه الأنواع)
+        approvals = []
+        AT = self.env.get('care.approval.type')
+        if AT is not None:
+            my_roles = set(u.care_role_ids.ids)
+            for t in AT.sudo().search([]):
+                for s in t.stage_ids:
+                    if (set(s.role_ids.ids) & my_roles) or (u.id in s.extra_user_ids.ids):
+                        approvals.append({'type': t.name, 'stage': s.name,
+                                          'mode': dict(s._fields['mode'].selection).get(s.mode, s.mode)})
+        # التفويضات
+        deleg_given = [{'to': d.delegate_id.name, 'scope': 'كل الأنواع' if d.scope == 'all' else 'مخصّص',
+                        'from': d.date_from and d.date_from.strftime('%Y/%m/%d') or '—',
+                        'to_date': d.date_to and d.date_to.strftime('%Y/%m/%d') or '—',
+                        'state': dict(d._fields['state'].selection).get(d.state, d.state)}
+                       for d in u.delegation_ids]
+        Deleg = self.env['care.user.delegation'].sudo()
+        deleg_recv = [{'from_user': d.delegator_id.name, 'scope': 'كل الأنواع' if d.scope == 'all' else 'مخصّص',
+                       'to_date': d.date_to and d.date_to.strftime('%Y/%m/%d') or '—',
+                       'state': dict(d._fields['state'].selection).get(d.state, d.state)}
+                      for d in Deleg.search([('delegate_id', '=', u.id)])]
+        # إشعارات الاعتماد
+        notify = [{'name': p.channel_name, 'channels': p.channel_id.channels_label,
+                   'mandatory': p.mandatory} for p in u.notify_pref_ids]
+        return {
+            'roles': roles, 'companies': companies, 'group_count': len(u.groups_id),
+            'groups_by_cat': groups_by_cat, 'menu_hides': menu_hides, 'field_masks': field_masks,
+            'approvals': approvals, 'deleg_given': deleg_given, 'deleg_recv': deleg_recv,
+            'notify': notify, 'role_label': u.care_role_label or '—',
+        }
+
+    def action_print_access(self):
+        self.ensure_one()
+        return self.env.ref('care_access_hub.action_report_user_access').report_action(self)
 
     def action_preview_effective(self):
         """معاينة الصلاحية الفعلية (اتحاد المسمّيات) — dry-run لا يعدّل شيئًا."""
