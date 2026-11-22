@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <!-- Main Menu with Dashboard action (client action was causing issues) -->
-    <menuitem id="menu_security_root" name="Security Manager" sequence="10" web_icon="security_management,static/description/icon.png" action="action_security_dashboard"/>
+    <menuitem id="menu_security_root" name="Security Manager" sequence="10" action="action_security_dashboard" parent="care_cafm.menu_cafm_root"/>
     
     <!-- Keep the dashboard menu for direct client action access -->
     <menuitem id="menu_security_dashboard" name="Dashboard" parent="menu_security_root" sequence="1" action="action_security_dashboard"/>
