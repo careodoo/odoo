@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from odoo import api, fields, models, _
+from odoo.exceptions import UserError
 
 
 class ResUsers(models.Model):
@@ -95,6 +96,59 @@ class ResUsers(models.Model):
         return {'type': 'ir.actions.client', 'tag': 'display_notification',
                 'params': {'title': _('تمّ التجريد — لقطة العكس #%s') % snap.id,
                            'message': '\n'.join(done), 'sticky': True, 'type': 'success'}}
+
+    # ---------- إنفاذ نطاق الشركات (متعدد الشركات الأصلي) ----------
+    def _ah_role_companies(self):
+        """الشركات المسموح بها للمستخدم مُشتقّة من مسمّياته:
+        None=بلا مسمّى (لا تغيير)، كل الشركات=إن كان أي مسمّى «كل الشركات» (company_ids فارغ)."""
+        self.ensure_one()
+        roles = self.care_role_ids
+        if not roles:
+            return None
+        if any(not r.company_ids for r in roles):
+            return self.env['res.company'].sudo().search([])
+        comps = self.env['res.company']
+        for r in roles:
+            comps |= r.company_ids
+        return comps
+
+    def action_preview_company_scope(self):
+        """معاينة نطاق الشركات المُشتقّ من المسمّيات — dry-run بلا تعديل."""
+        self.ensure_one()
+        comps = self._ah_role_companies()
+        if comps is None:
+            msg = _('لا مسمّى مُسنَد — لا تغيير على الشركات.')
+        else:
+            msg = _('الشركات المسموح بها من المسمّيات: %s') % ('، '.join(comps.mapped('name')) or '—')
+        return {'type': 'ir.actions.client', 'tag': 'display_notification',
+                'params': {'title': _('نطاق الشركات: %s') % self.name, 'message': msg,
+                           'sticky': True, 'type': 'info'}}
+
+    def action_apply_company_scope(self):
+        """يضبط «الشركات المسموح بها» للمستخدم من نطاق شركات مسمّياته (آلية أودو الأصلية).
+        آمن: يُبقي الشركة الحالية ضمن المسموح (منعًا للقفل)؛ خاصّ بمدير المنظومة؛ يُسجَّل تدقيقًا."""
+        if not self.env.user.has_group('care_access_hub.group_access_manager') \
+                and not self.env.user.has_group('base.group_system'):
+            raise UserError(_('ضبط نطاق الشركات خاصّ بمدير منظومة الصلاحيات.'))
+        done = []
+        for u in self:
+            comps = u._ah_role_companies()
+            if comps is None or not comps:
+                continue
+            if u.company_id and u.company_id.id not in comps.ids:
+                comps |= u.company_id  # لا تُقصِ شركته الحالية
+            before = len(u.company_ids)
+            if set(u.company_ids.ids) == set(comps.ids):
+                continue
+            u.sudo().write({'company_ids': [(6, 0, comps.ids)]})
+            self.env['care.access.audit'].sudo().log(
+                'company_scope', _('نطاق شركات %(u)s = %(c)s') % {
+                    'u': u.name, 'c': '، '.join(comps.mapped('name'))})
+            done.append('%s: %s→%s شركة' % (u.name, before, len(comps)))
+        msg = '\n'.join(done) if done else _('لا تغيير (بلا مسمّى مُقيَّد بشركات).')
+        return {'type': 'ir.actions.client', 'tag': 'display_notification',
+                'params': {'title': _('نطاق الشركات'), 'message': msg,
+                           'sticky': bool(done), 'type': 'success' if done else 'warning'}}
 
     def action_apply_roles(self):
         """تطبيق آمن (إضافة فقط): يمنح المستخدم مجموعات مسمّياته دون حذف شيء.

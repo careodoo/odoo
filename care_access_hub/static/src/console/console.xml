@@ -90,6 +90,7 @@
             <t t-esc="currentRole.scope === 'own' ? '🧭 النطاق: مشاريعه المعيّنة فقط' : '🏢 النطاق: كل الشركة'"/>
             <t t-if="currentRole.readonly"> · قراءة فقط افتراضيًّا</t>
           </div>
+          <div class="editinfo">✏️ <b>تعديل مباشر</b> — اضغط الخلية لتدوير المستوى (— / قراءة / قراءة+كتابة). التغيير يُعدّل صلاحيات <b>المسمّى</b> ويؤثّر على كل من يحمله.</div>
           <div class="legend">
             <span class="lg"><span class="dot" style="background:var(--none)"/>—</span>
             <span class="lg"><span class="dot" style="background:var(--read)"/>قراءة</span>
@@ -184,11 +185,12 @@
               </div>
             </div>
             <div class="urows">
-              <div class="urow-h">الصلاحية الفعلية (اتحاد المسمّيات) — <t t-esc="userUnionLevels.length"/> مودل</div>
+              <div class="urow-h">الصلاحية الفعلية — <t t-esc="userUnionLevels.length"/> مودل</div>
+              <div class="roinfo">👁️ <b>للعرض فقط</b> — هذه الصلاحية <b>تُحسب تلقائيًّا</b> من اتحاد مسمّيات المستخدم. لتعديلها غيّر مصفوفة المسمّى من تبويب «مصفوفة الصلاحيات».</div>
               <t t-foreach="userUnionLevels" t-as="x" t-key="x.label">
                 <div class="urow">
                   <div class="rt"><b t-esc="x.label"/><span t-esc="x.module"/></div>
-                  <span t-attf-class="cell {{lvlClass(x.level)}}" t-esc="lvlName(x.level)"/>
+                  <span t-attf-class="cell ro {{lvlClass(x.level)}}" t-esc="lvlName(x.level)"/>
                 </div>
               </t>
               <div class="note2" t-if="!userUnionLevels.length">لا مسمّى مُسنَد بعد — اختر مسمّى من القائمة.</div>

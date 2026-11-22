@@ -24,6 +24,16 @@
                                 string="معاينة الصلاحية الفعلية" class="btn-secondary ms-2"
                                 icon="fa-search"/>
                     </div>
+                    <separator string="🏢 نطاق الشركات"/>
+                    <div>
+                        <button name="action_preview_company_scope" type="object"
+                                string="معاينة الشركات من المسمّيات" class="btn-secondary"
+                                icon="fa-building"/>
+                        <button name="action_apply_company_scope" type="object"
+                                string="تطبيق نطاق الشركات" class="btn-primary ms-2"
+                                icon="fa-check"
+                                confirm="سيُضبط «الشركات المسموح بها» لهذا المستخدم من نطاق شركات مسمّياته (مع إبقاء شركته الحالية). متابعة؟"/>
+                    </div>
                     <separator string="🔔 إشعارات الاعتماد"/>
                     <div class="alert alert-info" role="alert">
                         الأنواع المختارة هنا <b>مُعطَّلة</b> عن هذا المستخدم. الإشعارات الإلزامية 🔒 تصل دائمًا ولا تُعطَّل.
