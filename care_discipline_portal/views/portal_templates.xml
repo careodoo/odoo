@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ============ قائمة الشكاوى + نموذج التقديم ============ -->
+    <template id="disc_pm_list" name="PM Disciplinary Complaints">
+        <t t-call="care_pms.pm_layout">
+            <style>
+                .dc-sev{display:inline-block;padding:2px 9px;border-radius:999px;font-size:11px;font-weight:800}
+                .dc-sev.low{background:#e8f5e9;color:#2e7d32}.dc-sev.medium{background:#fff4e5;color:#b26a00}.dc-sev.high{background:#fdecea;color:#c0392b}
+                .dc-st{display:inline-block;padding:2px 9px;border-radius:999px;font-size:11px;font-weight:800;background:#eef1f7;color:#334}
+                .dc-st.applied{background:#e8f5e9;color:#2e7d32}.dc-st.rej{background:#fdecea;color:#c0392b}.dc-st.wait{background:#eaf2ff;color:#1565c0}
+                .dc-grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+                @media(max-width:620px){.dc-grid2{grid-template-columns:1fr}}
+            </style>
+            <div class="pm-h">⚖️ <t t-esc="t('الشكاوى والإجراءات التأديبية','Disciplinary Complaints')"/></div>
+            <div class="pm-sub" t-esc="project.name"/>
+
+            <t t-if="ok"><div class="pm-alert ok">✅ <t t-esc="t('قُدّمت الشكوى وأُحيلت لاعتماد المدير المباشر.','Complaint submitted for the direct manager\'s approval.')"/></div></t>
+            <t t-if="err=='missing'"><div class="pm-alert bad">🚫 <t t-esc="t('أكمل الحقول الإلزامية (العامل، النوع، الوصف).','Fill the required fields (worker, category, description).')"/></div></t>
+            <t t-if="err=='ack'"><div class="pm-alert bad">🚫 <t t-esc="t('يجب الإقرار بصحّة البيانات (حماية من الشكوى الكيدية).','You must confirm the accuracy of the information.')"/></div></t>
+            <t t-if="err=='presc'"><div class="pm-alert bad">🚫 <t t-esc="t('مضى على الواقعة أكثر من مدّة التقادم المسموح بها.','The incident is older than the allowed prescription period.')"/></div></t>
+            <t t-if="err=='scope'"><div class="pm-alert bad">🚫 <t t-esc="t('العامل خارج نطاق مشروعك.','This worker is outside your project scope.')"/></div></t>
+            <t t-if="err=='1'"><div class="pm-alert bad">🚫 <t t-esc="t('تعذّر تنفيذ الطلب.','Could not process the request.')"/></div></t>
+
+            <!-- نموذج تقديم شكوى جديدة -->
+            <div class="pm-card">
+                <div class="hd b1">📝 <t t-esc="t('تقديم شكوى جديدة','File a new complaint')"/></div>
+                <div class="bd">
+                    <form t-attf-action="/my/pm/p/#{project.id}/discipline/submit" method="post">
+                        <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                        <div class="dc-grid2">
+                            <div>
+                                <label style="font-weight:700;font-size:12px"><t t-esc="t('العامل المُشتكى عليه','Worker')"/> *</label>
+                                <select name="employee_id" required="required">
+                                    <option value=""><t t-esc="t('— اختر العامل —','— Choose worker —')"/></option>
+                                    <t t-foreach="workers" t-as="w"><option t-att-value="w.id"><t t-esc="w.name"/> <t t-if="w.barcode">(<t t-esc="w.barcode"/>)</t></option></t>
+                                </select>
+                            </div>
+                            <div>
+                                <label style="font-weight:700;font-size:12px"><t t-esc="t('نوع المخالفة','Category')"/> *</label>
+                                <select name="category_id" required="required">
+                                    <option value=""><t t-esc="t('— اختر النوع —','— Choose category —')"/></option>
+                                    <t t-foreach="categories" t-as="c"><option t-att-value="c.id"><t t-esc="c.name"/></option></t>
+                                </select>
+                            </div>
+                            <div>
+                                <label style="font-weight:700;font-size:12px"><t t-esc="t('درجة الخطورة','Severity')"/></label>
+                                <select name="severity">
+                                    <option value="low"><t t-esc="t('بسيطة','Low')"/></option>
+                                    <option value="medium" selected="selected"><t t-esc="t('متوسّطة','Medium')"/></option>
+                                    <option value="high"><t t-esc="t('جسيمة','High')"/></option>
+                                </select>
+                            </div>
+                            <div>
+                                <label style="font-weight:700;font-size:12px"><t t-esc="t('تاريخ الواقعة','Incident date')"/></label>
+                                <input type="date" name="incident_date" t-att-value="today_iso"/>
+                            </div>
+                        </div>
+                        <label style="font-weight:700;font-size:12px;margin-top:8px;display:block"><t t-esc="t('وصف الواقعة','Incident description')"/> *</label>
+                        <textarea name="description" rows="3" required="required" t-attf-placeholder="#{t('اكتب تفاصيل الواقعة...','Describe what happened...')}"/>
+                        <input type="text" name="witnesses" t-attf-placeholder="#{t('الشهود (اختياري)','Witnesses (optional)')}"/>
+                        <label style="display:flex;align-items:center;gap:8px;margin:8px 0;font-size:12.5px;font-weight:700">
+                            <input type="checkbox" name="ack" value="1" style="width:auto"/>
+                            <t t-esc="t('أُقرّ بصحّة البيانات المذكورة','I confirm the information above is accurate')"/>
+                        </label>
+                        <button class="pm-btn p"><t t-esc="t('تقديم الشكوى','Submit complaint')"/></button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- قائمة شكاواي -->
+            <div class="pm-card">
+                <div class="hd light">📋 <t t-esc="t('شكاواي','My complaints')"/> (<t t-esc="len(rows)"/>)</div>
+                <table>
+                    <thead><tr>
+                        <th><t t-esc="t('الرقم','Ref')"/></th><th><t t-esc="t('العامل','Worker')"/></th>
+                        <th><t t-esc="t('النوع','Category')"/></th><th><t t-esc="t('الخطورة','Severity')"/></th>
+                        <th><t t-esc="t('التاريخ','Date')"/></th><th><t t-esc="t('الجزاء','Penalty')"/></th>
+                        <th><t t-esc="t('الحالة','Status')"/></th><th></th>
+                    </tr></thead>
+                    <tbody>
+                        <tr t-foreach="rows" t-as="r">
+                            <td style="font-weight:800" t-esc="r['name']"/>
+                            <td t-esc="r['employee']"/>
+                            <td t-esc="r['category']"/>
+                            <td><span t-attf-class="dc-sev #{r['sev_key']}" t-esc="r['severity']"/></td>
+                            <td t-esc="r['date']"/>
+                            <td t-esc="r['penalty'] or '—'"/>
+                            <td><span t-attf-class="dc-st #{r['state']=='applied' and 'applied' or (r['state']=='rejected' and 'rej' or 'wait')}" t-esc="r['state_label']"/></td>
+                            <td><a t-attf-href="/my/pm/p/#{project.id}/discipline/#{r['id']}" class="pm-badge b-grey"><t t-esc="t('تفاصيل','Details')"/></a></td>
+                        </tr>
+                        <tr t-if="not rows"><td colspan="8" style="text-align:center;color:#8a93a8;padding:14px"><t t-esc="t('لا توجد شكاوى.','No complaints.')"/></td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </t>
+    </template>
+
+    <!-- ============ تفاصيل شكوى + المسار ============ -->
+    <template id="disc_pm_detail" name="PM Complaint Detail">
+        <t t-call="care_pms.pm_layout">
+            <style>
+                .dc-timeline{display:flex;flex-wrap:wrap;gap:0;margin:10px 0}
+                .dc-step{flex:1;min-width:120px;text-align:center;position:relative;padding:6px 4px}
+                .dc-dot{width:26px;height:26px;border-radius:50%;margin:0 auto 5px;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:12px;color:#fff;background:#c7ccd8}
+                .dc-step.done .dc-dot{background:#2e7d32}.dc-step.cur .dc-dot{background:#1565c0;box-shadow:0 0 0 4px #eaf2ff}
+                .dc-step .lbl{font-size:10.5px;font-weight:700;color:#55607a;line-height:1.25}
+                .dc-step.done .lbl,.dc-step.cur .lbl{color:#15223a}
+                .dc-kv{display:grid;grid-template-columns:150px 1fr;gap:7px 12px;font-size:13px}
+                .dc-kv .k{color:#8a93a8;font-weight:700}.dc-kv .v{font-weight:700;color:#15223a}
+            </style>
+            <div class="pm-h">⚖️ <t t-esc="c['name']"/></div>
+            <div class="pm-sub"><a t-attf-href="/my/pm/p/#{project.id}/discipline" style="color:#1565c0">← <t t-esc="t('الشكاوى','Complaints')"/></a></div>
+
+            <t t-if="c['rejected']"><div class="pm-alert bad">🚫 <t t-esc="t('مرفوضة','Rejected')"/> <t t-if="c['reject_reason']">— <t t-esc="c['reject_reason']"/></t></div></t>
+
+            <div class="pm-card"><div class="bd">
+                <div class="dc-timeline">
+                    <t t-foreach="steps" t-as="s">
+                        <div t-attf-class="dc-step #{s_index &lt; cur_idx and 'done' or (s_index == cur_idx and 'cur' or '')}">
+                            <div class="dc-dot"><t t-if="s_index &lt; cur_idx">✓</t><t t-else="" t-esc="s_index+1"/></div>
+                            <div class="lbl" t-esc="s[1]"/>
+                        </div>
+                    </t>
+                </div>
+            </div></div>
+
+            <div class="pm-card">
+                <div class="hd light">📄 <t t-esc="t('تفاصيل الشكوى','Complaint details')"/></div>
+                <div class="bd">
+                    <div class="dc-kv">
+                        <div class="k"><t t-esc="t('العامل','Worker')"/></div><div class="v" t-esc="c['employee']"/>
+                        <div class="k"><t t-esc="t('نوع المخالفة','Category')"/></div><div class="v" t-esc="c['category']"/>
+                        <div class="k"><t t-esc="t('الخطورة','Severity')"/></div><div class="v" t-esc="c['severity']"/>
+                        <div class="k"><t t-esc="t('تاريخ الواقعة','Incident date')"/></div><div class="v" t-esc="c['date']"/>
+                        <div class="k"><t t-esc="t('الحالة','Status')"/></div><div class="v" t-esc="c['state_label']"/>
+                        <t t-if="c['penalty']">
+                            <div class="k"><t t-esc="t('الجزاء المُقرَّر','Penalty')"/></div><div class="v" t-esc="c['penalty']"/>
+                        </t>
+                        <t t-if="c['law_article']">
+                            <div class="k"><t t-esc="t('السند القانوني','Legal article')"/></div><div class="v" t-esc="c['law_article']"/>
+                        </t>
+                    </div>
+                    <div style="margin-top:10px">
+                        <div style="color:#8a93a8;font-weight:700;font-size:12px"><t t-esc="t('وصف الواقعة','Description')"/></div>
+                        <div style="border:1px solid #e6eaf3;border-radius:8px;padding:9px 11px;margin-top:3px;font-size:13px" t-esc="c['description']"/>
+                    </div>
+                </div>
+            </div>
+        </t>
+    </template>
+
+</odoo>
