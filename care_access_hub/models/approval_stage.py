@@ -23,6 +23,46 @@ class CareApprovalType(models.Model):
         for r in self:
             r.stage_count = len(r.stage_ids)
 
+    @api.model
+    def sync_from_registry(self):
+        """يُنشئ/يحدّث أنواع الاعتماد من سجلّ مركز الموافقات (كل نوع بموديله وحقل حالته)
+        ثم يملأ مراحلها من الحالة الفعلية — يجعل تبويب «توجيه الاعتمادات» كاملًا (كل الأنواع بمراحلها)."""
+        App = self.env.get('care.approval.center')
+        if App is None:
+            return 0
+        try:
+            entries = App.sudo()._entries()
+        except Exception:
+            return 0
+        IM = self.env['ir.model'].sudo()
+        existing = {t.model_name: t for t in self.sudo().search([]) if t.model_name}
+        created = 0
+        seq = 0
+        synced = self.sudo()
+        for e in entries:
+            seq += 10
+            model = e.get('model')
+            if not model or model not in self.env:
+                continue
+            im = IM.search([('model', '=', model)], limit=1)
+            if not im:
+                continue
+            label = e.get('module') or model
+            t = existing.get(model)
+            if t:
+                t.write({'name': label, 'sequence': seq, 'state_field': e.get('state_field') or 'state'})
+            else:
+                t = self.sudo().create({
+                    'name': label, 'model_id': im.id,
+                    'state_field': e.get('state_field') or 'state', 'sequence': seq})
+                created += 1
+            synced |= t
+        # املأ المراحل من الحالة الفعلية
+        synced.action_sync_stages()
+        # أخفِ الأنواع المبدئية الفارغة (بلا موديل) كي لا تظهر كبطاقات فارغة
+        self.sudo().search([('model_id', '=', False)]).write({'active': False})
+        return created
+
     def action_sync_stages(self):
         """يقرأ مراحل الحالة الفعلية من الموديل (dry-run آمن — لا يمسّ البيانات)."""
         for r in self:

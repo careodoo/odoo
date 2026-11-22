@@ -24,6 +24,31 @@
                                 string="معاينة الصلاحية الفعلية" class="btn-secondary ms-2"
                                 icon="fa-search"/>
                     </div>
+                    <separator string="🔔 إشعارات الاعتماد"/>
+                    <div class="alert alert-info" role="alert">
+                        الأنواع المختارة هنا <b>مُعطَّلة</b> عن هذا المستخدم. الإشعارات الإلزامية 🔒 تصل دائمًا ولا تُعطَّل.
+                    </div>
+                    <field name="notify_disabled_ids" nolabel="1" widget="many2many_tags"
+                           options="{'no_create': True}"/>
+                </page>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- لوحة «إشعاراتي» في التفضيلات الشخصية للمستخدم -->
+    <record id="view_users_pref_notify" model="ir.ui.view">
+        <field name="name">res.users.preferences.notify</field>
+        <field name="model">res.users</field>
+        <field name="inherit_id" ref="base.view_users_form_simple_modif"/>
+        <field name="arch" type="xml">
+            <xpath expr="//notebook" position="inside">
+                <page string="🔔 إشعاراتي" name="my_notify">
+                    <div class="alert alert-info" role="alert">
+                        تحكّم في إشعارات الاعتماد الواصلة إليك. أضِف أي نوع هنا <b>لتعطيل</b> إشعاره.
+                        الإشعارات الإلزامية 🔒 تصل دائمًا ولا تظهر للتعطيل.
+                    </div>
+                    <field name="notify_disabled_ids" nolabel="1" widget="many2many_tags"
+                           options="{'no_create': True}"/>
                 </page>
             </xpath>
         </field>

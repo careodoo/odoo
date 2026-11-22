@@ -68,9 +68,12 @@ class CareAccessNotifyChannel(models.Model):
             return 'none'
         if ch.mandatory:
             return ch.channel
-        # تفضيل المستخدم (opt-out)
+        # تفضيل المستخدم (تعطيل من ملفه الشخصي) — m2m على res.users، مع دعم opt-out القديم
+        u = user if hasattr(user, '_name') else self.env['res.users'].sudo().browse(int(user))
+        if 'notify_disabled_ids' in u._fields and ch.id in u.sudo().notify_disabled_ids.ids:
+            return 'none'
         off = self.env['care.access.notify.optout'].sudo().search_count(
-            [('user_id', '=', user.id if hasattr(user, 'id') else user), ('key', '=', key)])
+            [('user_id', '=', u.id), ('key', '=', key)])
         return 'none' if off else ch.channel
 
     @api.model

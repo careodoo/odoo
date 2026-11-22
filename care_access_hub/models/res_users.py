@@ -10,6 +10,11 @@ class ResUsers(models.Model):
         'care.job.role', 'care_user_role_rel', 'user_id', 'role_id',
         string='المسمّيات الوظيفية')
     care_role_label = fields.Char(string='المسمّيات', compute='_compute_role_label')
+    # إشعارات المستخدم المُعطَّلة (من ملفه الشخصي) — لا يُمكن تعطيل الإلزامية
+    notify_disabled_ids = fields.Many2many(
+        'care.access.notify.channel', 'care_user_notify_off_rel', 'user_id', 'channel_id',
+        string='الإشعارات المُعطَّلة', domain=[('mandatory', '=', False)],
+        help='أنواع الاعتماد التي عطّلت إشعارها. الإشعارات الإلزامية 🔒 لا يمكن تعطيلها.')
     # عدّاد مجموعات أودو الحالية — لإظهار فوضى الإسناد العشوائي (110 متوسّط)
     care_group_count = fields.Integer(string='عدد المجموعات الحالية', compute='_compute_group_count')
 
