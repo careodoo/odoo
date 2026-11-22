@@ -34,12 +34,18 @@
                                 icon="fa-check"
                                 confirm="سيُضبط «الشركات المسموح بها» لهذا المستخدم من نطاق شركات مسمّياته (مع إبقاء شركته الحالية). متابعة؟"/>
                     </div>
-                    <separator string="🔔 إشعارات الاعتماد"/>
-                    <div class="alert alert-info" role="alert">
-                        الأنواع المختارة هنا <b>مُعطَّلة</b> عن هذا المستخدم. الإشعارات الإلزامية 🔒 تصل دائمًا ولا تُعطَّل.
-                    </div>
-                    <field name="notify_disabled_ids" nolabel="1" widget="many2many_tags"
-                           options="{'no_create': True}"/>
+                    <separator string="🔔 إشعارات الاعتماد (التي تصل هذا المستخدم)"/>
+                    <button name="action_sync_notify_prefs" type="object"
+                            string="🔄 تحميل/تحديث" class="btn-secondary mb-2" icon="fa-refresh"/>
+                    <field name="notify_pref_ids" nolabel="1">
+                        <tree editable="bottom" create="false" delete="false">
+                            <field name="channel_icon" readonly="1" string=""/>
+                            <field name="channel_name" readonly="1"/>
+                            <field name="admin_channel" readonly="1" string="القناة"/>
+                            <field name="mandatory" readonly="1"/>
+                            <field name="enabled" widget="boolean_toggle" readonly="mandatory"/>
+                        </tree>
+                    </field>
                 </page>
             </xpath>
         </field>
@@ -54,11 +60,20 @@
             <xpath expr="//notebook" position="inside">
                 <page string="🔔 إشعاراتي" name="my_notify">
                     <div class="alert alert-info" role="alert">
-                        تحكّم في إشعارات الاعتماد الواصلة إليك. أضِف أي نوع هنا <b>لتعطيل</b> إشعاره.
-                        الإشعارات الإلزامية 🔒 تصل دائمًا ولا تظهر للتعطيل.
+                        تظهر هنا <b>كل أنواع الاعتماد التي تصلك إشعاراتها</b> (حسب صلاحياتك ومسمّياتك). فعّل/عطّل ما تريد.
+                        الإشعارات الإلزامية 🔒 تصل دائمًا ولا يمكن تعطيلها.
                     </div>
-                    <field name="notify_disabled_ids" nolabel="1" widget="many2many_tags"
-                           options="{'no_create': True}"/>
+                    <button name="action_sync_notify_prefs" type="object"
+                            string="🔄 تحميل / تحديث إشعاراتي" class="btn-primary mb-2" icon="fa-refresh"/>
+                    <field name="notify_pref_ids" nolabel="1">
+                        <tree editable="bottom" create="false" delete="false">
+                            <field name="channel_icon" readonly="1" string=""/>
+                            <field name="channel_name" readonly="1"/>
+                            <field name="admin_channel" readonly="1" string="القناة"/>
+                            <field name="mandatory" readonly="1"/>
+                            <field name="enabled" widget="boolean_toggle" readonly="mandatory"/>
+                        </tree>
+                    </field>
                 </page>
             </xpath>
         </field>

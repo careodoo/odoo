@@ -16,6 +16,63 @@ class ResUsers(models.Model):
         'care.access.notify.channel', 'care_user_notify_off_rel', 'user_id', 'channel_id',
         string='الإشعارات المُعطَّلة', domain=[('mandatory', '=', False)],
         help='أنواع الاعتماد التي عطّلت إشعارها. الإشعارات الإلزامية 🔒 لا يمكن تعطيلها.')
+    # «إشعاراتي»: الأنواع التي تصل المستخدم فعلًا (حسب صلاحياته) + تحكّمه فيها
+    notify_pref_ids = fields.One2many('care.user.notify.pref', 'user_id', string='إشعاراتي')
+
+    def _ah_relevant_channels(self):
+        """أنواع الإشعارات التي يصلها هذا المستخدم فعلًا (هو معتمِد محتمل حسب صلاحياته/مسمّياته)."""
+        self.ensure_one()
+        Center = self.env.get('care.approval.center')
+        Ch = self.env['care.access.notify.channel'].sudo()
+        if Center is None:
+            return Ch.browse()
+        my_groups = set(self.groups_id.ids)
+        my_roles = set(self.care_role_ids.ids)
+        broad = {'base.group_user', 'base.group_portal', 'base.group_public'}
+        AT = self.env.get('care.approval.type')
+        relevant = Ch.browse()
+        for e in Center.sudo()._entries():
+            ch = Ch.search([('key', '=', e.get('key'))], limit=1)
+            if not ch or ch.channel == 'none':
+                if not (ch and ch.mandatory):
+                    continue
+            # مسمّيات/مستخدمو مراحل النوع (منظومة الصلاحيات)
+            has_config = False
+            match = False
+            if AT is not None:
+                t = AT.sudo().search([('model_name', '=', e.get('model'))], limit=1)
+                if t:
+                    sroles = set(t.stage_ids.mapped('role_ids').ids)
+                    susers = set(t.stage_ids.mapped('extra_user_ids').ids)
+                    if sroles or susers:
+                        has_config = True
+                        match = bool(my_roles & sroles) or (self.id in susers)
+            if not has_config:
+                for g in e.get('groups') or []:
+                    if g in broad:
+                        continue
+                    grp = self.env.ref(g, raise_if_not_found=False)
+                    if grp and grp.id in my_groups:
+                        match = True
+                        break
+            if match or (ch and ch.mandatory):
+                relevant |= ch
+        return relevant
+
+    def action_sync_notify_prefs(self):
+        """يملأ «إشعاراتي» تلقائيًّا بالأنواع التي تصل المستخدم (حسب صلاحياته)، مع إبقاء تفضيلاته."""
+        Pref = self.env['care.user.notify.pref'].sudo()
+        for u in self:
+            relevant = u._ah_relevant_channels()
+            existing = {p.channel_id.id: p for p in u.notify_pref_ids}
+            for ch in relevant:
+                if ch.id not in existing:
+                    Pref.create({'user_id': u.id, 'channel_id': ch.id, 'enabled': True})
+            # احذف ما لم يعد ذا صلة
+            for p in u.notify_pref_ids:
+                if p.channel_id.id not in relevant.ids:
+                    p.unlink()
+        return {'type': 'ir.actions.client', 'tag': 'reload'}
     # عدّاد مجموعات أودو الحالية — لإظهار فوضى الإسناد العشوائي (110 متوسّط)
     care_group_count = fields.Integer(string='عدد المجموعات الحالية', compute='_compute_group_count')
 

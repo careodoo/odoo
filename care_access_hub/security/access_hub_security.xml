@@ -12,5 +12,19 @@
             <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
         </record>
 
+        <!-- كل مستخدم يرى/يعدّل تفضيلات إشعاراته فقط -->
+        <record id="rule_notify_pref_own" model="ir.rule">
+            <field name="name">إشعاراتي: الخاصة بالمستخدم فقط</field>
+            <field name="model_id" ref="model_care_user_notify_pref"/>
+            <field name="groups" eval="[(4, ref('base.group_user'))]"/>
+            <field name="domain_force">[('user_id', '=', user.id)]</field>
+        </record>
+        <record id="rule_notify_pref_mgr" model="ir.rule">
+            <field name="name">إشعاراتي: مدير المنظومة يرى الكل</field>
+            <field name="model_id" ref="model_care_user_notify_pref"/>
+            <field name="groups" eval="[(4, ref('group_access_manager'))]"/>
+            <field name="domain_force">[(1, '=', 1)]</field>
+        </record>
+
     </data>
 </odoo>

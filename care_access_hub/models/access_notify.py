@@ -68,8 +68,13 @@ class CareAccessNotifyChannel(models.Model):
             return 'none'
         if ch.mandatory:
             return ch.channel
-        # تفضيل المستخدم (تعطيل من ملفه الشخصي) — m2m على res.users، مع دعم opt-out القديم
         u = user if hasattr(user, '_name') else self.env['res.users'].sudo().browse(int(user))
+        # تفضيل المستخدم من «إشعاراتي» (care.user.notify.pref)
+        pref = self.env['care.user.notify.pref'].sudo().search(
+            [('user_id', '=', u.id), ('channel_id', '=', ch.id)], limit=1)
+        if pref and not pref.enabled:
+            return 'none'
+        # توافق خلفي: m2m/opt-out القديمة
         if 'notify_disabled_ids' in u._fields and ch.id in u.sudo().notify_disabled_ids.ids:
             return 'none'
         off = self.env['care.access.notify.optout'].sudo().search_count(
@@ -87,6 +92,23 @@ class CareAccessNotifyChannel(models.Model):
             elif c == 'email':
                 email |= u
         return push, email
+
+
+class CareUserNotifyPref(models.Model):
+    """تفضيل إشعار المستخدم لنوع اعتماد يصله (يظهر في «إشعاراتي» بملفه)."""
+    _name = 'care.user.notify.pref'
+    _description = 'تفضيل إشعار المستخدم'
+    _order = 'channel_name'
+
+    user_id = fields.Many2one('res.users', required=True, ondelete='cascade', index=True)
+    channel_id = fields.Many2one('care.access.notify.channel', required=True, ondelete='cascade')
+    channel_name = fields.Char(related='channel_id.name', string='نوع الاعتماد', store=True)
+    channel_icon = fields.Char(related='channel_id.icon', string='الأيقونة')
+    admin_channel = fields.Selection(related='channel_id.channel', string='القناة')
+    mandatory = fields.Boolean(related='channel_id.mandatory', string='إلزامي')
+    enabled = fields.Boolean(string='مُفعّل', default=True)
+
+    _sql_constraints = [('user_channel_uniq', 'unique(user_id, channel_id)', 'مُعرَّف مسبقًا.')]
 
 
 class CareAccessNotifyOptout(models.Model):
