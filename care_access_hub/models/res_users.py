@@ -19,6 +19,17 @@ class ResUsers(models.Model):
     # «إشعاراتي»: الأنواع التي تصل المستخدم فعلًا (حسب صلاحياته) + تحكّمه فيها
     notify_pref_ids = fields.One2many('care.user.notify.pref', 'user_id', string='إشعاراتي')
 
+    def write(self, vals):
+        res = super().write(vals)
+        # تحديث «إشعاراتي» تلقائيًّا عند تغيّر مسمّيات المستخدم (بلا حاجة لزرّ)
+        if 'care_role_ids' in vals and not self.env.context.get('ah_syncing_notify'):
+            try:
+                self.with_context(ah_syncing_notify=True).filtered(
+                    lambda u: not u.share)._ah_do_sync_notify_prefs()
+            except Exception:
+                pass
+        return res
+
     def _ah_relevant_channels(self):
         """أنواع الإشعارات التي يصلها هذا المستخدم فعلًا (هو معتمِد محتمل حسب صلاحياته/مسمّياته)."""
         self.ensure_one()
@@ -59,8 +70,8 @@ class ResUsers(models.Model):
                 relevant |= ch
         return relevant
 
-    def action_sync_notify_prefs(self):
-        """يملأ «إشعاراتي» تلقائيًّا بالأنواع التي تصل المستخدم (حسب صلاحياته)، مع إبقاء تفضيلاته."""
+    def _ah_do_sync_notify_prefs(self):
+        """يملأ «إشعاراتي» بالأنواع التي تصل المستخدم (حسب صلاحياته)، مع إبقاء تفضيلاته."""
         Pref = self.env['care.user.notify.pref'].sudo()
         for u in self:
             relevant = u._ah_relevant_channels()
@@ -68,10 +79,14 @@ class ResUsers(models.Model):
             for ch in relevant:
                 if ch.id not in existing:
                     Pref.create({'user_id': u.id, 'channel_id': ch.id, 'enabled': True})
-            # احذف ما لم يعد ذا صلة
             for p in u.notify_pref_ids:
                 if p.channel_id.id not in relevant.ids:
                     p.unlink()
+        return True
+
+    def action_sync_notify_prefs(self):
+        """زرّ «تحميل/تحديث إشعاراتي»."""
+        self._ah_do_sync_notify_prefs()
         return {'type': 'ir.actions.client', 'tag': 'reload'}
     # عدّاد مجموعات أودو الحالية — لإظهار فوضى الإسناد العشوائي (110 متوسّط)
     care_group_count = fields.Integer(string='عدد المجموعات الحالية', compute='_compute_group_count')
