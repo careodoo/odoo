@@ -18,6 +18,8 @@ access_notify_optout_own,care.access.notify.optout own,model_care_access_notify_
 access_notify_optout_mgr,care.access.notify.optout mgr,model_care_access_notify_optout,care_access_hub.group_access_manager,1,1,1,1
 access_notify_pref_own,care.user.notify.pref own,model_care_user_notify_pref,base.group_user,1,1,1,1
 access_notify_pref_mgr,care.user.notify.pref mgr,model_care_user_notify_pref,care_access_hub.group_access_manager,1,1,1,1
+access_menu_access_user,care.menu.access user,model_care_menu_access,base.group_user,1,0,0,0
+access_menu_access_mgr,care.menu.access mgr,model_care_menu_access,care_access_hub.group_access_manager,1,1,1,1
 access_role_model_perm_mgr,care.role.model.perm mgr,model_care_role_model_perm,care_access_hub.group_access_manager,1,1,1,1
 access_role_model_perm_user,care.role.model.perm user,model_care_role_model_perm,base.group_user,1,0,0,0
 access_role_field_mask_mgr,care.role.field.mask mgr,model_care_role_field_mask,care_access_hub.group_access_manager,1,1,1,1

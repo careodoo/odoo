@@ -18,6 +18,7 @@
         'views/migration_views.xml',
         'views/notify_views.xml',
         'views/matrix_views.xml',
+        'views/menu_access_views.xml',
         'views/console_action.xml',
     ],
     'assets': {
