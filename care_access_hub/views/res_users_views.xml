@@ -41,9 +41,10 @@
                         <tree editable="bottom" create="false" delete="false">
                             <field name="channel_icon" readonly="1" string=""/>
                             <field name="channel_name" readonly="1"/>
-                            <field name="channels_label" readonly="1" string="القنوات"/>
+                            <field name="use_app" widget="boolean_toggle" string="📱 تطبيق" readonly="mandatory"/>
+                            <field name="use_odoo" widget="boolean_toggle" string="🔔 أودو" readonly="mandatory"/>
+                            <field name="use_email" widget="boolean_toggle" string="📧 بريد" readonly="mandatory"/>
                             <field name="mandatory" readonly="1"/>
-                            <field name="enabled" widget="boolean_toggle" readonly="mandatory"/>
                         </tree>
                     </field>
                 </page>
@@ -69,9 +70,10 @@
                         <tree editable="bottom" create="false" delete="false">
                             <field name="channel_icon" readonly="1" string=""/>
                             <field name="channel_name" readonly="1"/>
-                            <field name="channels_label" readonly="1" string="القنوات"/>
+                            <field name="use_app" widget="boolean_toggle" string="📱 تطبيق" readonly="mandatory"/>
+                            <field name="use_odoo" widget="boolean_toggle" string="🔔 أودو" readonly="mandatory"/>
+                            <field name="use_email" widget="boolean_toggle" string="📧 بريد" readonly="mandatory"/>
                             <field name="mandatory" readonly="1"/>
-                            <field name="enabled" widget="boolean_toggle" readonly="mandatory"/>
                         </tree>
                     </field>
                 </page>

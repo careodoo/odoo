@@ -22,7 +22,7 @@ class CareAccessNotifyChannel(models.Model):
                             help='إشعار فوري (Push) على تطبيق الموبايل.')
     ch_odoo = fields.Boolean(string='🔔 إشعار داخل أودو', default=True,
                              help='إشعار في صندوق الوارد داخل أودو (الجرس).')
-    ch_email = fields.Boolean(string='📧 بريد إلكتروني', default=False,
+    ch_email = fields.Boolean(string='📧 بريد إلكتروني', default=True,
                               help='رسالة بريد إلكتروني.')
     channels_label = fields.Char(string='القنوات', compute='_compute_channels_label')
     mandatory = fields.Boolean(
@@ -91,15 +91,20 @@ class CareAccessNotifyChannel(models.Model):
         if not chans:
             return set()
         if ch.mandatory:
-            return chans
+            return chans  # الإلزامي: كل قنوات الإدارة (لا يُعطّلها المستخدم)
         u = user if hasattr(user, '_name') else self.env['res.users'].sudo().browse(int(user))
         pref = self.env['care.user.notify.pref'].sudo().search(
             [('user_id', '=', u.id), ('channel_id', '=', ch.id)], limit=1)
-        if pref and not pref.enabled:
-            return set()
-        if 'notify_disabled_ids' in u._fields and ch.id in u.sudo().notify_disabled_ids.ids:
-            return set()
-        return chans
+        if not pref:
+            return chans  # بلا تفضيل = كل قنوات الإدارة
+        user_set = set()
+        if pref.use_app:
+            user_set.add('app')
+        if pref.use_odoo:
+            user_set.add('odoo')
+        if pref.use_email:
+            user_set.add('email')
+        return chans & user_set  # المتاح من الإدارة ويريده المستخدم
 
     @api.model
     def split_recipients(self, users, key):
@@ -126,9 +131,11 @@ class CareUserNotifyPref(models.Model):
     channel_id = fields.Many2one('care.access.notify.channel', required=True, ondelete='cascade')
     channel_name = fields.Char(related='channel_id.name', string='نوع الاعتماد', store=True)
     channel_icon = fields.Char(related='channel_id.icon', string='الأيقونة')
-    channels_label = fields.Char(related='channel_id.channels_label', string='القنوات')
     mandatory = fields.Boolean(related='channel_id.mandatory', string='إلزامي')
-    enabled = fields.Boolean(string='مُفعّل', default=True)
+    # قنوات المستخدم — مُفعّلة افتراضيًّا، يُلغي أيًّا منها (عدا الإلزامي)
+    use_app = fields.Boolean(string='📱 تطبيق', default=True)
+    use_odoo = fields.Boolean(string='🔔 أودو', default=True)
+    use_email = fields.Boolean(string='📧 بريد', default=True)
 
     _sql_constraints = [('user_channel_uniq', 'unique(user_id, channel_id)', 'مُعرَّف مسبقًا.')]
 

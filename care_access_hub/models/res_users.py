@@ -79,7 +79,8 @@ class ResUsers(models.Model):
             existing = {p.channel_id.id: p for p in u.notify_pref_ids}
             for ch in relevant:
                 if ch.id not in existing:
-                    Pref.create({'user_id': u.id, 'channel_id': ch.id, 'enabled': True})
+                    Pref.create({'user_id': u.id, 'channel_id': ch.id,
+                                 'use_app': True, 'use_odoo': True, 'use_email': True})
             for p in u.notify_pref_ids:
                 if p.channel_id.id not in relevant.ids:
                     p.unlink()
