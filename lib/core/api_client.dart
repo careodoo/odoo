@@ -2391,6 +2391,12 @@ class ApiClient {
           _u('/pms/discipline/$projectId/file'), headers: await _headers(),
           body: jsonEncode(body))))['data'] as Map);
 
+  /// مدير المشروع: سحب/إلغاء شكوى (→ «ملغاة»).
+  Future<Map<String, dynamic>> pmCancelComplaint(int complaintId) async =>
+      Map<String, dynamic>.from((await _handle(await _net.post(
+          _u('/pms/complaint/$complaintId/cancel'), headers: await _headers(),
+          body: jsonEncode({}))))['data'] as Map);
+
   // ---- التايم شيت الإضافي (care.extra.timesheet) ----
   Future<Map<String, dynamic>> pmsExtraTimesheets(int projectId) async =>
       Map<String, dynamic>.from((await _handle(await _net.get(

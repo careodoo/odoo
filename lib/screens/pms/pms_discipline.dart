@@ -38,7 +38,7 @@ class _DisciplineScreenState extends State<DisciplineScreen> {
 
   Color _stateColor(String s) {
     if (s == 'applied') return Pms.green;
-    if (s == 'rejected' || s == 'closed') return Pms.slate;
+    if (s == 'rejected' || s == 'closed' || s == 'cancelled') return Pms.slate;
     return const Color(0xFF2563EB);
   }
 
@@ -221,6 +221,33 @@ class _DisciplineScreenState extends State<DisciplineScreen> {
               decoration: BoxDecoration(border: Border.all(color: const Color(0xFFE6EAF3)), borderRadius: BorderRadius.circular(8)),
               child: Text('${r['description']}', style: const TextStyle(fontSize: 13, color: Pms.ink)),
             ),
+            // سحب/إلغاء الشكوى (لمُقدّمها، قبل التطبيق/الإغلاق) → الحالة «ملغاة»
+            if (!['applied', 'closed', 'rejected', 'cancelled'].contains(st)) ...[
+              const SizedBox(height: 16),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  style: OutlinedButton.styleFrom(
+                      foregroundColor: Pms.red, side: const BorderSide(color: Pms.red),
+                      padding: const EdgeInsets.symmetric(vertical: 12)),
+                  icon: const Icon(Icons.block_rounded),
+                  label: Text(tr('سحب / إلغاء الشكوى', 'Withdraw / cancel')),
+                  onPressed: () async {
+                    try {
+                      await context.read<AuthProvider>().api.pmCancelComplaint(r['id'] as int);
+                      if (ctx.mounted) Navigator.pop(ctx);
+                      if (mounted) {
+                        setState(() => _f = context.read<AuthProvider>().api.pmComplaints(widget.projectId));
+                        ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text(tr('أُلغيت الشكوى (ملغاة)', 'Complaint cancelled'))));
+                      }
+                    } catch (e) {
+                      if (ctx.mounted) ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(content: Text('$e')));
+                    }
+                  },
+                ),
+              ),
+            ],
           ]),
         ),
       ),
