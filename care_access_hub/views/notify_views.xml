@@ -59,11 +59,6 @@ action = {'type': 'ir.actions.client', 'tag': 'display_notification',
                               'view_mode': 'tree', 'views': [(False, 'tree')]}}}</field>
     </record>
 
-    <!-- قائمة الإشعارات تحت منظومة الصلاحيات -->
-    <menuitem id="menu_notify_root" name="🔔 الإشعارات"
-              parent="menu_access_hub_root" sequence="30"/>
-    <menuitem id="menu_notify_sync" name="🔄 مزامنة من المركز"
-              parent="menu_notify_root" action="action_notify_sync_srv" sequence="5"/>
-    <menuitem id="menu_notify_channels" name="قنوات الإشعار"
-              parent="menu_notify_root" action="action_notify_channels" sequence="10"/>
+    <!-- قائمة الإشعارات العلوية أُزيلت — الإشعارات تبويب كامل داخل «لوحة الصلاحيات»
+         (قنوات app/odoo/email + الإلزامي + زرّ المزامنة). مكان واحد بلا تكرار. -->
 </odoo>

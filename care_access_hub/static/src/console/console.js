@@ -21,6 +21,7 @@ export class AccessConsole extends Component {
     setup() {
         this.orm = useService("orm");
         this.notification = useService("notification");
+        this.action = useService("action");
         this.state = useState({
             loading: true, error: null, tab: "overview",
             data: null, roleId: null, notifyMode: "admin", userId: null,
@@ -76,6 +77,20 @@ export class AccessConsole extends Component {
 
     pickRole(ev) { this.state.roleId = parseInt(ev.target.value); }
     openRoleMatrix(id) { this.state.roleId = id; this.state.tab = "matrix"; }
+    // فتح نماذج التعديل الخلفية من داخل الكونسول (بعد إزالة قوائمها العلوية المكرّرة)
+    openRoleForm(id) {
+        this.action.doAction({
+            type: "ir.actions.act_window", res_model: "care.job.role",
+            res_id: id || false, views: [[false, "form"]], target: "current",
+        });
+    }
+    newRole() { this.openRoleForm(false); }
+    openTypeForm(id) {
+        this.action.doAction({
+            type: "ir.actions.act_window", res_model: "care.approval.type",
+            res_id: id || false, views: [[false, "form"]], target: "current",
+        });
+    }
 
     async cycleLevel(line) {
         const next = String((parseInt(line.level) + 1) % 3);

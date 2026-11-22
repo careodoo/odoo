@@ -16,22 +16,9 @@
               groups="care_access_hub.group_access_manager"
               sequence="95"/>
 
-    <menuitem id="menu_access_hub_roles"
-              name="المسمّيات الوظيفية"
-              parent="menu_access_hub_root"
-              action="action_job_role"
-              sequence="10"/>
-
-    <menuitem id="menu_access_hub_approval_types"
-              name="أنواع الاعتماد والمراحل"
-              parent="menu_access_hub_root"
-              action="action_approval_type"
-              sequence="20"/>
-    <menuitem id="menu_access_hub_sync_approvals"
-              name="🔄 مزامنة الاعتمادات من المركز"
-              parent="menu_access_hub_root"
-              action="action_sync_approval_types_srv"
-              sequence="21"/>
+    <!-- المسمّيات الوظيفية + أنواع الاعتماد + المزامنة: أُزيلت من القائمة العلوية —
+         كلّها داخل «لوحة الصلاحيات» (تبويبات المسمّيات/المصفوفة/توجيه الاعتمادات)،
+         والبطاقات هناك تفتح نماذج التعديل مباشرة (بقرار المستخدم: مكان واحد بلا تكرار). -->
 
     <menuitem id="menu_access_hub_settings"
               name="الإعدادات"

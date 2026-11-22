@@ -52,7 +52,9 @@
         <!-- ROLES -->
         <t t-if="state.tab === 'roles'">
           <div class="eyebrow">JOB TITLES · ROLES</div>
-          <div class="sect-h"><h2>المسمّيات الوظيفية</h2><span class="hint">اضغط أي مسمّى لرؤية مصفوفته</span></div>
+          <div class="sect-h"><h2>المسمّيات الوظيفية</h2>
+            <button class="fbtn" t-on-click="newRole">➕ مسمّى جديد</button>
+            <span class="hint">اضغط أي مسمّى لرؤية مصفوفته · ⚙️ للتعديل</span></div>
           <t t-foreach="state.data.tiers" t-as="ti" t-key="ti.key">
             <t t-set="list" t-value="rolesByTier(ti.key)"/>
             <div class="tier" t-if="list.length">
@@ -60,7 +62,8 @@
               <div class="rolegrid">
                 <t t-foreach="list" t-as="r" t-key="r.id">
                   <div class="role" t-on-click="() => this.openRoleMatrix(r.id)">
-                    <div class="rn" t-esc="r.name"/>
+                    <div class="rn"><span t-esc="r.name"/>
+                      <span class="redit" t-on-click.stop="() => this.openRoleForm(r.id)" title="تعديل المسمّى (المجموعات/الشركات/القوائم)">⚙️</span></div>
                     <div class="meta">
                       <span class="pill scope" t-esc="r.scope === 'own' ? 'مشاريعه فقط' : 'كل الشركة'"/>
                       <span t-if="r.approve" class="pill appr">اعتماد</span>
@@ -97,7 +100,7 @@
             <span class="lg"><span class="dot" style="background:var(--write)"/>قراءة+كتابة</span>
           </div>
           <div class="mtable-wrap"><table class="mx"><tbody>
-            <t t-foreach="matrixGroups" t-as="g" t-key="g.module">
+            <t t-foreach="matrixGroups" t-as="g" t-key="g_index">
               <tr><td class="modcell main" colspan="2" t-esc="g.module"/></tr>
               <t t-foreach="g.rows" t-as="line" t-key="line.id">
                 <tr>
@@ -144,11 +147,12 @@
         <t t-if="state.tab === 'approvals'">
           <div class="eyebrow">APPROVAL ROUTING</div>
           <div class="sect-h"><h2>توجيه الاعتمادات بالمراحل</h2></div>
-          <p class="lead">لكل نوع سلسلة مراحل تُقرأ من حقل الحالة الفعلي، وكل مرحلة لها المسمّى المعتمِد.</p>
-          <t t-if="!state.data.atypes.length"><div class="note2">لا توجد أنواع اعتماد مُزامَنة بعد — استخدم «مزامنة المراحل» من الفورم الخلفي.</div></t>
+          <p class="lead">لكل نوع سلسلة مراحل تُقرأ من حقل الحالة الفعلي، وكل مرحلة لها المسمّى المعتمِد. اضغط ⚙️ لتعديل معتمِدي المراحل.</p>
+          <t t-if="!state.data.atypes.length"><div class="note2">لا توجد أنواع اعتماد مُزامَنة بعد.</div></t>
           <t t-foreach="state.data.atypes" t-as="at" t-key="at.id">
             <div class="card atcard">
-              <div class="atname" t-esc="at.name"/>
+              <div class="atname"><span t-esc="at.name"/>
+                <span class="redit" t-on-click="() => this.openTypeForm(at.id)" title="تعديل مراحل ومعتمِدي هذا النوع">⚙️</span></div>
               <div class="stages">
                 <t t-foreach="at.stages" t-as="s" t-key="s.id">
                   <div class="stage"><div class="sr" t-esc="s.name"/>

@@ -174,4 +174,12 @@
   .flist .frow:hover{background:var(--surface-2)}
   .flist .frow .fl{font-weight:700;color:var(--ink)}
   .flist .frow .ff{margin-inline-start:auto;font-size:10.5px;color:var(--muted);direction:ltr}
+
+  /* أزرار فتح النماذج من الكونسول (بعد إزالة القوائم العلوية المكرّرة) */
+  .role .rn{display:flex;align-items:center;gap:6px}
+  .redit{margin-inline-start:auto;cursor:pointer;opacity:.55;font-size:13px;line-height:1}
+  .redit:hover{opacity:1}
+  .atcard .atname{display:flex;align-items:center;gap:8px}
+  .atcard .atname .redit{margin-inline-start:auto}
+  .sect-h .fbtn{margin-inline-start:auto}
 }
