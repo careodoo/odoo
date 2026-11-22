@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- إضافة تبويب منظومة الصلاحيات إلى نموذج المستخدم -->
+    <record id="view_users_form_access_hub" model="ir.ui.view">
+        <field name="name">res.users.form.access.hub</field>
+        <field name="model">res.users</field>
+        <field name="inherit_id" ref="base.view_users_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//notebook" position="inside">
+                <page string="منظومة الصلاحيات" name="care_access_hub">
+                    <group>
+                        <field name="care_role_label" readonly="1"/>
+                    </group>
+                    <group string="المسمّيات الوظيفية">
+                        <field name="care_role_ids" nolabel="1" widget="many2many_tags"
+                               options="{'no_create': True}"/>
+                    </group>
+                    <div class="mt-2">
+                        <button name="action_apply_roles" type="object"
+                                string="تطبيق المسمّيات (إضافة آمنة)" class="btn-primary"
+                                icon="fa-check"/>
+                        <button name="action_preview_effective" type="object"
+                                string="معاينة الصلاحية الفعلية" class="btn-secondary ms-2"
+                                icon="fa-search"/>
+                    </div>
+                </page>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

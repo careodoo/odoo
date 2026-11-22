@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- شجرة المسمّيات الوظيفية -->
+    <record id="view_job_role_tree" model="ir.ui.view">
+        <field name="name">care.job.role.tree</field>
+        <field name="model">care.job.role</field>
+        <field name="arch" type="xml">
+            <tree string="المسمّيات الوظيفية" default_order="sequence">
+                <field name="sequence" widget="handle"/>
+                <field name="name"/>
+                <field name="code"/>
+                <field name="tier"/>
+                <field name="data_scope"/>
+                <field name="can_approve"/>
+                <field name="is_readonly"/>
+                <field name="user_count"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- بحث المسمّيات الوظيفية -->
+    <record id="view_job_role_search" model="ir.ui.view">
+        <field name="name">care.job.role.search</field>
+        <field name="model">care.job.role</field>
+        <field name="arch" type="xml">
+            <search string="بحث المسمّيات">
+                <field name="name"/>
+                <field name="code"/>
+                <filter name="f_exec" string="القيادة التنفيذية" domain="[('tier','=','exec')]"/>
+                <filter name="f_manager" string="مدراء الإدارات" domain="[('tier','=','manager')]"/>
+                <filter name="f_deputy" string="المساعدون والكبار" domain="[('tier','=','deputy')]"/>
+                <filter name="f_officer" string="المسؤولون والموظفون" domain="[('tier','=','officer')]"/>
+                <filter name="f_field" string="الميدان" domain="[('tier','=','field')]"/>
+                <separator/>
+                <filter name="f_approve" string="يملك اعتماد" domain="[('can_approve','=',True)]"/>
+                <filter name="f_readonly" string="قراءة فقط" domain="[('is_readonly','=',True)]"/>
+                <group expand="0" string="تجميع حسب">
+                    <filter name="g_tier" string="الطبقة" context="{'group_by':'tier'}"/>
+                    <filter name="g_scope" string="نطاق البيانات" context="{'group_by':'data_scope'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- نموذج المسمّى الوظيفي -->
+    <record id="view_job_role_form" model="ir.ui.view">
+        <field name="name">care.job.role.form</field>
+        <field name="model">care.job.role</field>
+        <field name="arch" type="xml">
+            <form string="مسمّى وظيفي">
+                <header>
+                    <button name="action_preview" type="object" string="معاينة آمنة (dry-run)"
+                            class="btn-primary" icon="fa-search"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button class="oe_stat_button" icon="fa-users" type="object" name="action_preview">
+                            <field name="user_count" widget="statinfo" string="المستخدمون"/>
+                        </button>
+                        <button class="oe_stat_button" icon="fa-shield" disabled="1">
+                            <field name="group_count" widget="statinfo" string="المجموعات"/>
+                        </button>
+                    </div>
+                    <widget name="web_ribbon" title="مؤرشف" bg_color="text-bg-danger" invisible="active"/>
+                    <div class="oe_title">
+                        <label for="name"/>
+                        <h1>
+                            <field name="name" placeholder="مثال: مدير الموارد البشرية"/>
+                        </h1>
+                        <field name="name_en" placeholder="Title (EN)"/>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="code"/>
+                            <field name="tier"/>
+                            <field name="sequence"/>
+                            <field name="active" invisible="1"/>
+                        </group>
+                        <group>
+                            <field name="data_scope"/>
+                            <field name="is_readonly"/>
+                            <field name="can_approve"/>
+                        </group>
+                    </group>
+                    <group string="الوصف / المهام">
+                        <field name="description" nolabel="1" placeholder="وصف مختصر لمهام ومسؤوليات هذا المسمّى..."/>
+                    </group>
+                    <group string="مجموعات أودو المقابلة">
+                        <field name="odoo_group_ids" nolabel="1" widget="many2many_tags"
+                               options="{'no_create': True}"/>
+                    </group>
+                    <notebook>
+                        <page string="مصفوفة الصلاحيات" name="perms">
+                            <field name="perm_line_ids">
+                                <tree string="مصفوفة الصلاحيات" editable="bottom">
+                                    <field name="area"/>
+                                    <field name="level"/>
+                                </tree>
+                            </field>
+                        </page>
+                        <page string="المستخدمون" name="users">
+                            <field name="user_ids" widget="many2many_tags"
+                                   options="{'no_create': True}"/>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- إجراء المسمّيات الوظيفية -->
+    <record id="action_job_role" model="ir.actions.act_window">
+        <field name="name">المسمّيات الوظيفية</field>
+        <field name="res_model">care.job.role</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="view_job_role_search"/>
+        <field name="context">{'search_default_g_tier': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">أنشئ أوّل مسمّى وظيفي</p>
+            <p>المسمّى الوظيفي قالب صلاحيات موحّد: اربطه بمجموعات أودو ومصفوفة مجالات، ثمّ أسنِده للمستخدمين.</p>
+        </field>
+    </record>
+
+</odoo>

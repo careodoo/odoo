@@ -1,0 +1,14 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_care_job_role_user,care.job.role user,model_care_job_role,base.group_user,1,0,0,0
+access_care_job_role_manager,care.job.role manager,model_care_job_role,care_access_hub.group_access_manager,1,1,1,1
+access_care_role_perm_user,care.role.perm user,model_care_role_perm,base.group_user,1,0,0,0
+access_care_role_perm_manager,care.role.perm manager,model_care_role_perm,care_access_hub.group_access_manager,1,1,1,1
+access_care_approval_type_user,care.approval.type user,model_care_approval_type,base.group_user,1,0,0,0
+access_care_approval_type_manager,care.approval.type manager,model_care_approval_type,care_access_hub.group_access_manager,1,1,1,1
+access_care_approval_stage_user,care.approval.stage user,model_care_approval_stage,base.group_user,1,0,0,0
+access_care_approval_stage_manager,care.approval.stage manager,model_care_approval_stage,care_access_hub.group_access_manager,1,1,1,1
+access_care_snapshot_mgr,care.access.snapshot manager,model_care_access_snapshot,care_access_hub.group_access_manager,1,1,1,1
+access_care_snapshot_line_mgr,care.access.snapshot.line manager,model_care_access_snapshot_line,care_access_hub.group_access_manager,1,1,1,1
+access_care_audit_mgr,care.access.audit manager,model_care_access_audit,care_access_hub.group_access_manager,1,1,1,0
+access_care_audit_user,care.access.audit user,model_care_access_audit,base.group_user,1,0,0,0
+access_care_learn_wizard,care.access.learn.wizard,model_care_access_learn_wizard,care_access_hub.group_access_manager,1,1,1,1

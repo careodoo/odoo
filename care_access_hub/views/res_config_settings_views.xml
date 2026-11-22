@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="res_config_settings_view_form_access_hub" model="ir.ui.view">
+        <field name="name">res.config.settings.view.form.inherit.access.hub</field>
+        <field name="model">res.config.settings</field>
+        <field name="inherit_id" ref="base.res_config_settings_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//form" position="inside">
+                <app string="منظومة الصلاحيات" name="care_access_hub" logo="/base/static/description/settings.png">
+                    <block title="خيارات المنظومة الموحّدة للصلاحيات"
+                           name="ah_main_block">
+                        <setting string="فصل الواجبات" help="منع مُنشئ المستند من اعتماده">
+                            <field name="ah_sod"/>
+                        </setting>
+                        <setting string="حدود مبالغ الاعتماد" help="تصعيد تلقائي عند تجاوز السقف">
+                            <field name="ah_thresholds"/>
+                        </setting>
+                        <setting string="التفويض المؤقّت (الإنابة)">
+                            <field name="ah_delegation"/>
+                        </setting>
+                        <setting string="إخفاء الحقول الحسّاسة حسب المسمّى">
+                            <field name="ah_field_mask"/>
+                        </setting>
+                        <setting string="محاكي الصلاحيات" help="ماذا يستطيع المستخدم؟">
+                            <field name="ah_simulator"/>
+                        </setting>
+                        <setting string="نطاق البيانات التلقائي" help="توليد record rules للمشاريع">
+                            <field name="ah_auto_scope"/>
+                        </setting>
+                        <setting string="سجلّ تدقيق كامل للصلاحيات والاعتماد">
+                            <field name="ah_audit"/>
+                        </setting>
+                        <setting string="مزامنة أودو التلقائية" help="توليد المجموعات/القواعد">
+                            <field name="ah_odoo_sync"/>
+                        </setting>
+                        <setting string="صلاحية الطوارئ المؤقّتة (break-glass)">
+                            <field name="ah_emergency"/>
+                        </setting>
+                        <setting string="الخريطة الحرارية لاختناقات الاعتماد">
+                            <field name="ah_heatmap"/>
+                        </setting>
+                        <setting string="الإسناد الجماعي بالمسمّى">
+                            <field name="ah_bulk_assign"/>
+                        </setting>
+                        <setting string="صلاحيات مؤقّتة بتاريخ انتهاء">
+                            <field name="ah_temp_grant"/>
+                        </setting>
+                        <setting string="الاعتماد بمرحلة محدّدة (لا ثنائي)">
+                            <field name="ah_stage_approval"/>
+                        </setting>
+                        <setting string="عدّة معتمِدين لكل مرحلة">
+                            <field name="ah_multi_approver"/>
+                        </setting>
+                        <setting string="لوحة إشعارات الموظف" help="داخلي + بورتال">
+                            <field name="ah_notify_prefs"/>
+                        </setting>
+                    </block>
+                </app>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

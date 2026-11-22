@@ -1,0 +1,392 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+
+        <!-- ==================== TIER: exec ==================== -->
+        <record id="role_ceo" model="care.job.role">
+            <field name="name">الرئيس التنفيذي</field>
+            <field name="name_en">Chief Executive Officer</field>
+            <field name="code">ceo</field>
+            <field name="sequence">10</field>
+            <field name="tier">exec</field>
+            <field name="data_scope">all</field>
+            <field name="is_readonly" eval="False"/>
+            <field name="can_approve" eval="True"/>
+            <field name="description">الرئيس التنفيذي للشركة.</field>
+        </record>
+
+        <record id="role_gm" model="care.job.role">
+            <field name="name">المدير العام</field>
+            <field name="name_en">General Manager</field>
+            <field name="code">gm</field>
+            <field name="sequence">20</field>
+            <field name="tier">exec</field>
+            <field name="data_scope">all</field>
+            <field name="is_readonly" eval="False"/>
+            <field name="can_approve" eval="True"/>
+            <field name="description">المدير العام للشركة.</field>
+        </record>
+
+        <record id="role_deputy_ceo" model="care.job.role">
+            <field name="name">نائب الرئيس التنفيذي</field>
+            <field name="name_en">Deputy Chief Executive Officer</field>
+            <field name="code">deputy_ceo</field>
+            <field name="sequence">30</field>
+            <field name="tier">exec</field>
+            <field name="data_scope">all</field>
+            <field name="is_readonly" eval="False"/>
+            <field name="can_approve" eval="True"/>
+            <field name="description">نائب الرئيس التنفيذي.</field>
+        </record>
+
+        <record id="role_cfo" model="care.job.role">
+            <field name="name">المدير المالي</field>
+            <field name="name_en">Chief Financial Officer</field>
+            <field name="code">cfo</field>
+            <field name="sequence">40</field>
+            <field name="tier">exec</field>
+            <field name="data_scope">all</field>
+            <field name="is_readonly" eval="False"/>
+            <field name="can_approve" eval="True"/>
+            <field name="description">المدير المالي للشركة.</field>
+        </record>
+
+        <!-- ==================== TIER: manager ==================== -->
+        <record id="role_bd_mgr" model="care.job.role">
+            <field name="name">مدير تطوير الأعمال</field>
+            <field name="name_en">Business Development Manager</field>
+            <field name="code">bd_mgr</field>
+            <field name="sequence">50</field>
+            <field name="tier">manager</field>
+            <field name="data_scope">all</field>
+            <field name="is_readonly" eval="False"/>
+            <field name="can_approve" eval="True"/>
+            <field name="description">مدير تطوير الأعمال.</field>
+        </record>
+
+        <record id="role_projects_mgr" model="care.job.role">
+            <field name="name">مدير المشاريع</field>
+            <field name="name_en">Projects Manager</field>
+            <field name="code">projects_mgr</field>
+            <field name="sequence">60</field>
+            <field name="tier">manager</field>
+            <field name="data_scope">all</field>
+            <field name="is_readonly" eval="False"/>
+            <field name="can_approve" eval="True"/>
+            <field name="description">مدير المشاريع.</field>
+        </record>
+
+        <record id="role_sp_ops_mgr" model="care.job.role">
+            <field name="name">مدير العمليات الخاصة</field>
+            <field name="name_en">Special Operations Manager</field>
+            <field name="code">sp_ops_mgr</field>
+            <field name="sequence">70</field>
+            <field name="tier">manager</field>
+            <field name="data_scope">all</field>
+            <field name="is_readonly" eval="False"/>
+            <field name="can_approve" eval="True"/>
+            <field name="description">مدير العمليات الخاصة.</field>
+        </record>
+
+        <record id="role_gov_ops_mgr" model="care.job.role">
+            <field name="name">مدير العمليات الحكومية</field>
+            <field name="name_en">Government Operations Manager</field>
+            <field name="code">gov_ops_mgr</field>
+            <field name="sequence">80</field>
+            <field name="tier">manager</field>
+            <field name="data_scope">all</field>
+            <field name="is_readonly" eval="False"/>
+            <field name="can_approve" eval="True"/>
+            <field name="description">مدير العمليات الحكومية.</field>
+        </record>
+
+        <record id="role_sales_mgr" model="care.job.role">
+            <field name="name">مدير المبيعات</field>
+            <field name="name_en">Sales Manager</field>
+            <field name="code">sales_mgr</field>
+            <field name="sequence">90</field>
+            <field name="tier">manager</field>
+            <field name="data_scope">all</field>
+            <field name="is_readonly" eval="False"/>
+            <field name="can_approve" eval="True"/>
+            <field name="description">مدير المبيعات.</field>
+        </record>
+
+        <record id="role_proc_mgr" model="care.job.role">
+            <field name="name">مدير المشتريات</field>
+            <field name="name_en">Procurement Manager</field>
+            <field name="code">proc_mgr</field>
+            <field name="sequence">100</field>
+            <field name="tier">manager</field>
+            <field name="data_scope">all</field>
+            <field name="is_readonly" eval="False"/>
+            <field name="can_approve" eval="True"/>
+            <field name="description">مدير المشتريات.</field>
+        </record>
+
+        <record id="role_hr_mgr" model="care.job.role">
+            <field name="name">مدير الموارد البشرية</field>
+            <field name="name_en">Human Resources Manager</field>
+            <field name="code">hr_mgr</field>
+            <field name="sequence">110</field>
+            <field name="tier">manager</field>
+            <field name="data_scope">all</field>
+            <field name="is_readonly" eval="False"/>
+            <field name="can_approve" eval="True"/>
+            <field name="description">مدير الموارد البشرية.</field>
+        </record>
+
+        <record id="role_mkt_mgr" model="care.job.role">
+            <field name="name">مدير التسويق</field>
+            <field name="name_en">Marketing Manager</field>
+            <field name="code">mkt_mgr</field>
+            <field name="sequence">120</field>
+            <field name="tier">manager</field>
+            <field name="data_scope">all</field>
+            <field name="is_readonly" eval="False"/>
+            <field name="can_approve" eval="True"/>
+            <field name="description">مدير التسويق.</field>
+        </record>
+
+        <record id="role_chief_acc" model="care.job.role">
+            <field name="name">رئيس حسابات</field>
+            <field name="name_en">Chief Accountant</field>
+            <field name="code">chief_acc</field>
+            <field name="sequence">130</field>
+            <field name="tier">manager</field>
+            <field name="data_scope">all</field>
+            <field name="is_readonly" eval="False"/>
+            <field name="can_approve" eval="True"/>
+            <field name="description">رئيس الحسابات.</field>
+        </record>
+
+        <!-- ==================== TIER: deputy ==================== -->
+        <record id="role_bd_asst" model="care.job.role">
+            <field name="name">مساعد مدير تطوير الأعمال</field>
+            <field name="name_en">Business Development Assistant Manager</field>
+            <field name="code">bd_asst</field>
+            <field name="sequence">140</field>
+            <field name="tier">deputy</field>
+            <field name="data_scope">all</field>
+            <field name="is_readonly" eval="False"/>
+            <field name="can_approve" eval="False"/>
+            <field name="description">مساعد مدير تطوير الأعمال.</field>
+        </record>
+
+        <record id="role_sp_ops_asst" model="care.job.role">
+            <field name="name">مساعد مدير العمليات الخاصة</field>
+            <field name="name_en">Special Operations Assistant Manager</field>
+            <field name="code">sp_ops_asst</field>
+            <field name="sequence">150</field>
+            <field name="tier">deputy</field>
+            <field name="data_scope">all</field>
+            <field name="is_readonly" eval="False"/>
+            <field name="can_approve" eval="False"/>
+            <field name="description">مساعد مدير العمليات الخاصة.</field>
+        </record>
+
+        <record id="role_gov_ops_asst" model="care.job.role">
+            <field name="name">مساعد مدير العمليات الحكومية</field>
+            <field name="name_en">Government Operations Assistant Manager</field>
+            <field name="code">gov_ops_asst</field>
+            <field name="sequence">160</field>
+            <field name="tier">deputy</field>
+            <field name="data_scope">all</field>
+            <field name="is_readonly" eval="False"/>
+            <field name="can_approve" eval="False"/>
+            <field name="description">مساعد مدير العمليات الحكومية.</field>
+        </record>
+
+        <record id="role_senior_acc" model="care.job.role">
+            <field name="name">محاسب أول</field>
+            <field name="name_en">Senior Accountant</field>
+            <field name="code">senior_acc</field>
+            <field name="sequence">170</field>
+            <field name="tier">deputy</field>
+            <field name="data_scope">all</field>
+            <field name="is_readonly" eval="False"/>
+            <field name="can_approve" eval="False"/>
+            <field name="description">محاسب أول.</field>
+        </record>
+
+        <!-- ==================== TIER: officer ==================== -->
+        <record id="role_passport_off" model="care.job.role">
+            <field name="name">مسؤول الجوازات</field>
+            <field name="name_en">Passport Officer</field>
+            <field name="code">passport_off</field>
+            <field name="sequence">180</field>
+            <field name="tier">officer</field>
+            <field name="data_scope">all</field>
+            <field name="is_readonly" eval="False"/>
+            <field name="can_approve" eval="False"/>
+            <field name="description">مسؤول الجوازات.</field>
+        </record>
+
+        <record id="role_payroll_off" model="care.job.role">
+            <field name="name">موظف الرواتب</field>
+            <field name="name_en">Payroll Officer</field>
+            <field name="code">payroll_off</field>
+            <field name="sequence">190</field>
+            <field name="tier">officer</field>
+            <field name="data_scope">all</field>
+            <field name="is_readonly" eval="False"/>
+            <field name="can_approve" eval="False"/>
+            <field name="description">موظف الرواتب.</field>
+        </record>
+
+        <record id="role_recruit_off" model="care.job.role">
+            <field name="name">مسؤول التوظيف</field>
+            <field name="name_en">Recruitment Officer</field>
+            <field name="code">recruit_off</field>
+            <field name="sequence">200</field>
+            <field name="tier">officer</field>
+            <field name="data_scope">all</field>
+            <field name="is_readonly" eval="False"/>
+            <field name="can_approve" eval="False"/>
+            <field name="description">مسؤول التوظيف.</field>
+        </record>
+
+        <record id="role_hr_emp" model="care.job.role">
+            <field name="name">موظف موارد بشرية</field>
+            <field name="name_en">Human Resources Officer</field>
+            <field name="code">hr_emp</field>
+            <field name="sequence">210</field>
+            <field name="tier">officer</field>
+            <field name="data_scope">all</field>
+            <field name="is_readonly" eval="False"/>
+            <field name="can_approve" eval="False"/>
+            <field name="description">موظف موارد بشرية.</field>
+        </record>
+
+        <record id="role_proc_emp" model="care.job.role">
+            <field name="name">موظف مشتريات</field>
+            <field name="name_en">Procurement Officer</field>
+            <field name="code">proc_emp</field>
+            <field name="sequence">220</field>
+            <field name="tier">officer</field>
+            <field name="data_scope">all</field>
+            <field name="is_readonly" eval="False"/>
+            <field name="can_approve" eval="False"/>
+            <field name="description">موظف مشتريات.</field>
+        </record>
+
+        <record id="role_accountant" model="care.job.role">
+            <field name="name">محاسب</field>
+            <field name="name_en">Accountant</field>
+            <field name="code">accountant</field>
+            <field name="sequence">230</field>
+            <field name="tier">officer</field>
+            <field name="data_scope">all</field>
+            <field name="is_readonly" eval="False"/>
+            <field name="can_approve" eval="False"/>
+            <field name="description">محاسب.</field>
+        </record>
+
+        <record id="role_exec_sec" model="care.job.role">
+            <field name="name">سكرتيرة تنفيذية</field>
+            <field name="name_en">Executive Secretary</field>
+            <field name="code">exec_sec</field>
+            <field name="sequence">240</field>
+            <field name="tier">officer</field>
+            <field name="data_scope">all</field>
+            <field name="is_readonly" eval="True"/>
+            <field name="can_approve" eval="False"/>
+            <field name="description">سكرتيرة تنفيذية.</field>
+        </record>
+
+        <record id="role_legal_adv" model="care.job.role">
+            <field name="name">مستشار قانوني</field>
+            <field name="name_en">Legal Advisor</field>
+            <field name="code">legal_adv</field>
+            <field name="sequence">250</field>
+            <field name="tier">officer</field>
+            <field name="data_scope">all</field>
+            <field name="is_readonly" eval="True"/>
+            <field name="can_approve" eval="False"/>
+            <field name="description">مستشار قانوني.</field>
+        </record>
+
+        <record id="role_mkt_emp" model="care.job.role">
+            <field name="name">موظف تسويق</field>
+            <field name="name_en">Marketing Officer</field>
+            <field name="code">mkt_emp</field>
+            <field name="sequence">260</field>
+            <field name="tier">officer</field>
+            <field name="data_scope">all</field>
+            <field name="is_readonly" eval="False"/>
+            <field name="can_approve" eval="False"/>
+            <field name="description">موظف تسويق.</field>
+        </record>
+
+        <record id="role_housing_off" model="care.job.role">
+            <field name="name">مسؤول السكنات</field>
+            <field name="name_en">Housing Officer</field>
+            <field name="code">housing_off</field>
+            <field name="sequence">270</field>
+            <field name="tier">officer</field>
+            <field name="data_scope">all</field>
+            <field name="is_readonly" eval="False"/>
+            <field name="can_approve" eval="False"/>
+            <field name="description">مسؤول السكنات.</field>
+        </record>
+
+        <!-- ==================== TIER: field ==================== -->
+        <record id="role_pm" model="care.job.role">
+            <field name="name">مدير مشروع</field>
+            <field name="name_en">Project Manager</field>
+            <field name="code">pm</field>
+            <field name="sequence">280</field>
+            <field name="tier">field</field>
+            <field name="data_scope">own</field>
+            <field name="is_readonly" eval="False"/>
+            <field name="can_approve" eval="True"/>
+            <field name="description">مدير مشروع ميداني.</field>
+        </record>
+
+        <record id="role_supervisor" model="care.job.role">
+            <field name="name">مشرف مشروع</field>
+            <field name="name_en">Project Supervisor</field>
+            <field name="code">supervisor</field>
+            <field name="sequence">290</field>
+            <field name="tier">field</field>
+            <field name="data_scope">own</field>
+            <field name="is_readonly" eval="False"/>
+            <field name="can_approve" eval="False"/>
+            <field name="description">مشرف مشروع ميداني.</field>
+        </record>
+
+        <record id="role_housing_guard" model="care.job.role">
+            <field name="name">حارس سكن</field>
+            <field name="name_en">Housing Guard</field>
+            <field name="code">housing_guard</field>
+            <field name="sequence">300</field>
+            <field name="tier">field</field>
+            <field name="data_scope">own</field>
+            <field name="is_readonly" eval="True"/>
+            <field name="can_approve" eval="False"/>
+            <field name="description">حارس سكن.</field>
+        </record>
+
+        <!-- ==================== Approval Types (no model_id) ==================== -->
+        <record id="atype_1" model="care.approval.type">
+            <field name="name">العمل الإضافي</field>
+            <field name="state_field">state</field>
+        </record>
+
+        <record id="atype_2" model="care.approval.type">
+            <field name="name">أمر الشراء</field>
+            <field name="state_field">state</field>
+        </record>
+
+        <record id="atype_3" model="care.approval.type">
+            <field name="name">طلب الإجازة</field>
+            <field name="state_field">state</field>
+        </record>
+
+        <record id="atype_4" model="care.approval.type">
+            <field name="name">محضر استلام سيارة</field>
+            <field name="state_field">state</field>
+        </record>
+
+    </data>
+</odoo>

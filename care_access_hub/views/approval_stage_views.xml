@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- شجرة أنواع الاعتماد -->
+    <record id="view_approval_type_tree" model="ir.ui.view">
+        <field name="name">care.approval.type.tree</field>
+        <field name="model">care.approval.type</field>
+        <field name="arch" type="xml">
+            <tree string="أنواع الاعتماد" default_order="sequence">
+                <field name="sequence" widget="handle"/>
+                <field name="name"/>
+                <field name="model_id"/>
+                <field name="state_field"/>
+                <field name="stage_count"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- نموذج نوع الاعتماد + المراحل -->
+    <record id="view_approval_type_form" model="ir.ui.view">
+        <field name="name">care.approval.type.form</field>
+        <field name="model">care.approval.type</field>
+        <field name="arch" type="xml">
+            <form string="نوع اعتماد">
+                <header>
+                    <button name="action_sync_stages" type="object"
+                            string="مزامنة المراحل من حقل الحالة" class="btn-primary"
+                            icon="fa-refresh"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <label for="name"/>
+                        <h1>
+                            <field name="name" placeholder="مثال: اعتماد طلب الشراء"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="model_id" options="{'no_create': True}"/>
+                            <field name="model_name"/>
+                        </group>
+                        <group>
+                            <field name="state_field"/>
+                            <field name="sequence"/>
+                            <field name="active" invisible="1"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="المراحل" name="stages">
+                            <field name="stage_ids">
+                                <tree string="المراحل" editable="bottom" default_order="sequence">
+                                    <field name="sequence" widget="handle"/>
+                                    <field name="name"/>
+                                    <field name="state_key"/>
+                                    <field name="is_approval"/>
+                                    <field name="role_ids" widget="many2many_tags"
+                                           options="{'no_create': True}"/>
+                                    <field name="extra_user_ids" widget="many2many_tags"
+                                           options="{'no_create': True}"/>
+                                    <field name="amount_threshold"/>
+                                    <field name="mode"/>
+                                </tree>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- إجراء أنواع الاعتماد -->
+    <record id="action_approval_type" model="ir.actions.act_window">
+        <field name="name">أنواع الاعتماد والمراحل</field>
+        <field name="res_model">care.approval.type</field>
+        <field name="view_mode">tree,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">أنشئ أوّل نوع اعتماد</p>
+            <p>اختر موديلًا وحقل حالته، ثمّ زامِن المراحل وحدِّد المعتمِدين بالمسمّى لكل مرحلة.</p>
+        </field>
+    </record>
+
+</odoo>

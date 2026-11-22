@@ -1,0 +1,23 @@
+# -*- coding: utf-8 -*-
+{
+    'name': 'CARE — منظومة الصلاحيات الموحّدة',
+    'version': '17.0.1.0.0',
+    'summary': 'مسمّيات وظيفية + مصفوفة صلاحيات + توجيه اعتمادات بالمراحل — المنظّم الموحّد (آمن/dry-run)',
+    'author': 'CARE Group',
+    'category': 'Technical',
+    'depends': ['base', 'web', 'mail'],
+    'data': [
+        'security/access_hub_security.xml',
+        'security/ir.model.access.csv',
+        'data/job_role_data.xml',
+        'views/access_role_views.xml',
+        'views/approval_stage_views.xml',
+        'views/res_users_views.xml',
+        'views/res_config_settings_views.xml',
+        'views/menu.xml',
+        'views/migration_views.xml',
+    ],
+    'installable': True,
+    'application': True,
+    'license': 'LGPL-3',
+}

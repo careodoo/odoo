@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- إجراء الإعدادات (يفتح إعدادات المنظومة) -->
+    <record id="action_access_hub_settings" model="ir.actions.act_window">
+        <field name="name">إعدادات منظومة الصلاحيات</field>
+        <field name="res_model">res.config.settings</field>
+        <field name="view_mode">form</field>
+        <field name="target">inline</field>
+        <field name="context">{'module': 'care_access_hub'}</field>
+    </record>
+
+    <!-- القائمة الجذرية -->
+    <menuitem id="menu_access_hub_root"
+              name="منظومة الصلاحيات"
+              sequence="95"/>
+
+    <menuitem id="menu_access_hub_roles"
+              name="المسمّيات الوظيفية"
+              parent="menu_access_hub_root"
+              action="action_job_role"
+              sequence="10"/>
+
+    <menuitem id="menu_access_hub_approval_types"
+              name="أنواع الاعتماد والمراحل"
+              parent="menu_access_hub_root"
+              action="action_approval_type"
+              sequence="20"/>
+
+    <menuitem id="menu_access_hub_settings"
+              name="الإعدادات"
+              parent="menu_access_hub_root"
+              action="action_access_hub_settings"
+              sequence="90"/>
+
+</odoo>

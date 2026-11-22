@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- لقطة الصلاحيات -->
+    <record id="view_access_snapshot_tree" model="ir.ui.view">
+        <field name="name">care.access.snapshot.tree</field>
+        <field name="model">care.access.snapshot</field>
+        <field name="arch" type="xml">
+            <tree decoration-success="restored">
+                <field name="name"/>
+                <field name="snapshot_date"/>
+                <field name="user_count"/>
+                <field name="group_total"/>
+                <field name="restored"/>
+                <field name="note"/>
+            </tree>
+        </field>
+    </record>
+    <record id="view_access_snapshot_form" model="ir.ui.view">
+        <field name="name">care.access.snapshot.form</field>
+        <field name="model">care.access.snapshot</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_restore" type="object" string="↩️ استعادة هذه اللقطة"
+                            class="btn-danger" confirm="سيُعاد إسناد مجموعات كل المستخدمين كما كان وقت اللقطة. متابعة؟"/>
+                </header>
+                <sheet>
+                    <div class="oe_title"><h1><field name="name"/></h1></div>
+                    <group>
+                        <field name="snapshot_date"/><field name="user_count"/>
+                        <field name="group_total"/><field name="restored"/><field name="note"/>
+                    </group>
+                    <notebook>
+                        <page string="السطور (مستخدم × مجموعات)">
+                            <field name="line_ids">
+                                <tree>
+                                    <field name="user_id"/>
+                                    <field name="group_count"/>
+                                </tree>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+    <record id="action_access_snapshot" model="ir.actions.act_window">
+        <field name="name">لقطات الصلاحيات</field>
+        <field name="res_model">care.access.snapshot</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+    <record id="action_take_snapshot_srv" model="ir.actions.server">
+        <field name="name">📸 إنشاء لقطة الآن</field>
+        <field name="model_id" ref="model_care_access_snapshot"/>
+        <field name="state">code</field>
+        <field name="code">snap = env['care.access.snapshot'].action_take_snapshot()
+action = {'type': 'ir.actions.act_window', 'res_model': 'care.access.snapshot', 'res_id': snap.id, 'view_mode': 'form', 'views': [(False, 'form')]}</field>
+    </record>
+
+    <!-- سجلّ التدقيق -->
+    <record id="view_access_audit_tree" model="ir.ui.view">
+        <field name="name">care.access.audit.tree</field>
+        <field name="model">care.access.audit</field>
+        <field name="arch" type="xml">
+            <tree create="false">
+                <field name="create_date"/>
+                <field name="action_type"/>
+                <field name="name"/>
+                <field name="user_id"/>
+            </tree>
+        </field>
+    </record>
+    <record id="action_access_audit" model="ir.actions.act_window">
+        <field name="name">سجلّ التدقيق</field>
+        <field name="res_model">care.access.audit</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <!-- الخريطة العكسية: المستخدمون الداخليون مرتّبون بعدد المجموعات (إظهار الفوضى) -->
+    <record id="view_reverse_map_tree" model="ir.ui.view">
+        <field name="name">care.access.reverse.map.tree</field>
+        <field name="model">res.users</field>
+        <field name="arch" type="xml">
+            <tree editable="bottom" create="false" delete="false" default_order="care_group_count desc"
+                  decoration-danger="care_group_count &gt; 150" decoration-warning="care_group_count &gt; 80">
+                <field name="name" readonly="1"/>
+                <field name="login" readonly="1"/>
+                <field name="care_group_count" string="مجموعات حالية"/>
+                <field name="care_role_ids" widget="many2many_tags" string="المسمّيات المقترحة"/>
+                <field name="care_excess_count" string="زائدة ⚠️"/>
+                <field name="care_missing_count" string="ناقصة"/>
+                <button name="action_access_diff" type="object" string="تحليل" icon="fa-search" class="btn-link"/>
+            </tree>
+        </field>
+    </record>
+    <record id="action_reverse_map" model="ir.actions.act_window">
+        <field name="name">الخريطة العكسية (مستخدم × مجموعات)</field>
+        <field name="res_model">res.users</field>
+        <field name="view_mode">tree</field>
+        <field name="domain">[('share', '=', False)]</field>
+        <field name="view_id" ref="view_reverse_map_tree"/>
+    </record>
+
+    <!-- تعلّم مجموعات المسمّى من مستخدم مرجعي -->
+    <record id="view_access_learn_wizard" model="ir.ui.view">
+        <field name="name">care.access.learn.wizard.form</field>
+        <field name="model">care.access.learn.wizard</field>
+        <field name="arch" type="xml">
+            <form string="تعلّم مجموعات المسمّى">
+                <div class="alert alert-info" role="alert">
+                    اختر مستخدمًا موثوقًا يؤدّي مهام هذا المسمّى — تُنسَخ مجموعاته إلى المسمّى كنقطة بداية نظيفة.
+                </div>
+                <group>
+                    <field name="role_id"/>
+                    <field name="reference_user_id"/>
+                    <field name="exclude_system"/>
+                    <field name="preview_count"/>
+                </group>
+                <footer>
+                    <button name="action_learn" type="object" string="تعلّم المجموعات" class="btn-primary"/>
+                    <button string="إلغاء" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+    <record id="action_access_learn" model="ir.actions.act_window">
+        <field name="name">تعلّم مجموعات المسمّى من مستخدم</field>
+        <field name="res_model">care.access.learn.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+    <!-- قائمة الترحيل -->
+    <menuitem id="menu_access_migration" name="الترحيل والتوحيد" parent="menu_access_hub_root" sequence="40"/>
+    <menuitem id="menu_learn" name="🎓 تعلّم المجموعات من مستخدم" parent="menu_access_migration"
+              action="action_access_learn" sequence="5"/>
+    <menuitem id="menu_reverse_map" name="الخريطة العكسية" parent="menu_access_migration"
+              action="action_reverse_map" sequence="10"/>
+    <menuitem id="menu_take_snapshot" name="📸 إنشاء لقطة" parent="menu_access_migration"
+              action="action_take_snapshot_srv" sequence="20"/>
+    <menuitem id="menu_snapshots" name="اللقطات" parent="menu_access_migration"
+              action="action_access_snapshot" sequence="30"/>
+    <menuitem id="menu_audit" name="سجلّ التدقيق" parent="menu_access_migration"
+              action="action_access_audit" sequence="40"/>
+</odoo>
