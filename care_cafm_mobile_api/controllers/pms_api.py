@@ -5294,6 +5294,15 @@ class PmsSectionsApi(Controller):
         if not emp:
             return _err('هذا الموظف ليس ضمن مشاريعك', 403)
 
+        # صلاحيات منظومة الصلاحيات: عند عرض المدير لعاملٍ آخر، أخفِ الحقول الحسّاسة المقنّعة
+        # عن مسمّى هذا المدير (جواز/مدني/هوية/ميلاد...). لا إخفاء عند عرض المستخدم لملفه هو.
+        _emp_hidden = set()
+        if _mgr_view:
+            try:
+                _emp_hidden = env['hr.employee']._ah_hidden_fields() or set()
+            except Exception:
+                _emp_hidden = set()
+
         def _rows(model, extra=None):
             if model not in env:
                 return []
@@ -5343,6 +5352,8 @@ class PmsSectionsApi(Controller):
         def _fv(name, label):
             if name not in emp._fields:
                 return None
+            if name in _emp_hidden:
+                return None  # حقل مقنّع عن مسمّى هذا المدير
             f = emp._fields[name]
             try:
                 v = emp[name]
