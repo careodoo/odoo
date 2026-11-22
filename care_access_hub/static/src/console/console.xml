@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <templates xml:base="/web/static/src/">
 <t t-name="care_access_hub.Console">
-  <div class="o_access_console" dir="rtl">
+  <div class="o_access_console" t-att-dir="dir">
     <t t-if="state.loading"><div class="ac-load">جارٍ التحميل…</div></t>
     <t t-elif="state.error"><div class="ac-err" t-esc="state.error"/></t>
     <t t-else="">

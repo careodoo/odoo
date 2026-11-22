@@ -7,7 +7,7 @@
   --deny:#dc2626; --deny-bg:#fdecec; --warn:#d97706; --warn-bg:#fdf1df;
   --r:16px;
   font-family:'Tajawal',system-ui,sans-serif; background:var(--bg); color:var(--ink);
-  min-height:100%; direction:rtl; line-height:1.6;
+  height:100%; overflow-y:auto; overflow-x:hidden; line-height:1.6;
 
   .ac-load,.ac-err{padding:60px;text-align:center;font-weight:700;color:var(--ink-2)}
   .ac-err{color:var(--deny)}
@@ -81,7 +81,7 @@
   .mtable-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:var(--r);background:var(--surface)}
   table.mx{border-collapse:collapse;width:100%;font-size:13px}
   table.mx td{padding:0}
-  td.modcell{text-align:right;padding:10px 14px;font-weight:700;border-bottom:1px solid var(--line-2)}
+  td.modcell{text-align:start;padding:10px 14px;font-weight:700;border-bottom:1px solid var(--line-2)}
   td.modcell.main{background:var(--navy);color:#fff;font-weight:800;font-size:13px}
   td.modcell.sub{padding-inline-start:28px;font-weight:600;color:var(--ink-2)}
   td.modcell.sub::before{content:"↳";color:var(--muted);margin-inline-end:6px}
@@ -121,7 +121,7 @@
   .uava{width:76px;height:76px;border-radius:50%;background:var(--gold);color:var(--navy-ink);display:flex;align-items:center;justify-content:center;font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:26px;margin:0 auto 12px;direction:ltr}
   .uface .un{font-weight:800;font-size:17px}
   .uface .ue{color:#c6d3ea;font-size:11.5px;margin-top:6px;direction:ltr}
-  .ufield{margin-top:14px;text-align:right}
+  .ufield{margin-top:14px;text-align:start}
   .ufield label{display:block;font-size:11px;color:#c6d3ea;font-weight:700;margin-bottom:6px}
   .uchips{display:flex;flex-wrap:wrap;gap:5px;max-height:220px;overflow-y:auto}
   .uchip{font-size:10.5px;font-weight:800;padding:4px 9px;border-radius:999px;border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.08);color:#fff;cursor:pointer}

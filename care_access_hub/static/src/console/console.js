@@ -1,6 +1,7 @@
 /** @odoo-module **/
 import { registry } from "@web/core/registry";
 import { useService } from "@web/core/utils/hooks";
+import { localization } from "@web/core/l10n/localization";
 import { Component, onWillStart, useState } from "@odoo/owl";
 
 const TABS = [
@@ -25,6 +26,7 @@ export class AccessConsole extends Component {
             data: null, roleId: null, notifyMode: "admin", userId: null,
         });
         this.TABS = TABS;
+        this.dir = (localization && localization.direction) || "ltr";
         onWillStart(() => this.load());
     }
 
