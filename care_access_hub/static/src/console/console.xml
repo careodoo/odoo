@@ -1,0 +1,181 @@
+<?xml version="1.0" encoding="utf-8"?>
+<templates xml:base="/web/static/src/">
+<t t-name="care_access_hub.Console">
+  <div class="o_access_console" dir="rtl">
+    <t t-if="state.loading"><div class="ac-load">جارٍ التحميل…</div></t>
+    <t t-elif="state.error"><div class="ac-err" t-esc="state.error"/></t>
+    <t t-else="">
+      <!-- header -->
+      <header class="ac-top"><div class="ac-wrap">
+        <div class="ac-logo"><div class="mk">CA<b>R</b>E</div>
+          <div class="sub">منظومة الصلاحيات والاعتمادات الموحّدة</div></div>
+        <div class="sp"/>
+        <span class="chip"><b t-esc="state.data.kpis.roles"/> مسمّى</span>
+        <span class="chip"><b t-esc="state.data.kpis.approvals"/> نوع اعتماد</span>
+      </div></header>
+
+      <!-- tabs -->
+      <nav class="ac-tabs"><div class="ac-wrap">
+        <t t-foreach="TABS" t-as="tb" t-key="tb[0]">
+          <button class="ac-tab" t-att-aria-selected="state.tab === tb[0] ? 'true' : 'false'"
+                  t-on-click="() => this.show(tb[0])">
+            <span class="ic" t-esc="tb[2]"/><t t-esc="tb[1]"/>
+          </button>
+        </t>
+      </div></nav>
+
+      <main><div class="ac-wrap">
+
+        <!-- OVERVIEW -->
+        <t t-if="state.tab === 'overview'">
+          <div class="eyebrow">THE CONCEPT</div>
+          <div class="sect-h"><h2>موديول واحد يحكم كل الصلاحيات والاعتمادات</h2></div>
+          <p class="lead">تتوحّد الصلاحيات في «صلاحيات القوائم» المطوّر: تُعرَّف مرّة لكل مسمّى، ويُسنَد المستخدم فيرِث. ونفس الموديول يحدّد المعتمِدين لكل مرحلة.</p>
+          <div class="kpis">
+            <div class="kpi" style="--accent:var(--navy)"><div class="v" t-esc="state.data.kpis.roles"/><div class="l">مسمّى وظيفي</div></div>
+            <div class="kpi" style="--accent:var(--gold)"><div class="v" t-esc="state.data.kpis.approvals"/><div class="l">نوع اعتماد</div></div>
+            <div class="kpi" style="--accent:var(--read)"><div class="v" t-esc="state.data.kpis.models"/><div class="l">مودل في المصفوفة</div></div>
+            <div class="kpi" style="--accent:var(--write)"><div class="v" t-esc="state.data.kpis.notify_mandatory"/><div class="l">إشعار إلزامي</div></div>
+          </div>
+          <div class="sect-h"><h2>كيف تعمل؟</h2></div>
+          <div class="card ac-flow">
+            <div class="cnode"><div class="t">المسمّى الوظيفي</div><div class="d">قالب صلاحيات + اعتماد</div></div>
+            <div class="carrow">←</div>
+            <div class="cnode hub"><div class="t">صلاحيات القوائم</div><div class="d">مصفوفة + مراحل اعتماد + نطاق</div></div>
+            <div class="carrow">←</div>
+            <div class="cnode"><div class="t">المستخدم</div><div class="d">يُسنَد → يرِث</div></div>
+            <div class="carrow">←</div>
+            <div class="cnode"><div class="t">أودو</div><div class="d">مجموعات + record rules</div></div>
+          </div>
+        </t>
+
+        <!-- ROLES -->
+        <t t-if="state.tab === 'roles'">
+          <div class="eyebrow">JOB TITLES · ROLES</div>
+          <div class="sect-h"><h2>المسمّيات الوظيفية</h2><span class="hint">اضغط أي مسمّى لرؤية مصفوفته</span></div>
+          <t t-foreach="state.data.tiers" t-as="ti" t-key="ti.key">
+            <t t-set="list" t-value="rolesByTier(ti.key)"/>
+            <div class="tier" t-if="list.length">
+              <div class="th"><span class="bar"/><h3 t-esc="ti.ar"/><span class="c" t-esc="ti.en + ' · ' + list.length"/></div>
+              <div class="rolegrid">
+                <t t-foreach="list" t-as="r" t-key="r.id">
+                  <div class="role" t-on-click="() => this.openRoleMatrix(r.id)">
+                    <div class="rn" t-esc="r.name"/>
+                    <div class="meta">
+                      <span class="pill scope" t-esc="r.scope === 'own' ? 'مشاريعه فقط' : 'كل الشركة'"/>
+                      <span t-if="r.approve" class="pill appr">اعتماد</span>
+                      <span t-if="r.readonly" class="pill ro">قراءة فقط</span>
+                      <span class="pill grp" t-esc="r.groups + ' مجموعة'"/>
+                    </div>
+                  </div>
+                </t>
+              </div>
+            </div>
+          </t>
+        </t>
+
+        <!-- MATRIX -->
+        <t t-if="state.tab === 'matrix'">
+          <div class="eyebrow">PERMISSION MATRIX</div>
+          <div class="sect-h"><h2>مصفوفة الصلاحيات</h2><span class="hint">اضغط الخلية لتدوير المستوى</span></div>
+          <div class="mtoolbar">
+            <label>المسمّى:</label>
+            <select class="sel" t-on-change="pickRole">
+              <t t-foreach="state.data.roles" t-as="r" t-key="r.id">
+                <option t-att-value="r.id" t-att-selected="r.id === state.roleId" t-esc="r.name"/>
+              </t>
+            </select>
+          </div>
+          <div class="scopebanner" t-if="currentRole">
+            <t t-esc="currentRole.scope === 'own' ? '🧭 النطاق: مشاريعه المعيّنة فقط' : '🏢 النطاق: كل الشركة'"/>
+            <t t-if="currentRole.readonly"> · قراءة فقط افتراضيًّا</t>
+          </div>
+          <div class="legend">
+            <span class="lg"><span class="dot" style="background:var(--none)"/>—</span>
+            <span class="lg"><span class="dot" style="background:var(--read)"/>قراءة</span>
+            <span class="lg"><span class="dot" style="background:var(--write)"/>قراءة+كتابة</span>
+          </div>
+          <div class="mtable-wrap"><table class="mx"><tbody>
+            <t t-foreach="matrixGroups" t-as="g" t-key="g.module">
+              <tr><td class="modcell main" colspan="2" t-esc="g.module"/></tr>
+              <t t-foreach="g.rows" t-as="line" t-key="line.id">
+                <tr>
+                  <td class="modcell sub"><span t-esc="line.label"/>
+                    <span class="mi" dir="ltr" t-esc="line.model"/>
+                    <span t-if="line.mask" class="mlk">🔒 <t t-esc="line.mask"/></span></td>
+                  <td style="width:140px">
+                    <div t-attf-class="cell {{lvlClass(line.level)}}" t-on-click="() => this.cycleLevel(line)"
+                         t-esc="lvlName(line.level)"/>
+                  </td>
+                </tr>
+              </t>
+            </t>
+          </tbody></table></div>
+        </t>
+
+        <!-- APPROVALS -->
+        <t t-if="state.tab === 'approvals'">
+          <div class="eyebrow">APPROVAL ROUTING</div>
+          <div class="sect-h"><h2>توجيه الاعتمادات بالمراحل</h2></div>
+          <p class="lead">لكل نوع سلسلة مراحل تُقرأ من حقل الحالة الفعلي، وكل مرحلة لها المسمّى المعتمِد.</p>
+          <t t-if="!state.data.atypes.length"><div class="note2">لا توجد أنواع اعتماد مُزامَنة بعد — استخدم «مزامنة المراحل» من الفورم الخلفي.</div></t>
+          <t t-foreach="state.data.atypes" t-as="at" t-key="at.id">
+            <div class="card atcard">
+              <div class="atname" t-esc="at.name"/>
+              <div class="stages">
+                <t t-foreach="at.stages" t-as="s" t-key="s.name">
+                  <div class="stage"><div class="sr" t-esc="s.name"/>
+                    <div class="sd" t-if="s.is_approval">معتمِد: <t t-esc="s.label || '—'"/></div>
+                    <div class="sd" t-else="">مرحلة حالة</div></div>
+                  <div class="sarrow">←</div>
+                </t>
+              </div>
+            </div>
+          </t>
+        </t>
+
+        <!-- NOTIFY -->
+        <t t-if="state.tab === 'notify'">
+          <div class="eyebrow">NOTIFICATIONS · مواكبة مركز الموافقات</div>
+          <div class="sect-h"><h2>إشعارات الاعتماد لكل نوع</h2>
+            <span class="hint"><button class="fbtn" t-on-click="syncChannels">🔄 مزامنة من المركز</button></span></div>
+          <div class="scopebanner gold">🔗 مربوط بمركز الموافقات — القناة تحكم تنبيهك لحظة ظهور الطلب. علّم «إلزامي 🔒» لما لا يستطيع المستخدم تعطيله.</div>
+          <div class="legend"><span class="lg">🔔 فوري</span><span class="lg">📧 بريد</span><span class="lg">🔕 بلا</span><span class="lg">🔒 إلزامي</span></div>
+          <div class="card ac-notify">
+            <t t-foreach="state.data.channels" t-as="ch" t-key="ch.id">
+              <div class="srow">
+                <div class="sic" t-esc="ch.mandatory ? '🔒' : '🔔'"/>
+                <div class="stx"><b t-esc="ch.name"/><span dir="ltr" t-esc="ch.key"/></div>
+                <div class="nch">
+                  <button t-attf-class="chipbtn {{ch.channel==='push'?'on':''}}" t-on-click="() => this.setChannel(ch,'push')">🔔</button>
+                  <button t-attf-class="chipbtn {{ch.channel==='email'?'on':''}}" t-on-click="() => this.setChannel(ch,'email')">📧</button>
+                  <button t-attf-class="chipbtn {{ch.channel==='none'?'on':''}}" t-on-click="() => this.setChannel(ch,'none')">🔕</button>
+                  <button t-attf-class="lockbtn {{ch.mandatory?'on':''}}" t-on-click="() => this.toggleMandatory(ch)"
+                          t-esc="ch.mandatory ? '🔒 إلزامي' : 'اختياري'"/>
+                </div>
+              </div>
+            </t>
+          </div>
+        </t>
+
+        <!-- MIGRATE -->
+        <t t-if="state.tab === 'migrate'">
+          <div class="eyebrow">CONSOLIDATION &amp; MIGRATION · التوحيد والترحيل</div>
+          <div class="sect-h"><h2>من الفوضى إلى موديول واحد</h2></div>
+          <div class="kpis">
+            <div class="kpi" style="--accent:var(--deny)"><div class="v" t-esc="state.data.migrate.groups"/><div class="l">مجموعة (Groups)</div></div>
+            <div class="kpi" style="--accent:var(--deny)"><div class="v" t-esc="state.data.migrate.acls"/><div class="l">صلاحية ACL</div></div>
+            <div class="kpi" style="--accent:var(--deny)"><div class="v" t-esc="state.data.migrate.rules"/><div class="l">قاعدة سجلّات</div></div>
+            <div class="kpi" style="--accent:var(--write)"><div class="v" t-esc="state.data.migrate.internal"/><div class="l">مستخدم داخلي</div></div>
+          </div>
+          <div class="scopebanner warn">⚠️ لا تُحذف كل المجموعات (أودو يعتمد عليها). الحلّ: الموديول يصبح المُنسِّق — يشتقّ ويُسنِد ويُجرّد العشوائية.</div>
+          <div style="margin-top:14px">
+            <button class="ac-btn" t-on-click="deriveAll">⟲ اشتقاق مصفوفة كل المسمّيات من الوضع الحالي</button>
+          </div>
+        </t>
+
+      </div></main>
+    </t>
+  </div>
+</t>
+</templates>

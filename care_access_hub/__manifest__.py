@@ -18,7 +18,15 @@
         'views/migration_views.xml',
         'views/notify_views.xml',
         'views/matrix_views.xml',
+        'views/console_action.xml',
     ],
+    'assets': {
+        'web.assets_backend': [
+            'care_access_hub/static/src/console/console.scss',
+            'care_access_hub/static/src/console/console.js',
+            'care_access_hub/static/src/console/console.xml',
+        ],
+    },
     'installable': True,
     'application': True,
     'license': 'LGPL-3',
