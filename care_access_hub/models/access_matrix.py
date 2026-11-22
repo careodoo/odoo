@@ -142,5 +142,21 @@ class CareRoleFieldMask(models.Model):
                 continue
             rows.append({'role_id': role.id, 'model_name': model_name,
                          'field_name': fname, 'field_label': (f.string or fname)[:120], 'hidden': False})
-        if rows:
-            self.sudo().create(rows)
+        if not rows:
+            return
+        # آمن للسباق: استدعاءان متزامنان (نقرتان سريعتان/تحديث دوري) قد يحاولان الإدراج معًا
+        # ⇒ ينتهك القيد الفريد. نُدرج داخل savepoint، وعند التكرار نُدرج المفقود فقط فردًا فردًا.
+        try:
+            with self.env.cr.savepoint():
+                self.sudo().create(rows)
+        except Exception:
+            now = set(self.sudo().search(
+                [('role_id', '=', role.id), ('model_name', '=', model_name)]).mapped('field_name'))
+            for v in rows:
+                if v['field_name'] in now:
+                    continue
+                try:
+                    with self.env.cr.savepoint():
+                        self.sudo().create([v])
+                except Exception:
+                    pass
