@@ -9,6 +9,8 @@ const TABS = [
     ["matrix", "مصفوفة الصلاحيات", "▦"],
     ["approvals", "توجيه الاعتمادات", "⇄"],
     ["notify", "الإشعارات", "🔔"],
+    ["user", "بطاقة المستخدم", "🪪"],
+    ["ideas", "أفكار متقدّمة", "✦"],
     ["migrate", "التوحيد والترحيل", "⇲"],
 ];
 const LVLC = { "0": "v0", "1": "v1", "2": "v2" };
@@ -20,7 +22,7 @@ export class AccessConsole extends Component {
         this.notification = useService("notification");
         this.state = useState({
             loading: true, error: null, tab: "overview",
-            data: null, roleId: null, notifyMode: "admin",
+            data: null, roleId: null, notifyMode: "admin", userId: null,
         });
         this.TABS = TABS;
         onWillStart(() => this.load());
@@ -33,6 +35,9 @@ export class AccessConsole extends Component {
             this.state.data = d;
             if (d.roles.length && !this.state.roleId) {
                 this.state.roleId = d.roles[0].id;
+            }
+            if (d.users && d.users.length && !this.state.userId) {
+                this.state.userId = d.users[0].id;
             }
             this.state.error = null;
         } catch (e) {
@@ -91,6 +96,47 @@ export class AccessConsole extends Component {
         const n = await this.orm.call("care.access.console", "sync_channels", []);
         this.notification.add("مزامنة الإشعارات: أُضيف " + n + " نوعًا.", { type: "success" });
         await this.load();
+    }
+
+    // ----- user card -----
+    get currentUser() {
+        return (this.state.data.users || []).find((u) => u.id === this.state.userId) || null;
+    }
+    pickUser(ev) { this.state.userId = parseInt(ev.target.value); }
+    userHasRole(roleId) {
+        const u = this.currentUser;
+        return u && u.roles.indexOf(roleId) >= 0;
+    }
+    async toggleUserRole(roleId) {
+        const u = this.currentUser;
+        if (!u) return;
+        const i = u.roles.indexOf(roleId);
+        if (i >= 0) { u.roles.splice(i, 1); } else { u.roles.push(roleId); }
+        await this.orm.call("care.access.console", "set_user_roles", [u.id, u.roles]);
+    }
+    userInitials(name) {
+        const p = (name || "").trim().split(/\s+/);
+        return ((p[0] || "")[0] || "") + (p.length > 1 ? "." + ((p[1] || "")[0] || "") : "");
+    }
+    get userUnionLevels() {
+        // اتحاد مستويات مصفوفات مسمّيات المستخدم (الأعلى)، مجمّعة بالموديول
+        const u = this.currentUser;
+        if (!u) return [];
+        const best = {};
+        for (const rid of u.roles) {
+            for (const line of (this.state.data.matrix[rid] || [])) {
+                const k = line.model;
+                if (!best[k] || parseInt(line.level) > parseInt(best[k].level)) {
+                    best[k] = { module: line.module, label: line.label, level: line.level };
+                }
+            }
+        }
+        return Object.values(best).filter((x) => x.level !== "0");
+    }
+
+    // ----- ideas -----
+    async toggleIdea(idea) {
+        idea.on = await this.orm.call("care.access.console", "toggle_idea", [idea.key]);
     }
 }
 AccessConsole.template = "care_access_hub.Console";

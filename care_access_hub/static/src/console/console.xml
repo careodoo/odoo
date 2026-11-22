@@ -158,6 +158,60 @@
           </div>
         </t>
 
+        <!-- USER -->
+        <t t-if="state.tab === 'user'">
+          <div class="eyebrow">USER ASSIGNMENT</div>
+          <div class="sect-h"><h2>بطاقة المستخدم</h2><span class="hint">أسنِد مسمّى — فيرِث صلاحياته</span></div>
+          <div class="mtoolbar">
+            <label>المستخدم:</label>
+            <select class="sel" t-on-change="pickUser">
+              <t t-foreach="state.data.users" t-as="u" t-key="u.id">
+                <option t-att-value="u.id" t-att-selected="u.id === state.userId" t-esc="u.name"/>
+              </t>
+            </select>
+          </div>
+          <div class="ucard" t-if="currentUser">
+            <div class="uface">
+              <div class="uava" t-esc="userInitials(currentUser.name)"/>
+              <div class="un" t-esc="currentUser.name"/>
+              <div class="ue" t-esc="currentUser.email"/>
+              <div class="ufield"><label>المسمّيات — يمكن اختيار أكثر من واحد</label>
+                <div class="uchips">
+                  <t t-foreach="state.data.roles" t-as="r" t-key="r.id">
+                    <button t-attf-class="uchip {{userHasRole(r.id)?'on':''}}" t-on-click="() => this.toggleUserRole(r.id)" t-esc="r.name"/>
+                  </t>
+                </div>
+              </div>
+            </div>
+            <div class="urows">
+              <div class="urow-h">الصلاحية الفعلية (اتحاد المسمّيات) — <t t-esc="userUnionLevels.length"/> مودل</div>
+              <t t-foreach="userUnionLevels" t-as="x" t-key="x.label">
+                <div class="urow">
+                  <div class="rt"><b t-esc="x.label"/><span t-esc="x.module"/></div>
+                  <span t-attf-class="cell {{lvlClass(x.level)}}" t-esc="lvlName(x.level)"/>
+                </div>
+              </t>
+              <div class="note2" t-if="!userUnionLevels.length">لا مسمّى مُسنَد بعد — اختر مسمّى من القائمة.</div>
+            </div>
+          </div>
+        </t>
+
+        <!-- IDEAS -->
+        <t t-if="state.tab === 'ideas'">
+          <div class="eyebrow">BEYOND THE BRIEF · أفكار متقدّمة</div>
+          <div class="sect-h"><h2>أفكار تجعل المنظومة مطوّرة</h2><span class="hint">فعّل/عطّل كل فكرة</span></div>
+          <div class="ideas">
+            <t t-foreach="state.data.ideas" t-as="idea" t-key="idea.key">
+              <div t-attf-class="idea {{idea.on?'':'off'}}" t-on-click="() => this.toggleIdea(idea)">
+                <div class="ic" t-esc="idea.icon"/>
+                <h3 t-esc="idea.title"/>
+                <p t-esc="idea.desc"/>
+                <div class="isw"><span t-attf-class="sw {{idea.on?'on':''}}"/><t t-esc="idea.on ? 'مُفعّل' : 'معطّل'"/></div>
+              </div>
+            </t>
+          </div>
+        </t>
+
         <!-- MIGRATE -->
         <t t-if="state.tab === 'migrate'">
           <div class="eyebrow">CONSOLIDATION &amp; MIGRATION · التوحيد والترحيل</div>

@@ -7,6 +7,22 @@ TIERS = [('exec', 'القيادة التنفيذية', 'C-Suite'), ('manager', '
          ('officer', 'المسؤولون والموظفون', 'Officers & Staff'),
          ('field', 'الميدان (منطَّق بالمشاريع)', 'Field · Project-scoped')]
 
+# الأفكار الـ12 (تبويب ideas) ↔ خيارات res.company
+IDEAS = [
+    ('ah_sod', '🛡️', 'فصل الواجبات (SoD)', 'تحذير عند منح مستخدمٍ إنشاء واعتماد نفس المستند.'),
+    ('ah_thresholds', '💰', 'حدود مبالغ الاعتماد', 'سقف لكل مسمّى — فوقه يُصعَّد تلقائيًّا للأعلى.'),
+    ('ah_delegation', '🔁', 'التفويض المؤقّت (الإنابة)', 'تفويض الصلاحيات لمسمّى آخر لمدّة محدّدة.'),
+    ('ah_field_mask', '👁️', 'إخفاء الحقول الحسّاسة', 'قناع على مستوى الحقل لكل مسمّى.'),
+    ('ah_simulator', '🧪', 'محاكي الصلاحيات', 'ماذا يستطيع هذا المستخدم؟ تقرير فوري قبل الحفظ.'),
+    ('ah_auto_scope', '🧭', 'نطاق البيانات التلقائي', 'record rules تُولَّد آليًّا من المسمّى.'),
+    ('ah_audit', '📜', 'سجلّ تدقيق كامل', 'كل تغيير يُسجَّل — غير قابل للحذف.'),
+    ('ah_odoo_sync', '🔄', 'مزامنة أودو التلقائية', 'المصفوفة → مجموعات + ACL + record rules.'),
+    ('ah_emergency', '🚨', 'صلاحية الطوارئ المؤقّتة', 'وصول عاجل بسقف زمني يُلغى تلقائيًّا.'),
+    ('ah_heatmap', '📊', 'خريطة حرارية للاعتمادات', 'اختناقات الاعتماد لكل مرحلة.'),
+    ('ah_bulk_assign', '🧩', 'إسناد جماعي بالمسمّى', 'أسنِد مسمّى لعشرات المستخدمين دفعة واحدة.'),
+    ('ah_temp_grant', '⏳', 'صلاحيات مؤقّتة بتاريخ انتهاء', 'تُسحب تلقائيًّا بانتهاء التاريخ.'),
+]
+
 
 class CareAccessConsole(models.AbstractModel):
     _name = 'care.access.console'
@@ -63,12 +79,38 @@ class CareAccessConsole(models.AbstractModel):
                     'stages': [{'name': s.name, 'label': s.approver_label or '',
                                 'is_approval': s.is_approval} for s in t.stage_ids],
                 })
+        # المستخدمون الداخليون (بطاقة المستخدم)
+        internal_users = self.env['res.users'].sudo().search(
+            [('share', '=', False), ('active', '=', True)], order='name')
+        users = [{'id': u.id, 'name': u.name, 'email': u.login,
+                  'roles': u.care_role_ids.ids, 'groups': len(u.groups_id)}
+                 for u in internal_users]
+        # الأفكار الـ12
+        company = self.env.company
+        ideas = [{'key': k, 'icon': ic, 'title': t, 'desc': d, 'on': bool(getattr(company, k, False))}
+                 for k, ic, t, d in IDEAS]
         return {
             'tiers': [{'key': k, 'ar': ar, 'en': en} for k, ar, en in TIERS],
             'roles': rdata, 'matrix': matrix, 'channels': channels,
             'kpis': kpis, 'migrate': mig, 'atypes': atypes,
+            'users': users, 'ideas': ideas,
             'levels': [['0', '—'], ['1', 'قراءة'], ['2', 'قراءة+كتابة']],
         }
+
+    @api.model
+    def set_user_roles(self, user_id, role_ids):
+        self.env['res.users'].sudo().browse(int(user_id)).care_role_ids = \
+            [(6, 0, [int(x) for x in role_ids])]
+        return True
+
+    @api.model
+    def toggle_idea(self, key):
+        c = self.env.company
+        if key in c._fields:
+            val = not bool(getattr(c, key))
+            c.sudo().write({key: val})
+            return val
+        return False
 
     @api.model
     def set_level(self, line_id, level):
