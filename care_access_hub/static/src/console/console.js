@@ -24,6 +24,7 @@ export class AccessConsole extends Component {
         this.state = useState({
             loading: true, error: null, tab: "overview",
             data: null, roleId: null, notifyMode: "admin", userId: null,
+            fieldPanel: { open: false, model: null, label: null, line: null, fields: [], q: "" },
         });
         this.TABS = TABS;
         this.dir = (localization && localization.direction) || "ltr";
@@ -81,6 +82,26 @@ export class AccessConsole extends Component {
         await this.orm.call("care.access.console", "set_level", [line.id, next]);
         line.level = next;
     }
+    // ----- field-mask editor (تخصيص صلاحيات الحقول) -----
+    async openFields(line) {
+        const d = await this.orm.call("care.access.console", "get_fields", [this.state.roleId, line.model]);
+        this.state.fieldPanel = { open: true, model: line.model, label: line.label || d.label,
+            line: line, fields: d.fields || [], q: "" };
+    }
+    closeFields() { this.state.fieldPanel.open = false; }
+    get fieldPanelRows() {
+        const q = (this.state.fieldPanel.q || "").toLowerCase();
+        const rows = this.state.fieldPanel.fields || [];
+        if (!q) return rows;
+        return rows.filter((f) => (f.label || "").toLowerCase().includes(q) || (f.field || "").toLowerCase().includes(q));
+    }
+    get fieldHiddenCount() { return (this.state.fieldPanel.fields || []).filter((f) => f.hidden).length; }
+    async toggleFieldMask(f) {
+        f.hidden = !f.hidden;
+        await this.orm.call("care.access.console", "toggle_field_mask", [f.id, f.hidden]);
+        if (this.state.fieldPanel.line) this.state.fieldPanel.line.mask = this.fieldHiddenCount;
+    }
+    onFieldSearch(ev) { this.state.fieldPanel.q = ev.target.value; }
     async toggleFlag(ch, flag) {
         ch[flag] = !ch[flag];
         await this.orm.call("care.access.console", "set_channel_flag", [ch.id, flag, ch[flag]]);
@@ -129,7 +150,7 @@ export class AccessConsole extends Component {
             for (const line of (this.state.data.matrix[rid] || [])) {
                 const k = line.model;
                 if (!best[k] || parseInt(line.level) > parseInt(best[k].level)) {
-                    best[k] = { module: line.module, label: line.label, level: line.level };
+                    best[k] = { model: k, module: line.module, label: line.label, level: line.level };
                 }
             }
         }

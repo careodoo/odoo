@@ -104,14 +104,40 @@
                   <td class="modcell sub"><span t-esc="line.label"/>
                     <span class="mi" dir="ltr" t-esc="line.model"/>
                     <span t-if="line.mask" class="mlk">🔒 <t t-esc="line.mask"/></span></td>
-                  <td style="width:140px">
-                    <div t-attf-class="cell {{lvlClass(line.level)}}" t-on-click="() => this.cycleLevel(line)"
-                         t-esc="lvlName(line.level)"/>
+                  <td style="width:200px">
+                    <div class="cellrow">
+                      <div t-attf-class="cell {{lvlClass(line.level)}}" t-on-click="() => this.cycleLevel(line)"
+                           t-esc="lvlName(line.level)"/>
+                      <button class="fbtn" t-on-click="() => this.openFields(line)"
+                              title="تخصيص صلاحيات الحقول — إخفاء حقول حسّاسة عن هذا المسمّى">🔒 الحقول</button>
+                    </div>
                   </td>
                 </tr>
               </t>
             </t>
           </tbody></table></div>
+
+          <!-- محرّر «تخصيص صلاحيات الحقول» -->
+          <t t-if="state.fieldPanel.open">
+            <div class="fmodal-bg" t-on-click="closeFields"/>
+            <div class="fmodal">
+              <div class="fmodal-h">
+                <div><b>🔒 حقول: <t t-esc="state.fieldPanel.label || state.fieldPanel.model"/></b>
+                  <span class="fmodal-sub">مخفيّة: <t t-esc="fieldHiddenCount"/> / <t t-esc="state.fieldPanel.fields.length"/></span></div>
+                <span class="fx" t-on-click="closeFields">✕</span>
+              </div>
+              <div class="fmodal-note">علّم الحقول التي تريد إخفاءها عن مستخدمي هذا المسمّى (يُخفى فعليًّا في الواجهة والتطبيق متى أخفته كل مسمّيات المستخدم).</div>
+              <input class="fsearch" placeholder="ابحث عن حقل…" t-on-input="onFieldSearch"/>
+              <div class="flist">
+                <label class="frow" t-foreach="fieldPanelRows" t-as="f" t-key="f.id">
+                  <input type="checkbox" t-att-checked="f.hidden" t-on-change="() => this.toggleFieldMask(f)"/>
+                  <span class="fl" t-esc="f.label"/>
+                  <span class="ff" dir="ltr" t-esc="f.field"/>
+                </label>
+                <div t-if="!fieldPanelRows.length" class="note2">لا حقول مطابقة.</div>
+              </div>
+            </div>
+          </t>
         </t>
 
         <!-- APPROVALS -->
@@ -124,7 +150,7 @@
             <div class="card atcard">
               <div class="atname" t-esc="at.name"/>
               <div class="stages">
-                <t t-foreach="at.stages" t-as="s" t-key="s.name">
+                <t t-foreach="at.stages" t-as="s" t-key="s.id">
                   <div class="stage"><div class="sr" t-esc="s.name"/>
                     <div class="sd" t-if="s.is_approval">معتمِد: <t t-esc="s.label || '—'"/></div>
                     <div class="sd" t-else="">مرحلة حالة</div></div>
@@ -187,7 +213,7 @@
             <div class="urows">
               <div class="urow-h">الصلاحية الفعلية — <t t-esc="userUnionLevels.length"/> مودل</div>
               <div class="roinfo">👁️ <b>للعرض فقط</b> — هذه الصلاحية <b>تُحسب تلقائيًّا</b> من اتحاد مسمّيات المستخدم. لتعديلها غيّر مصفوفة المسمّى من تبويب «مصفوفة الصلاحيات».</div>
-              <t t-foreach="userUnionLevels" t-as="x" t-key="x.label">
+              <t t-foreach="userUnionLevels" t-as="x" t-key="x.model">
                 <div class="urow">
                   <div class="rt"><b t-esc="x.label"/><span t-esc="x.module"/></div>
                   <span t-attf-class="cell ro {{lvlClass(x.level)}}" t-esc="lvlName(x.level)"/>

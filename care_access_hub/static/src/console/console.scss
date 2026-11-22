@@ -153,4 +153,25 @@
   .isw .sw.on::after{inset-inline-end:20px}
 
   @media(max-width:860px){.kpis{grid-template-columns:repeat(2,1fr)}.ucard{grid-template-columns:1fr}}
+
+  /* ===== محرّر تخصيص صلاحيات الحقول ===== */
+  .cellrow{display:flex;align-items:center;gap:8px}
+  .fbtn{border:1px solid var(--line);background:var(--surface-2);color:var(--navy);border-radius:9px;
+    padding:5px 9px;font-size:11.5px;font-weight:700;cursor:pointer;white-space:nowrap}
+  .fbtn:hover{background:var(--approve-bg);border-color:var(--gold)}
+  .fmodal-bg{position:fixed;inset:0;background:rgba(10,20,40,.45);z-index:1040}
+  .fmodal{position:fixed;inset-inline-end:0;top:0;height:100%;width:min(460px,94vw);background:var(--surface);
+    z-index:1041;box-shadow:-8px 0 30px rgba(0,0,0,.25);display:flex;flex-direction:column}
+  .fmodal-h{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 16px;
+    background:var(--navy);color:#fff}
+  .fmodal-h .fmodal-sub{display:block;font-size:11px;color:var(--gold-2);font-weight:700;margin-top:3px}
+  .fmodal-h .fx{cursor:pointer;font-size:18px;opacity:.85}
+  .fmodal-h .fx:hover{opacity:1}
+  .fmodal-note{padding:9px 16px;font-size:11.5px;color:var(--ink-2);background:var(--surface-2);border-bottom:1px solid var(--line)}
+  .fsearch{margin:10px 14px;padding:9px 12px;border:1px solid var(--line);border-radius:10px;font-size:13px}
+  .flist{flex:1;overflow:auto;padding:0 12px 16px}
+  .flist .frow{display:flex;align-items:center;gap:9px;padding:8px 8px;border-bottom:1px solid var(--line-2);cursor:pointer;font-size:12.5px}
+  .flist .frow:hover{background:var(--surface-2)}
+  .flist .frow .fl{font-weight:700;color:var(--ink)}
+  .flist .frow .ff{margin-inline-start:auto;font-size:10.5px;color:var(--muted);direction:ltr}
 }

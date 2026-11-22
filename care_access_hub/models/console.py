@@ -135,6 +135,30 @@ class CareAccessConsole(models.AbstractModel):
         return True
 
     @api.model
+    def get_fields(self, role_id, model_name):
+        """حقول مودل مع حالة الإخفاء لهذا المسمّى — لمحرّر «تخصيص صلاحيات الحقول»."""
+        self._check_mgr()
+        role = self.env['care.job.role'].sudo().browse(int(role_id))
+        Mask = self.env['care.role.field.mask'].sudo()
+        label = None
+        line = self.env['care.role.model.perm'].sudo().search(
+            [('role_id', '=', role.id), ('model_name', '=', model_name)], limit=1)
+        label = line.model_label if line else model_name
+        Mask._ensure_fields(role, model_name, label)
+        rows = Mask.search([('role_id', '=', role.id), ('model_name', '=', model_name)],
+                           order='field_label')
+        return {'model': model_name, 'label': label,
+                'fields': [{'id': m.id, 'field': m.field_name,
+                            'label': m.field_label or m.field_name, 'hidden': m.hidden} for m in rows]}
+
+    @api.model
+    def toggle_field_mask(self, mask_id, hidden):
+        """تبديل إخفاء حقل عن مسمّى."""
+        self._check_mgr()
+        self.env['care.role.field.mask'].sudo().browse(int(mask_id)).write({'hidden': bool(hidden)})
+        return True
+
+    @api.model
     def set_channel_flag(self, channel_id, flag, value):
         self._check_mgr()
         fmap = {'app': 'ch_app', 'odoo': 'ch_odoo', 'email': 'ch_email'}
