@@ -1,0 +1,227 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ============ نموذج الشكوى ============ -->
+    <record id="view_complaint_form" model="ir.ui.view">
+        <field name="name">care.complaint.form</field>
+        <field name="model">care.complaint</field>
+        <field name="arch" type="xml">
+            <form string="شكوى / إجراء تأديبي">
+                <header>
+                    <button name="action_submit" type="object" string="تقديم الشكوى"
+                            class="btn-primary" invisible="state != 'draft'"/>
+                    <button name="action_manager_approve" type="object" string="اعتماد (المدير المباشر)"
+                            class="btn-primary" invisible="state != 'submitted'"/>
+                    <button name="action_hr_take" type="object" string="استلام وفتح تحقيق"
+                            class="btn-primary" invisible="state != 'manager_approved'"
+                            groups="care_discipline.group_discipline_hr"/>
+                    <button name="action_record_defense" type="object" string="تدوين أقوال العامل"
+                            invisible="state != 'hr_review'"
+                            groups="care_discipline.group_discipline_hr"/>
+                    <button name="action_hr_to_legal" type="object" string="تحويل للإدارة القانونية"
+                            class="btn-primary" invisible="state != 'hr_review'"
+                            groups="care_discipline.group_discipline_hr"/>
+                    <button name="action_legal_decide" type="object" string="إقرار القرار القانوني"
+                            class="btn-primary" invisible="state != 'legal_review'"
+                            groups="care_discipline.group_discipline_legal"/>
+                    <button name="action_apply" type="object" string="تطبيق الجزاء"
+                            class="btn-primary" invisible="state != 'penalty_decided'"
+                            groups="care_discipline.group_discipline_hr"/>
+                    <button name="action_close" type="object" string="إغلاق وأرشفة"
+                            invisible="state != 'applied'"
+                            groups="care_discipline.group_discipline_hr"/>
+                    <button name="action_reject" type="object" string="رفض"
+                            invisible="state in ('draft', 'applied', 'closed', 'rejected')"
+                            confirm="رفض الشكوى وإنهاء المسار؟"/>
+                    <field name="state" widget="statusbar" nolabel="1"
+                           statusbar_visible="draft,submitted,manager_approved,hr_review,legal_review,penalty_decided,applied,closed"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button type="object" name="action_print_report" class="oe_stat_button" icon="fa-print"
+                                invisible="state in ('draft','submitted')">
+                            <span>طباعة القرار</span>
+                        </button>
+                    </div>
+                    <widget name="web_ribbon" title="مرفوضة" bg_color="text-bg-danger"
+                            invisible="state != 'rejected'"/>
+                    <widget name="web_ribbon" title="مُغلقة" bg_color="text-bg-secondary"
+                            invisible="state != 'closed'"/>
+                    <div class="oe_title">
+                        <label for="name"/>
+                        <h1><field name="name" readonly="1"/></h1>
+                    </div>
+                    <group>
+                        <group string="الأطراف">
+                            <field name="employee_id" options="{'no_create': True}"
+                                   readonly="state not in ('draft',)"/>
+                            <field name="department_id"/>
+                            <field name="complainant_id"/>
+                            <field name="manager_id" readonly="state not in ('draft','submitted')"/>
+                        </group>
+                        <group string="تصنيف الواقعة">
+                            <field name="category_id" options="{'no_create': True}"
+                                   readonly="state not in ('draft',)"/>
+                            <field name="severity" readonly="state not in ('draft','hr_review')"/>
+                            <field name="incident_date" readonly="state not in ('draft',)"/>
+                            <field name="prior_count"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="الواقعة والأدلة">
+                            <group>
+                                <field name="description" placeholder="وصف تفصيلي للواقعة..."
+                                       readonly="state not in ('draft',)"/>
+                                <field name="witnesses" readonly="state not in ('draft','hr_review')"/>
+                                <field name="complainant_ack"
+                                       readonly="state not in ('draft',)"/>
+                            </group>
+                            <field name="attachment_ids" widget="many2many_binary"/>
+                        </page>
+                        <page string="التحقيق وحق الدفاع"
+                              groups="care_discipline.group_discipline_hr,care_discipline.group_discipline_legal">
+                            <group>
+                                <field name="hr_user_id"/>
+                                <field name="defense_date"/>
+                            </group>
+                            <separator string="أقوال / دفاع العامل"/>
+                            <field name="defense_statement" placeholder="ما أدلى به العامل..."/>
+                            <separator string="محضر التحقيق"/>
+                            <field name="investigation_notes"/>
+                        </page>
+                        <page string="القرار القانوني"
+                              groups="care_discipline.group_discipline_hr,care_discipline.group_discipline_legal">
+                            <group>
+                                <group>
+                                    <field name="penalty_type"
+                                           readonly="state not in ('legal_review',)"/>
+                                    <field name="law_article_id"
+                                           options="{'no_create': True}"
+                                           readonly="state not in ('legal_review',)"/>
+                                    <field name="deduction_days"
+                                           invisible="penalty_type != 'deduction'"
+                                           readonly="state not in ('legal_review',)"/>
+                                </group>
+                                <group>
+                                    <field name="legal_user_id"/>
+                                    <field name="applied_date"/>
+                                    <field name="penalty_id" readonly="1"
+                                           invisible="not penalty_id"/>
+                                    <field name="suspension_id" readonly="1"
+                                           invisible="not suspension_id"/>
+                                </group>
+                            </group>
+                            <separator string="حيثيات القرار"/>
+                            <field name="legal_reasoning"
+                                   readonly="state not in ('legal_review',)"/>
+                        </page>
+                    </notebook>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <!-- ============ شجرة ============ -->
+    <record id="view_complaint_tree" model="ir.ui.view">
+        <field name="name">care.complaint.tree</field>
+        <field name="model">care.complaint</field>
+        <field name="arch" type="xml">
+            <tree string="الشكاوى التأديبية"
+                  decoration-muted="state in ('closed','rejected')"
+                  decoration-danger="penalty_type == 'termination'"
+                  decoration-info="state == 'draft'">
+                <field name="name"/>
+                <field name="employee_id"/>
+                <field name="department_id" optional="show"/>
+                <field name="category_id"/>
+                <field name="severity"
+                       decoration-danger="severity == 'high'"
+                       decoration-warning="severity == 'medium'" widget="badge"/>
+                <field name="incident_date"/>
+                <field name="complainant_id" optional="hide"/>
+                <field name="penalty_type" optional="show"/>
+                <field name="state" widget="badge"
+                       decoration-success="state == 'applied'"
+                       decoration-info="state in ('submitted','manager_approved')"
+                       decoration-warning="state in ('hr_review','legal_review','penalty_decided')"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- ============ بحث ============ -->
+    <record id="view_complaint_search" model="ir.ui.view">
+        <field name="name">care.complaint.search</field>
+        <field name="model">care.complaint</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="employee_id"/>
+                <field name="category_id"/>
+                <field name="department_id"/>
+                <filter name="f_draft" string="مسوّدات" domain="[('state','=','draft')]"/>
+                <filter name="f_inprogress" string="قيد المعالجة"
+                        domain="[('state','in',('submitted','manager_approved','hr_review','legal_review','penalty_decided'))]"/>
+                <filter name="f_applied" string="طُبّق" domain="[('state','=','applied')]"/>
+                <filter name="f_high" string="جسيمة" domain="[('severity','=','high')]"/>
+                <separator/>
+                <filter name="f_mine" string="شكاواي" domain="[('complainant_id','=',uid)]"/>
+                <filter name="f_to_approve" string="بانتظار اعتمادي"
+                        domain="[('manager_id','=',uid),('state','=','submitted')]"/>
+                <group expand="0" string="تجميع">
+                    <filter name="g_state" string="الحالة" context="{'group_by':'state'}"/>
+                    <filter name="g_emp" string="الموظف" context="{'group_by':'employee_id'}"/>
+                    <filter name="g_dept" string="القسم" context="{'group_by':'department_id'}"/>
+                    <filter name="g_cat" string="النوع" context="{'group_by':'category_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_complaint" model="ir.actions.act_window">
+        <field name="name">الشكاوى التأديبية</field>
+        <field name="res_model">care.complaint</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="view_complaint_search"/>
+        <field name="context">{'search_default_f_inprogress': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiley_face">لا توجد شكاوى</p>
+            <p>سجّل شكوى/إجراء تأديبي ضد موظف ليمرّ بمسار الاعتماد: المدير ← الموارد البشرية ← القانونية ← التطبيق.</p>
+        </field>
+    </record>
+
+    <!-- إجراء من ملف الموظف (الزرّ الذكي) -->
+    <record id="action_complaint_from_employee" model="ir.actions.act_window">
+        <field name="name">الشكاوى التأديبية</field>
+        <field name="res_model">care.complaint</field>
+        <field name="view_mode">tree,form</field>
+        <field name="domain">[('employee_id', '=', active_id)]</field>
+        <field name="context">{'default_employee_id': active_id}</field>
+    </record>
+
+    <!-- ============ أنواع المخالفات ============ -->
+    <record id="view_category_tree" model="ir.ui.view">
+        <field name="name">care.complaint.category.tree</field>
+        <field name="model">care.complaint.category</field>
+        <field name="arch" type="xml">
+            <tree string="أنواع المخالفات" editable="bottom">
+                <field name="sequence" widget="handle"/>
+                <field name="name"/>
+                <field name="name_en"/>
+                <field name="default_severity"/>
+                <field name="suggested_penalty"/>
+                <field name="active" widget="boolean_toggle"/>
+            </tree>
+        </field>
+    </record>
+    <record id="action_category" model="ir.actions.act_window">
+        <field name="name">أنواع المخالفات</field>
+        <field name="res_model">care.complaint.category</field>
+        <field name="view_mode">tree</field>
+    </record>
+
+</odoo>

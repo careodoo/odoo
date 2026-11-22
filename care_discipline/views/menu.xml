@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- قائمة رئيسية تحت الموارد البشرية -->
+    <menuitem id="menu_discipline_root" name="الشكاوى التأديبية"
+              parent="hr.menu_hr_root" sequence="55"
+              groups="base.group_user"/>
+
+    <menuitem id="menu_complaint" name="الشكاوى والإجراءات"
+              parent="menu_discipline_root" action="action_complaint" sequence="10"/>
+
+    <menuitem id="menu_discipline_config" name="الإعدادات"
+              parent="menu_discipline_root" sequence="90"
+              groups="care_discipline.group_discipline_hr"/>
+    <menuitem id="menu_category" name="أنواع المخالفات"
+              parent="menu_discipline_config" action="action_category" sequence="10"/>
+    <menuitem id="menu_disc_settings" name="ضوابط المنظومة"
+              parent="menu_discipline_config" action="action_disc_config_settings" sequence="20"/>
+</odoo>

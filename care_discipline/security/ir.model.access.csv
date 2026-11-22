@@ -1,0 +1,6 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_cat_internal,care.complaint.category internal,model_care_complaint_category,base.group_user,1,0,0,0
+access_cat_hr,care.complaint.category hr,model_care_complaint_category,group_discipline_hr,1,1,1,1
+access_complaint_internal,care.complaint internal,model_care_complaint,base.group_user,1,1,1,0
+access_complaint_hr,care.complaint hr,model_care_complaint,group_discipline_hr,1,1,1,1
+access_complaint_legal,care.complaint legal,model_care_complaint,group_discipline_legal,1,1,0,0

@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_disc_config_settings" model="ir.ui.view">
+        <field name="name">care.discipline.config.settings</field>
+        <field name="model">res.config.settings</field>
+        <field name="inherit_id" ref="base.res_config_settings_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//form" position="inside">
+                <app string="الشكاوى التأديبية" name="care_discipline"
+                     logo="/base/static/img/icons/hr.png">
+                    <block title="ضوابط المنظومة (أفكار قابلة للتفعيل/التعطيل)"
+                           name="disc_controls">
+                        <setting string="توقيع إلكتروني لكل مرحلة"
+                                 help="توقيع المُقدّم/المدير/الموارد البشرية/القانونية على كل خطوة.">
+                            <field name="disc_esign"/>
+                        </setting>
+                        <setting string="حماية من الشكوى الكيدية"
+                                 help="إلزام مُقدّم الشكوى بالإقرار بصحّة البيانات قبل التقديم.">
+                            <field name="disc_false_guard"/>
+                        </setting>
+                        <setting string="حق الدفاع إلزامي"
+                                 help="وجوب تدوين أقوال العامل قبل التحويل للإدارة القانونية.">
+                            <field name="disc_require_defense"/>
+                        </setting>
+                        <setting string="السند القانوني إلزامي"
+                                 help="ربط القرار بمادة من قانون العمل الكويتي.">
+                            <field name="disc_require_law_article"/>
+                        </setting>
+                        <setting string="تطبيق مدّة التقادم"
+                                 help="منع الجزاء على واقعة قديمة تجاوزت المدّة.">
+                            <field name="disc_prescription"/>
+                            <div class="content-group mt16" invisible="not disc_prescription">
+                                <label for="disc_prescription_days" string="المدّة (أيام)"/>
+                                <field name="disc_prescription_days" class="oe_inline"/>
+                            </div>
+                        </setting>
+                        <setting string="إنشاء الخصم/الإيقاف تلقائيًّا"
+                                 help="عند التطبيق يُنشَأ سجل الخصم أو الإيقاف في الموديول المناسب.">
+                            <field name="disc_auto_integration"/>
+                        </setting>
+                    </block>
+                </app>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="action_disc_config_settings" model="ir.actions.act_window">
+        <field name="name">إعدادات الشكاوى التأديبية</field>
+        <field name="res_model">res.config.settings</field>
+        <field name="view_mode">form</field>
+        <field name="target">inline</field>
+        <field name="context">{'module': 'care_discipline'}</field>
+    </record>
+</odoo>
