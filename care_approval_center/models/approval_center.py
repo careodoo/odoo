@@ -771,7 +771,9 @@ class CareApprovalCenter(models.AbstractModel):
             _logger.warning('approval-center: esign stamp failed for %s/%s: %s', rec._name, rec.id, ex)
 
     def _approver_recipients(self, entry):
-        """مستخدمو الاعتماد لنوعٍ ما — اتحاد مجموعاته، مع استبعاد المجموعات شديدة الاتساع."""
+        """مستخدمو الاعتماد لنوعٍ ما — اتحاد مجموعاته، مع استبعاد المجموعات شديدة الاتساع.
+        منظومة الصلاحيات (care_access_hub): إن عُيّنت مسمّيات/مستخدمون معتمِدون لمراحل هذا النوع،
+        تُقيَّد عليهم (عزل)؛ وإن لم يُعيَّن أحد = المعتمِدون الافتراضيون للموديول (ليس «الكل»)."""
         users = self.env['res.users'].browse()
         broad = {'base.group_user', 'base.group_portal', 'base.group_public'}
         for g in entry.get('groups') or []:
@@ -783,6 +785,17 @@ class CareApprovalCenter(models.AbstractModel):
                     users |= grp.users
             except Exception:
                 continue
+        # تقييد على المعتمِدين المُعيَّنين في منظومة الصلاحيات (إن وُجدوا)
+        AT = self.env.get('care.approval.type')
+        if AT is not None:
+            try:
+                t = AT.sudo().search([('model_name', '=', entry.get('model'))], limit=1)
+                if t:
+                    configured = t.stage_ids.mapped('role_ids.user_ids') | t.stage_ids.mapped('extra_user_ids')
+                    if configured:
+                        users = configured  # عزل: المعتمِدون المُعيَّنون فقط
+            except Exception:
+                pass
         return users.filtered(lambda u: u.active and not u.share)[:300]
 
     @api.model

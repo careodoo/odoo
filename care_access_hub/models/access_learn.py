@@ -36,5 +36,5 @@ class CareAccessLearnWizard(models.TransientModel):
         self.env['care.access.audit'].sudo().log(
             'learn', _('مجموعات «%s» تُعلّمت من %s (%s مجموعة)') % (
                 self.role_id.name, self.reference_user_id.name, len(g)))
-        return {'type': 'ir.actions.act_window', 'res_model': 'care.job.role',
+        return {'type': 'ir.actions.act_window', 'name': _('المسمّى'), 'res_model': 'care.job.role',
                 'res_id': self.role_id.id, 'view_mode': 'form', 'views': [(False, 'form')]}

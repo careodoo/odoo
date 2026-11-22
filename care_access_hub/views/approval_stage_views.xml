@@ -47,6 +47,10 @@
                     </group>
                     <notebook>
                         <page string="المراحل" name="stages">
+                            <div class="alert alert-info" role="alert">
+                                🔑 <b>دلالة المعتمِدين:</b> إذا <b>حدّدت</b> مسمّيات/مستخدمين لمرحلة → <b>هم فقط</b> يُشعَرون ويعتمدون (عزل).
+                                وإذا <b>تركتها فارغة</b> → يذهب الطلب إلى <b>المعتمِدين الافتراضيين للموديول</b> (كما هو الآن) — <b>وليس للجميع</b>.
+                            </div>
                             <field name="stage_ids">
                                 <tree string="المراحل" editable="bottom" default_order="sequence">
                                     <field name="sequence" widget="handle"/>
@@ -79,7 +83,8 @@
 action = {'type': 'ir.actions.client', 'tag': 'display_notification',
           'params': {'title': 'مزامنة الاعتمادات', 'message': 'أُضيف %s نوع + مُلئت مراحلها.' % n,
                      'type': 'success', 'sticky': False,
-                     'next': {'type': 'ir.actions.act_window', 'res_model': 'care.approval.type',
+                     'next': {'type': 'ir.actions.act_window', 'name': 'أنواع الاعتماد والمراحل',
+                              'res_model': 'care.approval.type',
                               'view_mode': 'tree,form', 'views': [(False, 'tree'), (False, 'form')]}}}</field>
     </record>
 

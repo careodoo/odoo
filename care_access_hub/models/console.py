@@ -76,8 +76,11 @@ class CareAccessConsole(models.AbstractModel):
             for t in AT.sudo().search([]):
                 atypes.append({
                     'id': t.id, 'name': t.name,
-                    'stages': [{'name': s.name, 'label': s.approver_label or '',
-                                'is_approval': s.is_approval} for s in t.stage_ids],
+                    'stages': [{
+                        'id': s.id, 'name': s.name, 'is_approval': s.is_approval,
+                        'amount': s.amount_threshold or 0.0, 'mode': s.mode,
+                        'roles': [{'id': r.id, 'name': r.name} for r in s.role_ids],
+                    } for s in t.stage_ids],
                 })
         # المستخدمون الداخليون (بطاقة المستخدم)
         internal_users = self.env['res.users'].sudo().search(

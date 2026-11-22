@@ -52,7 +52,8 @@
 action = {'type': 'ir.actions.client', 'tag': 'display_notification',
           'params': {'title': 'مزامنة الإشعارات',
                      'message': 'أُضيف %s نوع اعتماد جديد.' % n, 'type': 'success', 'sticky': False,
-                     'next': {'type': 'ir.actions.act_window', 'res_model': 'care.access.notify.channel',
+                     'next': {'type': 'ir.actions.act_window', 'name': 'قنوات الإشعار',
+                              'res_model': 'care.access.notify.channel',
                               'view_mode': 'tree', 'views': [(False, 'tree')]}}}</field>
     </record>
 
