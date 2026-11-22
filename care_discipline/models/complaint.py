@@ -370,6 +370,20 @@ class CareComplaint(models.Model):
                 raise UserError(_('الإلغاء حقّ مُقدّم الشكوى أو الموارد البشرية.'))
             r.state = 'cancelled'
             r.message_post(body=_('🚫 أُلغيت الشكوى (سُحبت) %s.') % r.name)
+            # إشعار المدير/الموارد البشرية بالسحب
+            parties = r.manager_id | r._group_users('care_discipline.group_discipline_hr')
+            if parties:
+                r._notify(parties, _('🚫 سُحبت الشكوى %s من مُقدّمها.') % r.name)
+
+    def action_reset(self):
+        """إعادة شكوى «مرفوضة» أو «ملغاة» إلى مسودة — لتدارك قرارٍ بالخطأ (الموارد البشرية/النظام)."""
+        self._grp_require('care_discipline.group_discipline_hr',
+                          _('إعادة الفتح من صلاحية الموارد البشرية.'))
+        for r in self:
+            if r.state not in ('rejected', 'cancelled'):
+                raise UserError(_('تُعاد المرفوضة/الملغاة فقط إلى مسودة.'))
+            r.state = 'draft'
+            r.message_post(body=_('↩️ أُعيدت الشكوى %s إلى مسودة.') % r.name)
 
     def action_print_report(self):
         """طباعة «القرار التأديبي» (بعد قرار الإدارة القانونية)."""

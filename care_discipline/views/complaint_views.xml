@@ -36,6 +36,9 @@
                     <button name="action_cancel" type="object" string="🚫 إلغاء (سحب)"
                             invisible="state in ('applied', 'closed', 'rejected', 'cancelled')"
                             confirm="إلغاء/سحب الشكوى؟ ستصبح حالتها «ملغاة»."/>
+                    <button name="action_reset" type="object" string="↩️ إعادة لمسودة"
+                            invisible="state not in ('rejected', 'cancelled')"
+                            groups="care_discipline.group_discipline_hr"/>
                     <field name="state" widget="statusbar" nolabel="1"
                            statusbar_visible="draft,submitted,manager_approved,hr_review,legal_review,penalty_decided,applied,closed"/>
                 </header>
