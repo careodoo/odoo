@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -333,51 +334,82 @@ class MoreScreen extends StatelessWidget {
   /// Admin/demo: preview the app as any other user (impersonation switcher).
   void _switchUser(BuildContext context) {
     final auth = context.read<AuthProvider>();
+    String query = '';
+    Timer? debounce;
+    Future<List<dynamic>> future = auth.impersonatableUsers();
     showModalBottomSheet(context: context, isScrollControlled: true, backgroundColor: Colors.transparent,
-      builder: (_) => DraggableScrollableSheet(
-        expand: false, initialChildSize: 0.75, minChildSize: 0.5, maxChildSize: 0.95,
-        builder: (c, sc) => Container(
-          decoration: const BoxDecoration(color: Color(0xFFF6F7F9), borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
-          clipBehavior: Clip.antiAlias,
-          child: Column(children: [
-            Container(width: double.infinity, padding: const EdgeInsets.fromLTRB(20, 14, 20, 16),
-              decoration: const BoxDecoration(gradient: LinearGradient(colors: [_redBright, _redDeep], begin: Alignment.topRight, end: Alignment.bottomLeft)),
-              child: Column(children: [
-                Center(child: Container(width: 40, height: 4, margin: const EdgeInsets.only(bottom: 12), decoration: BoxDecoration(color: Colors.white54, borderRadius: BorderRadius.circular(3)))),
-                Row(children: [
-                  const Icon(Icons.switch_account_rounded, color: Colors.white),
-                  const SizedBox(width: 10),
-                  Expanded(child: Text(tr('عرض التطبيق كـ (تجريبي)', 'Preview app as (demo)'),
-                      style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w900))),
-                ]),
-              ])),
-            Expanded(child: FutureBuilder<List<dynamic>>(
-              future: auth.impersonatableUsers(),
-              builder: (c, snap) {
-                if (!snap.hasData) return const Center(child: CircularProgressIndicator());
-                final users = snap.data!;
-                return ListView(controller: sc, padding: const EdgeInsets.all(8), children: [
-                  for (final u in users) Card(
-                    margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    child: ListTile(
-                      leading: CircleAvatar(backgroundColor: _navy, child: Text('${u['name']}'.characters.first, style: const TextStyle(color: Colors.white))),
-                      title: Text('${u['name']}', style: const TextStyle(fontWeight: FontWeight.w800)),
-                      subtitle: Text('${u['login']} · ${u['kind']}', style: const TextStyle(fontSize: 12)),
-                      trailing: const Icon(Icons.login_rounded, color: _navy),
-                      onTap: () async {
-                        Navigator.pop(c);
-                        try {
-                          await auth.impersonate('${u['login']}');
-                        } catch (e) {
-                          if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
-                        }
-                      },
+      builder: (_) => StatefulBuilder(
+        builder: (ctx, setSheet) => DraggableScrollableSheet(
+          expand: false, initialChildSize: 0.8, minChildSize: 0.5, maxChildSize: 0.95,
+          builder: (c, sc) => Container(
+            decoration: const BoxDecoration(color: Color(0xFFF6F7F9), borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+            clipBehavior: Clip.antiAlias,
+            child: Column(children: [
+              Container(width: double.infinity, padding: const EdgeInsets.fromLTRB(20, 14, 20, 14),
+                decoration: const BoxDecoration(gradient: LinearGradient(colors: [_redBright, _redDeep], begin: Alignment.topRight, end: Alignment.bottomLeft)),
+                child: Column(children: [
+                  Center(child: Container(width: 40, height: 4, margin: const EdgeInsets.only(bottom: 12), decoration: BoxDecoration(color: Colors.white54, borderRadius: BorderRadius.circular(3)))),
+                  Row(children: [
+                    const Icon(Icons.switch_account_rounded, color: Colors.white),
+                    const SizedBox(width: 10),
+                    Expanded(child: Text(tr('عرض التطبيق كـ', 'Preview app as'),
+                        style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w900))),
+                  ]),
+                  const SizedBox(height: 12),
+                  // حقل البحث داخل القائمة (3000+ مستخدم) — بحث بالخادم مع تأخير بسيط
+                  TextField(
+                    autofocus: false,
+                    textInputAction: TextInputAction.search,
+                    style: const TextStyle(fontSize: 14),
+                    decoration: InputDecoration(
+                      hintText: tr('ابحث بالاسم أو الدخول أو الرقم الوظيفي…', 'Search name / login / badge…'),
+                      prefixIcon: const Icon(Icons.search_rounded),
+                      filled: true, fillColor: Colors.white,
+                      contentPadding: const EdgeInsets.symmetric(vertical: 2, horizontal: 10),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
                     ),
+                    onChanged: (v) {
+                      debounce?.cancel();
+                      debounce = Timer(const Duration(milliseconds: 350), () {
+                        query = v;
+                        setSheet(() => future = auth.impersonatableUsers(q: query));
+                      });
+                    },
                   ),
-                ]);
-              },
-            )),
-          ]),
+                ])),
+              Expanded(child: FutureBuilder<List<dynamic>>(
+                future: future,
+                builder: (c, snap) {
+                  if (snap.connectionState == ConnectionState.waiting) return const Center(child: CircularProgressIndicator());
+                  final users = snap.data ?? const [];
+                  if (users.isEmpty) {
+                    return Center(child: Text(
+                        query.isEmpty ? tr('اكتب للبحث عن مستخدم', 'Type to search a user') : tr('لا نتائج', 'No results'),
+                        style: const TextStyle(color: Colors.black54)));
+                  }
+                  return ListView(controller: sc, padding: const EdgeInsets.all(8), children: [
+                    for (final u in users) Card(
+                      margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      child: ListTile(
+                        leading: CircleAvatar(backgroundColor: _navy, child: Text('${u['name']}'.characters.first, style: const TextStyle(color: Colors.white))),
+                        title: Text('${u['name']}', style: const TextStyle(fontWeight: FontWeight.w800)),
+                        subtitle: Text('${u['login']} · ${u['kind']}', style: const TextStyle(fontSize: 12)),
+                        trailing: const Icon(Icons.login_rounded, color: _navy),
+                        onTap: () async {
+                          Navigator.pop(c);
+                          try {
+                            await auth.impersonate('${u['login']}');
+                          } catch (e) {
+                            if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
+                          }
+                        },
+                      ),
+                    ),
+                  ]);
+                },
+              )),
+            ]),
+          ),
         ),
       ),
     );

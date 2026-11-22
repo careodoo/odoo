@@ -527,10 +527,12 @@ class ApiClient {
       _handle(await _net.post(_u('/notifications/read_all'), headers: await _headers()));
 
   // ---- admin ---------------------------------------------------------------
-  /// Test-only: list users to impersonate (admin).
-  Future<List<dynamic>> adminUsers() async =>
-      List<dynamic>.from((await _handle(
-              await _net.get(_u('/admin/users'), headers: await _headers())))['data'] as List);
+  /// List users to impersonate (admin) — supports server-side search `q`.
+  Future<List<dynamic>> adminUsers({String q = ''}) async {
+    final qs = q.trim().isEmpty ? '' : '?q=${Uri.encodeQueryComponent(q.trim())}';
+    return List<dynamic>.from((await _handle(
+            await _net.get(_u('/admin/users$qs'), headers: await _headers())))['data'] as List);
+  }
 
   /// Switch the session to another user (admin). Sets the returned token.
   Future<Map<String, dynamic>> impersonate(String login) async {

@@ -72,7 +72,7 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<List<dynamic>> impersonatableUsers() => api.adminUsers();
+  Future<List<dynamic>> impersonatableUsers({String q = ''}) => api.adminUsers(q: q);
 
   /// Re-read the profile after the user edits their own details.
   Future<void> refreshProfile() async {
