@@ -19,6 +19,7 @@
         'views/notify_views.xml',
         'views/matrix_views.xml',
         'views/console_action.xml',
+        'views/access_guards_views.xml',
         'reports/access_request_report.xml',
         'reports/user_access_report.xml',
         'views/access_request_views.xml',

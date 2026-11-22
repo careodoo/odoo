@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_access_guards_form" model="ir.ui.view">
+        <field name="name">care.access.guards.form</field>
+        <field name="model">care.access.guards</field>
+        <field name="arch" type="xml">
+            <form string="الجاردات والقيود" create="false">
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="open_masks" type="object" class="oe_stat_button" icon="fa-eye-slash">
+                            <field name="mask_count" widget="statinfo" string="حقول مقنّعة"/>
+                        </button>
+                        <button name="open_thresholds" type="object" class="oe_stat_button" icon="fa-money">
+                            <field name="threshold_count" widget="statinfo" string="حدود مبالغ"/>
+                        </button>
+                        <button name="open_temp_grants" type="object" class="oe_stat_button" icon="fa-hourglass-half">
+                            <field name="temp_active_count" widget="statinfo" string="مؤقّتة نشطة"/>
+                        </button>
+                        <button name="open_delegations" type="object" class="oe_stat_button" icon="fa-exchange">
+                            <field name="deleg_active_count" widget="statinfo" string="تفويضات نشطة"/>
+                        </button>
+                        <button name="open_audit" type="object" class="oe_stat_button" icon="fa-history">
+                            <field name="role_count" widget="statinfo" string="المسمّيات"/>
+                        </button>
+                    </div>
+                    <div class="oe_title">
+                        <h1>🛡️ الجاردات والقيود</h1>
+                        <div class="text-muted">الضوابط والحمايات المُفعّلة على منظومة الصلاحيات — لشركة:
+                            <field name="company_id" readonly="1" class="oe_inline"/></div>
+                    </div>
+
+                    <group string="🔒 الفصل والحدود">
+                        <label for="ah_sod"/>
+                        <div><field name="ah_sod" widget="boolean_toggle"/>
+                            <span class="text-muted ms-2">يمنع منشئ المستند من اعتماده (يُطبَّق على طلبات الصلاحية ومركز الموافقات).</span></div>
+                        <label for="ah_thresholds"/>
+                        <div><field name="ah_thresholds" widget="boolean_toggle"/>
+                            <span class="text-muted ms-2">سقف مبلغ لكل مرحلة اعتماد — فوقه تنشط مرحلة أعلى.</span></div>
+                        <label for="ah_stage_approval"/>
+                        <div><field name="ah_stage_approval" widget="boolean_toggle"/>
+                            <span class="text-muted ms-2">الاعتماد بمرحلة محدّدة (لا اعتماد ثنائي مبسّط).</span></div>
+                        <label for="ah_multi_approver"/>
+                        <div><field name="ah_multi_approver" widget="boolean_toggle"/>
+                            <span class="text-muted ms-2">السماح بعدّة معتمِدين لكل مرحلة (أيّ واحد / الكل).</span></div>
+                    </group>
+
+                    <group string="👁️ الإخفاء والنطاق">
+                        <label for="ah_field_mask"/>
+                        <div><field name="ah_field_mask" widget="boolean_toggle"/>
+                            <span class="text-muted ms-2">إخفاء/قفل الحقول الحسّاسة حسب مسمّى المستخدم.</span></div>
+                        <label for="ah_auto_scope"/>
+                        <div><field name="ah_auto_scope" widget="boolean_toggle"/>
+                            <span class="text-muted ms-2">حصر رؤية البيانات في مشاريع المستخدم (نطاق own).</span></div>
+                    </group>
+
+                    <group string="⏳ التفويض والطوارئ">
+                        <label for="ah_delegation"/>
+                        <div><field name="ah_delegation" widget="boolean_toggle"/>
+                            <span class="text-muted ms-2">تفويض مؤقّت لاعتمادات المستخدم لزميل بين تاريخين.</span></div>
+                        <label for="ah_temp_grant"/>
+                        <div><field name="ah_temp_grant" widget="boolean_toggle"/>
+                            <span class="text-muted ms-2">صلاحيات بتاريخ انتهاء تُسحب تلقائيًّا (طلب إضافة صلاحية مؤقّت).</span></div>
+                        <label for="ah_emergency"/>
+                        <div><field name="ah_emergency" widget="boolean_toggle"/>
+                            <span class="text-muted ms-2">وصول طوارئ عاجل بسقف زمني يُلغى تلقائيًّا (Break-glass).</span></div>
+                    </group>
+
+                    <group string="📊 التدقيق والأدوات">
+                        <label for="ah_audit"/>
+                        <div><field name="ah_audit" widget="boolean_toggle"/>
+                            <span class="text-muted ms-2">تسجيل كل تغيير صلاحية/اعتماد — غير قابل للحذف.</span></div>
+                        <label for="ah_simulator"/>
+                        <div><field name="ah_simulator" widget="boolean_toggle"/>
+                            <span class="text-muted ms-2">معاينة فورية لما يستطيعه المستخدم قبل الحفظ.</span></div>
+                        <label for="ah_heatmap"/>
+                        <div><field name="ah_heatmap" widget="boolean_toggle"/>
+                            <span class="text-muted ms-2">خريطة حرارية لاختناقات الاعتماد لكل مرحلة.</span></div>
+                        <label for="ah_bulk_assign"/>
+                        <div><field name="ah_bulk_assign" widget="boolean_toggle"/>
+                            <span class="text-muted ms-2">إسناد مسمّى لعشرات المستخدمين دفعة واحدة.</span></div>
+                        <label for="ah_odoo_sync"/>
+                        <div><field name="ah_odoo_sync" widget="boolean_toggle"/>
+                            <span class="text-muted ms-2">توليد مجموعات/قواعد أودو من المصفوفة تلقائيًّا (متقدّم).</span></div>
+                        <label for="ah_notify_prefs"/>
+                        <div><field name="ah_notify_prefs" widget="boolean_toggle"/>
+                            <span class="text-muted ms-2">تمكين لوحة إشعارات الموظف (داخلي + بورتال).</span></div>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_access_guards" model="ir.actions.server">
+        <field name="name">الجاردات والقيود</field>
+        <field name="model_id" ref="model_care_access_guards"/>
+        <field name="state">code</field>
+        <field name="code">action = env['care.access.guards'].action_open()</field>
+    </record>
+
+    <menuitem id="menu_access_guards" name="🛡️ الجاردات والقيود"
+              parent="menu_access_hub_root" action="action_access_guards" sequence="5"/>
+
+</odoo>

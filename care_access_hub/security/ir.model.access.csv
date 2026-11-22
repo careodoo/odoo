@@ -24,3 +24,4 @@ access_role_field_mask_mgr,care.role.field.mask mgr,model_care_role_field_mask,c
 access_role_field_mask_user,care.role.field.mask user,model_care_role_field_mask,base.group_user,1,0,0,0
 access_access_request_user,care.access.request user,model_care_access_request,base.group_user,1,1,1,0
 access_access_request_mgr,care.access.request mgr,model_care_access_request,care_access_hub.group_access_manager,1,1,1,1
+access_access_guards_mgr,care.access.guards mgr,model_care_access_guards,care_access_hub.group_access_manager,1,1,1,1
