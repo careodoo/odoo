@@ -75,11 +75,16 @@ class _RootShellState extends State<RootShell> {
         // chooser so they can opt into management. Switchable from account.
         var mode = auth.appMode;
         if (mode == null) {
+          // بقرار المستخدم (2026-11-22): موظفو الشركة متعدّدو الأنظمة يبدؤون من
+          // «شاشة اختيار الأنظمة» (الأيقونات) بدل الدخول التلقائي لإدارة المرافق.
+          // أمّا عملاء CARE 2 CARE (المتجر/النفايات) فيُحوَّلون مباشرة لرئيسيّتهم.
           final def = auth.defaultMode;
-          if (def != null && def != 'c2c' && modes.any((m) => m.key == def)) {
-            mode = def;
+          if (def == 'waste_ops' && modes.any((m) => m.key == 'waste_ops')) {
+            mode = 'waste_ops';  // عميل خدمات النفايات → بوابته مباشرة
+          } else if (def == 'c2c') {
+            return C2CShell(canSwitchCafm: cafmSwitch, showModeSwitch: true);  // عميل C2C → الرئيسية
           } else {
-            return ModeChooserScreen(modes: modes);
+            return ModeChooserScreen(modes: modes);  // كل موظفي الشركة → اختيار الأنظمة
           }
         }
         // route to chosen mode
