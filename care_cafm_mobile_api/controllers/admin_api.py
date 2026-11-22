@@ -14,11 +14,20 @@ class AdminApi(Controller):
         env = _auth()
         if not env or not env.user.has_group('base.group_system'):
             return _err('للأدمن فقط', 403)
-        users = env['res.users'].sudo().search(
-            [('active', '=', True), ('login', 'not in', ('__system__', 'public'))], order='share, name')
-        return _ok([{'login': u.login, 'name': u.name,
-                     'kind': ('عميل' if u.share else ('أدمن' if u.has_group('base.group_system') else 'موظف'))}
-                    for u in users if u.login])
+        q = (kw.get('q') or '').strip()
+        dom = [('active', '=', True), ('login', 'not in', ('__system__', 'public'))]
+        if q:
+            # بحث داخل القائمة (3000+ مستخدم): بالاسم/الدخول/باركود الموظف/اسم الشريك
+            dom += ['|', '|', '|', ('name', 'ilike', q), ('login', 'ilike', q),
+                    ('employee_id.barcode', 'ilike', q), ('partner_id.name', 'ilike', q)]
+        # حدٌّ آمن للنتائج (البحث يُضيّق؛ بلا بحث نُظهر أوّل دفعة)
+        limit = 60 if q else 40
+        users = env['res.users'].sudo().search(dom, order='share, name', limit=limit)
+        total = env['res.users'].sudo().search_count(dom)
+        data = [{'login': u.login, 'name': u.name,
+                 'kind': ('عميل' if u.share else ('أدمن' if u.has_group('base.group_system') else 'موظف'))}
+                for u in users if u.login]
+        return _ok(data, total=total, shown=len(data), q=q)
 
     @route(API + '/admin/impersonate', type='http', auth='public', methods=['POST'], csrf=False, cors='*')
     def impersonate(self, **kw):
