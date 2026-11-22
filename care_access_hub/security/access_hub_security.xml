@@ -26,5 +26,25 @@
             <field name="domain_force">[(1, '=', 1)]</field>
         </record>
 
+        <!-- التفويضات: كل مستخدم يدير تفويضاته التي يمنحها (أو يرى ما فُوّض إليه) -->
+        <record id="rule_delegation_own" model="ir.rule">
+            <field name="name">تفويضاتي الخاصة</field>
+            <field name="model_id" ref="model_care_user_delegation"/>
+            <field name="groups" eval="[(4, ref('base.group_user'))]"/>
+            <field name="domain_force">['|', ('delegator_id', '=', user.id), ('delegate_id', '=', user.id)]</field>
+        </record>
+        <record id="rule_delegation_mgr" model="ir.rule">
+            <field name="name">التفويضات: المدير يرى الكل</field>
+            <field name="model_id" ref="model_care_user_delegation"/>
+            <field name="groups" eval="[(4, ref('group_access_manager'))]"/>
+            <field name="domain_force">[(1, '=', 1)]</field>
+        </record>
+        <record id="rule_delegation_line_own" model="ir.rule">
+            <field name="name">بنود التفويض الخاصة</field>
+            <field name="model_id" ref="model_care_user_delegation_line"/>
+            <field name="groups" eval="[(4, ref('base.group_user'))]"/>
+            <field name="domain_force">['|', ('delegation_id.delegator_id', '=', user.id), ('delegation_id.delegate_id', '=', user.id)]</field>
+        </record>
+
     </data>
 </odoo>

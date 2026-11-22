@@ -18,6 +18,8 @@ class ResUsers(models.Model):
         help='أنواع الاعتماد التي عطّلت إشعارها. الإشعارات الإلزامية 🔒 لا يمكن تعطيلها.')
     # «إشعاراتي»: الأنواع التي تصل المستخدم فعلًا (حسب صلاحياته) + تحكّمه فيها
     notify_pref_ids = fields.One2many('care.user.notify.pref', 'user_id', string='إشعاراتي')
+    # «تفويضاتي»: التفويضات التي يمنحها هذا المستخدم لآخرين
+    delegation_ids = fields.One2many('care.user.delegation', 'delegator_id', string='تفويضاتي')
 
     def write(self, vals):
         res = super().write(vals)

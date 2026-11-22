@@ -20,6 +20,10 @@ access_notify_pref_own,care.user.notify.pref own,model_care_user_notify_pref,bas
 access_notify_pref_mgr,care.user.notify.pref mgr,model_care_user_notify_pref,care_access_hub.group_access_manager,1,1,1,1
 access_menu_access_user,care.menu.access user,model_care_menu_access,base.group_user,1,0,0,0
 access_menu_access_mgr,care.menu.access mgr,model_care_menu_access,care_access_hub.group_access_manager,1,1,1,1
+access_delegation_own,care.user.delegation own,model_care_user_delegation,base.group_user,1,1,1,1
+access_delegation_mgr,care.user.delegation mgr,model_care_user_delegation,care_access_hub.group_access_manager,1,1,1,1
+access_delegation_line_own,care.user.delegation.line own,model_care_user_delegation_line,base.group_user,1,1,1,1
+access_delegation_line_mgr,care.user.delegation.line mgr,model_care_user_delegation_line,care_access_hub.group_access_manager,1,1,1,1
 access_role_model_perm_mgr,care.role.model.perm mgr,model_care_role_model_perm,care_access_hub.group_access_manager,1,1,1,1
 access_role_model_perm_user,care.role.model.perm user,model_care_role_model_perm,base.group_user,1,0,0,0
 access_role_field_mask_mgr,care.role.field.mask mgr,model_care_role_field_mask,care_access_hub.group_access_manager,1,1,1,1

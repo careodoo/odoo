@@ -796,6 +796,17 @@ class CareApprovalCenter(models.AbstractModel):
                         users = configured  # عزل: المعتمِدون المُعيَّنون فقط
             except Exception:
                 pass
+        # التفويضات (الإنابة): المفوَّض إليه يُضاف لأنواع المفوِّض النشطة ضمن المدّة
+        Deleg = self.env.get('care.user.delegation')
+        if Deleg is not None and users and AT is not None:
+            try:
+                atype = AT.sudo().search([('model_name', '=', entry.get('model'))], limit=1)
+                if atype:
+                    for d in Deleg.sudo().search([('delegator_id', 'in', users.ids), ('active', '=', True)]):
+                        if d.covers_type(atype):
+                            users |= d.delegate_id
+            except Exception:
+                pass
         return users.filtered(lambda u: u.active and not u.share)[:300]
 
     @api.model

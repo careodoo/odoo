@@ -48,6 +48,50 @@
                         </tree>
                     </field>
                 </page>
+                <page string="🔁 التفويضات" name="my_delegations">
+                    <div class="alert alert-info" role="alert">
+                        فوّض زميلًا في اعتماداتك — <b>كل الموديولات</b> أو <b>مخصّص</b> — بين تاريخين وبحدّ مبلغ.
+                        المفوَّض إليه يعتمد <b>بتوقيعه هو</b> ويظهر أنه «مفوّض من قبلك».
+                    </div>
+                    <field name="delegation_ids" nolabel="1" context="{'default_delegator_id': id}">
+                        <tree>
+                            <field name="delegate_id"/>
+                            <field name="scope"/>
+                            <field name="date_from"/>
+                            <field name="date_to"/>
+                            <field name="amount_limit"/>
+                            <field name="state" widget="badge"
+                                   decoration-success="state == 'active'"
+                                   decoration-info="state == 'sched'"
+                                   decoration-muted="state in ('off','expired')"/>
+                            <field name="active" widget="boolean_toggle"/>
+                        </tree>
+                        <form>
+                            <group>
+                                <group>
+                                    <field name="delegate_id" options="{'no_create': True}"/>
+                                    <field name="scope" widget="radio" options="{'horizontal': True}"/>
+                                    <field name="active"/>
+                                </group>
+                                <group>
+                                    <field name="date_from"/>
+                                    <field name="date_to"/>
+                                    <field name="amount_limit"/>
+                                </group>
+                            </group>
+                            <div invisible="scope != 'custom'">
+                                <button name="action_load_types" type="object" class="btn-primary mb-2"
+                                        string="🔄 تحميل الأنواع" icon="fa-refresh"/>
+                                <field name="line_ids" nolabel="1">
+                                    <tree editable="bottom" create="false" delete="false">
+                                        <field name="type_name" readonly="1"/>
+                                        <field name="enabled" widget="boolean_toggle" string="مفوَّض ✓"/>
+                                    </tree>
+                                </field>
+                            </div>
+                        </form>
+                    </field>
+                </page>
             </xpath>
         </field>
     </record>
@@ -75,6 +119,50 @@
                             <field name="use_email" widget="boolean_toggle" string="📧 بريد" readonly="mandatory"/>
                             <field name="mandatory" readonly="1"/>
                         </tree>
+                    </field>
+                </page>
+                <page string="🔁 التفويضات" name="my_delegations">
+                    <div class="alert alert-info" role="alert">
+                        فوّض زميلًا في اعتماداتك — <b>كل الموديولات</b> أو <b>مخصّص</b> — بين تاريخين وبحدّ مبلغ.
+                        المفوَّض إليه يعتمد <b>بتوقيعه هو</b> ويظهر أنه «مفوّض من قبلك».
+                    </div>
+                    <field name="delegation_ids" nolabel="1" context="{'default_delegator_id': id}">
+                        <tree>
+                            <field name="delegate_id"/>
+                            <field name="scope"/>
+                            <field name="date_from"/>
+                            <field name="date_to"/>
+                            <field name="amount_limit"/>
+                            <field name="state" widget="badge"
+                                   decoration-success="state == 'active'"
+                                   decoration-info="state == 'sched'"
+                                   decoration-muted="state in ('off','expired')"/>
+                            <field name="active" widget="boolean_toggle"/>
+                        </tree>
+                        <form>
+                            <group>
+                                <group>
+                                    <field name="delegate_id" options="{'no_create': True}"/>
+                                    <field name="scope" widget="radio" options="{'horizontal': True}"/>
+                                    <field name="active"/>
+                                </group>
+                                <group>
+                                    <field name="date_from"/>
+                                    <field name="date_to"/>
+                                    <field name="amount_limit"/>
+                                </group>
+                            </group>
+                            <div invisible="scope != 'custom'">
+                                <button name="action_load_types" type="object" class="btn-primary mb-2"
+                                        string="🔄 تحميل الأنواع" icon="fa-refresh"/>
+                                <field name="line_ids" nolabel="1">
+                                    <tree editable="bottom" create="false" delete="false">
+                                        <field name="type_name" readonly="1"/>
+                                        <field name="enabled" widget="boolean_toggle" string="مفوَّض ✓"/>
+                                    </tree>
+                                </field>
+                            </div>
+                        </form>
                     </field>
                 </page>
             </xpath>
