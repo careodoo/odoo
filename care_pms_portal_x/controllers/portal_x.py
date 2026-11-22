@@ -869,7 +869,7 @@ class PMPortalX(PMManagerPortal):
             rows = [[['f', r.employee_id.name, r.name or ''] + _wstag(r.employee_id),
                      'pill:crit:%s' % _sel_label_rec(r),
                      str(getattr(r, 'incident_date', '') or ''),
-                     (r.category_id.name if getattr(r, 'category_id', False) else '—'),
+                     (r.category_label() if hasattr(r, 'category_label') else (r.category_id.name or '—')),
                      (dict(r._fields['severity']._description_selection(env)).get(r.severity, '') if getattr(r, 'severity', False) else '')]
                     for r in recs]
             return {'cols': ['العامل', 'الحالة', 'تاريخ الواقعة', 'نوع المخالفة', 'الخطورة', ''],
@@ -3150,7 +3150,7 @@ td.k{color:#657086;font-size:11px}td.v{font-weight:700;font-size:11.5px}td.p,td.
         'care.document.request': ['employee_id', 'type_id', 'need_front', 'need_back', 'deadline', 'priority', 'note'],
         'hr.employee.resignation': ['employee_id', 'request_date', 'leave_date', 'resignation_type', 'reason'],
         'care.eos': ['employee_id', 'last_working_day', 'reason'],
-        'care.complaint': ['employee_id', 'category_id', 'severity', 'incident_date', 'witnesses', 'description'],
+        'care.complaint': ['employee_id', 'category_id', 'category_other', 'severity', 'incident_date', 'witnesses', 'description'],
         'permission.request': ['employee_id', 'type', 'permission_from', 'permission_hours', 'reason'],
         'hr.action.absence': ['employee_id', 'case_type', 'absence_date', 'absence_reason', 'absence_hours'],
         'hr.action.leave.return': ['employee_id', 'start_work_date', 'return_to_country_date', 'notes'],

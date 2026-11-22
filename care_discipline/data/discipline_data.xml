@@ -62,5 +62,13 @@
             <field name="default_severity">high</field>
             <field name="suggested_penalty">warning</field>
         </record>
+        <record id="cat_other" model="care.complaint.category">
+            <field name="name">أخرى (حدّد)</field>
+            <field name="name_en">Other (specify)</field>
+            <field name="sequence">900</field>
+            <field name="default_severity">medium</field>
+            <field name="suggested_penalty">warning</field>
+            <field name="free_text" eval="True"/>
+        </record>
     </data>
 </odoo>

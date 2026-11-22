@@ -62,6 +62,11 @@
                         <group string="تصنيف الواقعة">
                             <field name="category_id" options="{'no_create': True}"
                                    readonly="state not in ('draft',)"/>
+                            <field name="category_is_free" invisible="1"/>
+                            <field name="category_other" invisible="not category_is_free"
+                                   required="category_is_free"
+                                   readonly="state not in ('draft',)"
+                                   placeholder="اكتب نوع المخالفة..."/>
                             <field name="severity" readonly="state not in ('draft','hr_review')"/>
                             <field name="incident_date" readonly="state not in ('draft',)"/>
                             <field name="prior_count"/>

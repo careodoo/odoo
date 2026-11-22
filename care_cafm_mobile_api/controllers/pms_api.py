@@ -4926,10 +4926,16 @@ class PmsSectionsApi(Controller):
         try:
             rec = env[model].browse(int(id))
             rec.check_access_rule('read')
-            rep = env['ir.actions.report'].sudo().search([('report_name', '=', report)], limit=1)
+            Rep = env['ir.actions.report'].sudo()
+            rep = Rep.search([('report_name', '=', report)], limit=1)
+            if not rep:
+                # التطبيق قد يُمرّر xmlid الإجراء (action_report_*) بدل report_name — نقبل الاثنين
+                ref = env.ref(report, raise_if_not_found=False)
+                if ref and ref._name == 'ir.actions.report':
+                    rep = ref
             if not rep or rep.model != model:
                 return request.not_found()
-            pdf, _t = env['ir.actions.report'].sudo()._render_qweb_pdf(report, [rec.id])
+            pdf, _t = Rep._render_qweb_pdf(rep.report_name, [rec.id])
         except Exception as e:
             return request.make_response(str(e), status=500)
         return request.make_response(pdf, headers=[
@@ -6007,7 +6013,8 @@ class PmsSectionsApi(Controller):
         return {
             'id': r.id, 'name': r.name, 'employee': r.employee_id.name or None,
             'employee_id': r.employee_id.id,
-            'category': r.category_id.name or None,
+            'category': (r.category_label() if hasattr(r, 'category_label') else (r.category_id.name or None)),
+            'category_free': bool(r.category_id.free_text) if r.category_id else False,
             'severity': sevsel.get(r.severity) if r.severity else None,
             'incident_date': _d(r.incident_date),
             'description': r.description or None,
@@ -6028,7 +6035,8 @@ class PmsSectionsApi(Controller):
         if 'care.complaint.category' not in env:
             return _err('الوحدة غير مثبّتة', 404)
         cats = [{'id': c.id, 'name': c.name,
-                 'severity': c.default_severity if 'default_severity' in c._fields else None}
+                 'severity': c.default_severity if 'default_severity' in c._fields else None,
+                 'free_text': bool(c.free_text) if 'free_text' in c._fields else False}
                 for c in env['care.complaint.category'].sudo().search([('active', '=', True)], order='sequence')]
         sev = [{'value': k, 'label': l}
                for k, l in env['care.complaint']._fields['severity']._description_selection(env)]
@@ -6069,6 +6077,7 @@ class PmsSectionsApi(Controller):
             'employee_id': emp.id,
             'complainant_id': env.user.id,
             'category_id': int(b['category_id']),
+            'category_other': (b.get('category_other') or '').strip() or False,
             'description': desc,
             'incident_date': b.get('incident_date') or _f.Date.today(),
             'witnesses': b.get('witnesses') or False,

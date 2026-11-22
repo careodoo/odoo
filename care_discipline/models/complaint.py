@@ -19,6 +19,8 @@ class CareComplaintCategory(models.Model):
         [('warning', 'إنذار'), ('deduction', 'خصم'),
          ('suspension', 'إيقاف'), ('termination', 'إنهاء خدمة')],
         string='الجزاء المقترح', default='warning')
+    free_text = fields.Boolean(string='نوع حرّ («أخرى» — يُكتب يدويًّا)',
+                               help='عند اختيار هذا النوع يُطلب من مُقدّم الشكوى كتابة نوع المخالفة.')
     active = fields.Boolean(default=True)
 
 
@@ -56,6 +58,9 @@ class CareComplaint(models.Model):
     legal_user_id = fields.Many2one('res.users', string='المستشار القانوني', readonly=True, copy=False)
 
     # ===== تفاصيل الواقعة =====
+    category_other = fields.Char(string='نوع المخالفة (أخرى — حدّد)',
+                                 help='يُكتب نوع المخالفة يدويًّا عند اختيار نوع «أخرى».')
+    category_is_free = fields.Boolean(related='category_id.free_text')
     category_id = fields.Many2one('care.complaint.category', string='نوع المخالفة',
                                   required=True, tracking=True)
     severity = fields.Selection(
@@ -121,6 +126,19 @@ class CareComplaint(models.Model):
     def _onchange_category(self):
         if self.category_id and self.category_id.default_severity:
             self.severity = self.category_id.default_severity
+
+    @api.constrains('category_id', 'category_other')
+    def _check_category_other(self):
+        for r in self:
+            if r.category_id and r.category_id.free_text and not (r.category_other or '').strip():
+                raise ValidationError(_('اخترت نوع «أخرى» — فاكتب نوع المخالفة في خانة «نوع المخالفة (أخرى)».'))
+
+    def category_label(self):
+        """الاسم الظاهر للنوع: النص الحرّ إن كان النوع «أخرى»، وإلا اسم الفئة."""
+        self.ensure_one()
+        if self.category_id and self.category_id.free_text and self.category_other:
+            return self.category_other
+        return self.category_id.name if self.category_id else ''
 
     @api.depends('employee_id')
     def _compute_prior(self):
