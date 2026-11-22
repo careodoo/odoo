@@ -86,6 +86,10 @@
                             <field name="can_approve"/>
                         </group>
                     </group>
+                    <group string="نطاق الشركات (فارغ = كل الشركات)">
+                        <field name="company_ids" nolabel="1" widget="many2many_tags"
+                               options="{'no_create': True}"/>
+                    </group>
                     <group string="الوصف / المهام">
                         <field name="description" nolabel="1" placeholder="وصف مختصر لمهام ومسؤوليات هذا المسمّى..."/>
                     </group>
@@ -117,6 +121,13 @@
                                     <field name="level"/>
                                 </tree>
                             </field>
+                        </page>
+                        <page string="صلاحيات القوائم (إخفاء)" name="menus">
+                            <div class="alert alert-info" role="alert">
+                                القوائم المختارة هنا تُخفى عن مستخدمي هذا المسمّى (تُخفى فعليًّا فقط إن أخفتها كل مسمّيات المستخدم). يوحّد وظيفة إخفاء القوائم داخل النظام.
+                            </div>
+                            <field name="menu_hide_ids" widget="many2many_tags"
+                                   options="{'no_create': True}"/>
                         </page>
                         <page string="المستخدمون" name="users">
                             <field name="user_ids" widget="many2many_tags"

@@ -72,6 +72,9 @@ class CareApprovalStage(models.Model):
     mode = fields.Selection(
         [('any', 'أيّ واحد يكفي'), ('all', 'يتطلب موافقة الكل')],
         string='النمط', default='any', required=True)
+    # نطاق الشركات لهذه المرحلة: فارغ = كل الشركات
+    company_ids = fields.Many2many('res.company', 'care_stage_company_rel', 'stage_id', 'company_id',
+                                   string='الشركات')
     approver_label = fields.Char(string='المعتمِدون', compute='_compute_label')
 
     @api.depends('role_ids', 'extra_user_ids')

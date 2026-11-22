@@ -40,6 +40,17 @@ class CareJobRole(models.Model):
         help='المجموعات الفعلية التي يرِثها المستخدم عند إسناده لهذا المسمّى.')
     perm_line_ids = fields.One2many('care.role.perm', 'role_id', string='مصفوفة الصلاحيات (مناطق)')
     model_perm_ids = fields.One2many('care.role.model.perm', 'role_id', string='مصفوفة الصلاحيات (مودلز)')
+    menu_hide_ids = fields.Many2many('ir.ui.menu', 'care_role_menu_hide_rel', 'role_id', 'menu_id',
+                                     string='القوائم المخفية (صلاحيات القوائم)')
+    # نطاق الشركات: فارغ = كل الشركات؛ وإلا يقتصر المسمّى على الشركات المختارة
+    company_ids = fields.Many2many('res.company', 'care_role_company_rel', 'role_id', 'company_id',
+                                   string='الشركات')
+    company_scope = fields.Char(string='نطاق الشركات', compute='_compute_company_scope')
+
+    @api.depends('company_ids')
+    def _compute_company_scope(self):
+        for r in self:
+            r.company_scope = 'كل الشركات' if not r.company_ids else '، '.join(r.company_ids.mapped('name'))
 
     user_ids = fields.Many2many('res.users', 'care_user_role_rel', 'role_id', 'user_id',
                                 string='المستخدمون بهذا المسمّى')
@@ -82,20 +93,37 @@ class CareJobRole(models.Model):
             return '1'
         return '0'
 
+    def _group_level_map(self, groups):
+        """خريطة {model: level} من ACL كل مجموعات المسمّى دفعة واحدة (أداء)."""
+        lm = {}
+        if not groups:
+            return lm
+        acls = self.env['ir.model.access'].sudo().search([('group_id', 'in', groups.ids)])
+        for a in acls:
+            tech = a.model_id.model
+            lv = 2 if (a.perm_write or a.perm_create) else (1 if a.perm_read else 0)
+            if lv > lm.get(tech, 0):
+                lm[tech] = lv
+        return lm
+
     def action_derive_matrix(self):
-        """يملأ مصفوفة المودلز من الوضع الحالي (مجموعات المسمّى) — ترحيل فعلي، بلا تعديل إنتاجي."""
-        from .access_matrix import MATRIX
+        """يملأ مصفوفة المودلز من الوضع الحالي (مجموعات المسمّى) ديناميكيًّا — كل الموديولات/المودلز.
+        ترحيل فعلي، بلا تعديل إنتاجي."""
+        from .access_matrix import build_matrix_tree
+        try:
+            tree = build_matrix_tree(self.env)
+        except Exception:
+            from .access_matrix import MATRIX
+            tree = MATRIX
         Line = self.env['care.role.model.perm'].sudo()
         for role in self:
-            groups = role.odoo_group_ids
+            lm = role._group_level_map(role.odoo_group_ids)
             existing = {l.model_name: l for l in role.model_perm_ids}
             seq = 0
-            for module, models_ in MATRIX:
+            for module, models_ in tree:
                 for mname, mlabel in models_:
                     seq += 1
-                    if self.env.get(mname) is None:
-                        continue  # المودل غير مُثبّت — نتخطّاه
-                    lvl = role._level_from_groups(groups, mname)
+                    lvl = str(lm.get(mname, 0))
                     vals = {'module': module, 'model_label': mlabel, 'sequence': seq, 'level': lvl}
                     if mname in existing:
                         existing[mname].write(vals)
@@ -106,8 +134,13 @@ class CareJobRole(models.Model):
 
     @api.model
     def cron_or_action_derive_all(self):
-        """اشتقاق مصفوفة كل المسمّيات (زرّ/سيرفر أكشن)."""
-        self.search([]).action_derive_matrix()
+        """اشتقاق مصفوفة كل المسمّيات — commit لكل مسمّى (حجم المعاملة كبير: ٨٨٠ مودل × ٣٣ مسمّى)."""
+        for role in self.search([]):
+            try:
+                role.action_derive_matrix()
+                self.env.cr.commit()
+            except Exception:
+                self.env.cr.rollback()
         return True
 
 

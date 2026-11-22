@@ -59,6 +59,8 @@
                                            options="{'no_create': True}"/>
                                     <field name="amount_threshold"/>
                                     <field name="mode"/>
+                                    <field name="company_ids" widget="many2many_tags"
+                                           options="{'no_create': True}" optional="show"/>
                                 </tree>
                             </field>
                         </page>

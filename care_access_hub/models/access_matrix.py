@@ -5,7 +5,53 @@
 #  - الترحيل الفعلي: اشتقاق المستوى من ACL مجموعات المسمّى الحالية (الوضع القائم → النظام الجديد).
 from odoo import api, fields, models, _
 
-# المصفوفة المُنسَّقة: (عنوان الموديول, [(مودل تقني, اسم عربي), ...]) — تُطابق شجرة الموكاب
+# موديولات تقنية تُستبعَد من المصفوفة (ليست أعمالًا)
+_EXCL_MOD = {
+    'base', 'web', 'web_editor', 'web_tour', 'web_unsplash', 'mail', 'bus', 'iap', 'base_setup',
+    'base_import', 'base_vat', 'base_address_city', 'base_address_extended', 'phone_validation',
+    'digest', 'resource', 'auth_signup', 'auth_totp', 'portal', 'http_routing', 'website',
+    'social_media', 'utm', 'link_tracker', 'google_gmail', 'microsoft_account', 'spreadsheet',
+    'spreadsheet_dashboard', 'barcodes', 'onboarding', 'uom',
+}
+_EXCL_PREFIX = ('ir.', 'base.', 'bus.', 'mail.', 'web_', 'website', 'res.lang', 'res.currency',
+                'report.', 'spreadsheet', 'digest.', 'iap.', 'auth_', 'format.', 'utm.', 'link.tracker')
+
+
+def build_matrix_tree(env):
+    """يبني شجرة (موديول → مودلز أعماله) ديناميكيًّا من كل الموديولات المُثبّتة:
+    المودلز المواجهة للمستخدم فقط (لها نافذة إجراء)، مجمّعة بالموديول المُعرِّف، مستبعِدًا التقنية."""
+    Mod = env['ir.module.module'].sudo()
+    installed = Mod.search([('state', '=', 'installed')])
+    modlabel = {m.name: (m.shortdesc or m.name) for m in installed}
+    installed_names = set(modlabel)
+    # الموديول المُعرِّف لكل مودل عبر ir.model_data
+    model_mod = {}
+    for d in env['ir.model.data'].sudo().search([('model', '=', 'ir.model')]):
+        model_mod.setdefault(d.res_id, d.module)
+    # المودلز المواجهة للمستخدم (لها act_window)
+    aw_models = set(env['ir.actions.act_window'].sudo().search([]).mapped('res_model'))
+    tree = {}
+    for m in env['ir.model'].sudo().search([('transient', '=', False)]):
+        tech = m.model
+        if tech not in aw_models:
+            continue
+        if tech.startswith(_EXCL_PREFIX):
+            continue
+        mod = model_mod.get(m.id)
+        if not mod or mod not in installed_names or mod in _EXCL_MOD:
+            continue
+        tree.setdefault(mod, []).append((tech, m.name))
+    # قائمة مرتّبة: care_* أولًا ثم الباقي، وداخل كل موديول بالاسم
+    def _key(mod):
+        return (0 if mod.startswith('care') else 1, modlabel.get(mod, mod))
+    out = []
+    for mod in sorted(tree, key=_key):
+        models_ = sorted(set(tree[mod]), key=lambda x: x[1])
+        out.append((modlabel.get(mod, mod), models_))
+    return out
+
+
+# المصفوفة المُنسَّقة (احتياطية — تُستخدم إن فشل البناء الديناميكي)
 MATRIX = [
     ('الموارد البشرية', [('hr.employee', 'الموظف'), ('hr.contract', 'العقد'), ('hr.leave', 'طلب إجازة')]),
     ('الرواتب', [('care.payroll', 'كشف الراتب'), ('care.payslip', 'قسيمة الراتب')]),
