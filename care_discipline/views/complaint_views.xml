@@ -38,8 +38,11 @@
                 </header>
                 <sheet>
                     <div class="oe_button_box" name="button_box">
-                        <button type="object" name="action_print_report" class="oe_stat_button" icon="fa-print"
-                                invisible="state in ('draft','submitted')">
+                        <button type="object" name="action_print_complaint" class="oe_stat_button" icon="fa-file-text-o">
+                            <span>طباعة الشكوى</span>
+                        </button>
+                        <button type="object" name="action_print_report" class="oe_stat_button" icon="fa-gavel"
+                                invisible="state not in ('penalty_decided','applied','closed')">
                             <span>طباعة القرار</span>
                         </button>
                     </div>

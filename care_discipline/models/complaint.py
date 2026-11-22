@@ -161,10 +161,51 @@ class CareComplaint(models.Model):
                 pass
 
     def _notify(self, users, body):
+        if not users:
+            return
+        # (1) إشعار داخل أودو (الوارد/الجرس) لكل المعنيّين
         try:
-            if users:
-                self.message_post(body=body, partner_ids=users.mapped('partner_id').ids,
-                                  subtype_xmlid='mail.mt_comment')
+            self.message_post(body=body, partner_ids=users.mapped('partner_id').ids,
+                              subtype_xmlid='mail.mt_comment')
+        except Exception:
+            pass
+        # (2) إشعار دفع التطبيق إن توفّر مركز الإشعارات
+        Push = self.env.get('care.cafm.notification')
+        if Push is not None and hasattr(Push, 'push'):
+            try:
+                Push.sudo().push(users, 'CARE — شكوى تأديبية %s' % (self.name or ''), body)
+            except Exception:
+                pass
+        # (3) بريد إلكتروني احترافي مباشر
+        try:
+            Mail = self.env['mail.mail'].sudo()
+            emp = self.employee_id.name or '—'
+            for u in users:
+                if not u.email:
+                    continue
+                html = (
+                    '<div style="font-family:Tajawal,Arial,sans-serif;direction:rtl;text-align:right;'
+                    'color:#111;max-width:620px;margin:auto;border:1px solid #e2e8f0;border-radius:10px;overflow:hidden">'
+                    '<div style="background:#0e2a47;color:#fff;padding:14px 18px;font-size:16px;font-weight:700">'
+                    'CARE — الشكاوى التأديبية</div>'
+                    '<div style="padding:16px 18px;font-size:14px;line-height:1.9">'
+                    '<p style="margin:0 0 10px">%s</p>'
+                    '<table style="width:100%%;border-collapse:collapse;font-size:13px">'
+                    '<tr><td style="padding:5px 8px;background:#f1f5f9;font-weight:700;width:38%%">رقم الشكوى</td><td style="padding:5px 8px">%s</td></tr>'
+                    '<tr><td style="padding:5px 8px;background:#f1f5f9;font-weight:700">الموظف المُشتكى عليه</td><td style="padding:5px 8px">%s</td></tr>'
+                    '<tr><td style="padding:5px 8px;background:#f1f5f9;font-weight:700">نوع المخالفة</td><td style="padding:5px 8px">%s</td></tr>'
+                    '<tr><td style="padding:5px 8px;background:#f1f5f9;font-weight:700">الحالة</td><td style="padding:5px 8px">%s</td></tr>'
+                    '</table></div>'
+                    '<div style="padding:10px 18px;background:#f8fafc;color:#64748b;font-size:11px">'
+                    'رسالة آلية من منظومة CARE — لا تردّ على هذا البريد.</div></div>'
+                ) % (body, self.name or '', emp, self.category_label() or '—',
+                     dict(self._fields['state'].selection).get(self.state, self.state))
+                Mail.create({
+                    'subject': 'CARE — شكوى تأديبية %s' % (self.name or ''),
+                    'email_to': u.email,
+                    'body_html': html,
+                    'auto_delete': True,
+                }).send()
         except Exception:
             pass
 
@@ -317,8 +358,14 @@ class CareComplaint(models.Model):
             r.state = 'rejected'
 
     def action_print_report(self):
+        """طباعة «القرار التأديبي» (بعد قرار الإدارة القانونية)."""
         self.ensure_one()
         return self.env.ref('care_discipline.action_report_complaint').report_action(self)
+
+    def action_print_complaint(self):
+        """طباعة «الشكوى التأديبية» (النموذج الأوّلي — يطبعه مُقدّم الشكوى/المدير)."""
+        self.ensure_one()
+        return self.env.ref('care_discipline.action_report_complaint_form').report_action(self)
 
     def _grp_require(self, xmlid, msg):
         if not self.env.user.has_group(xmlid) and not self.env.user.has_group('base.group_system'):

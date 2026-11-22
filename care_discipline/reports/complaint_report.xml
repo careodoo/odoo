@@ -1,5 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
+    <!-- ============ 1) تقرير «شكوى تأديبية» (يطبعه مُقدّم الشكوى/مدير المشروع من البداية) ============ -->
+    <record id="action_report_complaint_form" model="ir.actions.report">
+        <field name="name">شكوى تأديبية</field>
+        <field name="model">care.complaint</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">care_discipline.report_complaint_form</field>
+        <field name="report_file">care_discipline.report_complaint_form</field>
+        <field name="paperformat_id" ref="care_report_layout.paperformat_care_doc"/>
+        <field name="binding_model_id" ref="model_care_complaint"/>
+        <field name="binding_type">report</field>
+    </record>
+
+    <!-- ============ 2) تقرير «قرار تأديبي» (ناتج عن الشكوى بعد قرار الإدارة القانونية) ============ -->
     <record id="action_report_complaint" model="ir.actions.report">
         <field name="name">قرار تأديبي</field>
         <field name="model">care.complaint</field>
@@ -11,36 +24,81 @@
         <field name="binding_type">report</field>
     </record>
 
+    <!-- رأس بيانات الموظف + الواقعة (مشترك) -->
+    <template id="complaint_head">
+        <!-- 1) بيانات الموظف -->
+        <t t-call="care_hr.rpt_secbar"><t t-set="n">1</t><t t-set="en">EMPLOYEE</t><t t-set="ar">بيانات الموظف</t></t>
+        <table width="100%" style="border-collapse:separate;border-spacing:7px 7px;border:none;margin:4px 0 8px">
+            <tr>
+                <t t-call="care_hr.rpt_fld"><t t-set="en">Full Name</t><t t-set="ar">الاسم</t><t t-set="val" t-value="doc.employee_id.name"/></t>
+                <t t-call="care_hr.rpt_fld"><t t-set="en">Badge No.</t><t t-set="ar">الرقم الوظيفي</t><t t-set="val" t-value="doc.employee_id.barcode"/></t>
+                <t t-call="care_hr.rpt_fld"><t t-set="en">Job Title</t><t t-set="ar">المسمى الوظيفي</t><t t-set="val" t-value="doc.employee_id.job_title or doc.employee_id.job_id.name"/></t>
+            </tr>
+            <tr>
+                <t t-call="care_hr.rpt_fld"><t t-set="en">Department</t><t t-set="ar">الإدارة</t><t t-set="val" t-value="doc.department_id.name"/></t>
+                <t t-call="care_hr.rpt_fld"><t t-set="en">Case No.</t><t t-set="ar">رقم الشكوى</t><t t-set="val" t-value="doc.name"/></t>
+                <t t-call="care_hr.rpt_fld"><t t-set="en">Incident Date</t><t t-set="ar">تاريخ الواقعة</t><t t-set="val" t-value="doc.incident_date and doc.incident_date.strftime('%d/%m/%Y')"/></t>
+            </tr>
+        </table>
+
+        <!-- 2) الواقعة -->
+        <t t-call="care_hr.rpt_secbar"><t t-set="n">2</t><t t-set="en">VIOLATION</t><t t-set="ar">المخالفة</t></t>
+        <table width="100%" style="border-collapse:separate;border-spacing:7px 7px;border:none;margin:4px 0 6px">
+            <tr>
+                <t t-call="care_hr.rpt_fld"><t t-set="en">Category</t><t t-set="ar">نوع المخالفة</t><t t-set="val" t-value="doc.category_label()"/></t>
+                <t t-call="care_hr.rpt_fld"><t t-set="en">Severity</t><t t-set="ar">الخطورة</t><t t-set="val" t-value="dict(doc._fields['severity'].selection).get(doc.severity)"/></t>
+                <t t-call="care_hr.rpt_fld"><t t-set="en">Prior (year)</t><t t-set="ar">مخالفات سابقة</t><t t-set="val" t-value="doc.prior_count"/></t>
+            </tr>
+        </table>
+        <div style="font-size:10.5px;color:#444;font-weight:700;margin:2px 0 3px;text-transform:uppercase">Details · <span dir="rtl" style="text-transform:none">وصف الواقعة</span></div>
+        <div style="border:1px solid #9aa6bd;border-radius:5px;padding:9px 11px;margin-bottom:8px;min-height:46px;font-size:13px" dir="auto"><t t-esc="doc.description or ''"/></div>
+        <t t-if="doc.witnesses">
+            <div style="font-size:12px;margin-bottom:8px"><b>الشهود:</b> <t t-esc="doc.witnesses"/></div>
+        </t>
+    </template>
+
+    <!-- السجل الزمني / الإشعارات (من محادثة السجل) -->
+    <template id="complaint_timeline">
+        <t t-set="_msgs" t-value="doc.message_ids.filtered(lambda m: m.message_type in ('comment','notification') and (m.body or m.subject))[:12]"/>
+        <t t-if="_msgs">
+            <t t-call="care_hr.rpt_secbar"><t t-set="n">•</t><t t-set="en">TIMELINE</t><t t-set="ar">السجل الزمني والإشعارات</t></t>
+            <table width="100%" style="border-collapse:collapse;margin:4px 0 8px;font-size:11.5px" dir="rtl">
+                <tr style="background:#eef2f8">
+                    <th style="border:1px solid #cbd5e1;padding:4px 7px;width:26%;text-align:right">التاريخ</th>
+                    <th style="border:1px solid #cbd5e1;padding:4px 7px;width:22%;text-align:right">بواسطة</th>
+                    <th style="border:1px solid #cbd5e1;padding:4px 7px;text-align:right">الحدث</th>
+                </tr>
+                <tr t-foreach="_msgs" t-as="mm">
+                    <td style="border:1px solid #e2e8f0;padding:4px 7px"><t t-esc="mm.date and mm.date.strftime('%Y/%m/%d %H:%M')"/></td>
+                    <td style="border:1px solid #e2e8f0;padding:4px 7px"><t t-esc="mm.author_id.name or 'النظام'"/></td>
+                    <td style="border:1px solid #e2e8f0;padding:4px 7px" dir="auto"><t t-out="mm.body"/></td>
+                </tr>
+            </table>
+        </t>
+    </template>
+
+    <!-- ===== جسم «الشكوى التأديبية» (بلا قرار) ===== -->
+    <template id="complaint_form_inner">
+        <div class="page" dir="ltr"
+             style="font-family:'Cairo','DejaVu Sans',Arial,sans-serif;color:#000000;font-size:13px;font-weight:400">
+            <t t-call="care_discipline.complaint_head"/>
+            <div style="border:1px dashed #9aa6bd;border-radius:5px;padding:8px 11px;margin:6px 0 10px;font-size:11.5px;color:#444" dir="rtl">
+                هذه شكوى تأديبية قيد الدراسة — يصدر «القرار التأديبي» بعد اعتماد المدير والتحقيق وقرار الإدارة القانونية.
+            </div>
+            <t t-call="care_discipline.complaint_timeline"/>
+            <!-- تواقيع الرفع (توقيع إلكتروني معتمد) -->
+            <table width="100%" style="border-collapse:separate;border-spacing:10px 0;margin-top:14px;table-layout:fixed" dir="rtl"><tr>
+                <t t-call="care_esignature.esign_box"><t t-set="role">مُقدّم الشكوى</t><t t-set="role_en">Complainant</t><t t-set="name" t-value="doc.complainant_id.name or ''"/><t t-set="sig" t-value="doc.env['care.esignature'].for_role(doc._name, doc.id, 'مُقدّم الشكوى')"/><t t-set="w">50%</t></t>
+                <t t-call="care_esignature.esign_box"><t t-set="role">المدير المباشر</t><t t-set="role_en">Line Manager</t><t t-set="name" t-value="doc.manager_id.name or ''"/><t t-set="sig" t-value="doc.env['care.esignature'].for_role(doc._name, doc.id, 'المدير المباشر')"/><t t-set="w">50%</t></t>
+            </tr></table>
+        </div>
+    </template>
+
+    <!-- ===== جسم «القرار التأديبي» (الشكوى + الدفاع + القرار القانوني والجزاء) ===== -->
     <template id="complaint_inner">
         <div class="page" dir="ltr"
              style="font-family:'Cairo','DejaVu Sans',Arial,sans-serif;color:#000000;font-size:13px;font-weight:400">
-
-            <!-- 1) بيانات الموظف -->
-            <t t-call="care_hr.rpt_secbar"><t t-set="n">1</t><t t-set="en">EMPLOYEE</t><t t-set="ar">بيانات الموظف</t></t>
-            <table width="100%" style="border-collapse:separate;border-spacing:7px 7px;border:none;margin:4px 0 8px">
-                <tr>
-                    <t t-call="care_hr.rpt_fld"><t t-set="en">Full Name</t><t t-set="ar">الاسم</t><t t-set="val" t-value="doc.employee_id.name"/></t>
-                    <t t-call="care_hr.rpt_fld"><t t-set="en">Badge No.</t><t t-set="ar">الرقم الوظيفي</t><t t-set="val" t-value="doc.employee_id.barcode"/></t>
-                    <t t-call="care_hr.rpt_fld"><t t-set="en">Job Title</t><t t-set="ar">المسمى الوظيفي</t><t t-set="val" t-value="doc.employee_id.job_title or doc.employee_id.job_id.name"/></t>
-                </tr>
-                <tr>
-                    <t t-call="care_hr.rpt_fld"><t t-set="en">Department</t><t t-set="ar">الإدارة</t><t t-set="val" t-value="doc.department_id.name"/></t>
-                    <t t-call="care_hr.rpt_fld"><t t-set="en">Case No.</t><t t-set="ar">رقم الشكوى</t><t t-set="val" t-value="doc.name"/></t>
-                    <t t-call="care_hr.rpt_fld"><t t-set="en">Incident Date</t><t t-set="ar">تاريخ الواقعة</t><t t-set="val" t-value="doc.incident_date and doc.incident_date.strftime('%d/%m/%Y')"/></t>
-                </tr>
-            </table>
-
-            <!-- 2) الواقعة -->
-            <t t-call="care_hr.rpt_secbar"><t t-set="n">2</t><t t-set="en">VIOLATION</t><t t-set="ar">المخالفة</t></t>
-            <table width="100%" style="border-collapse:separate;border-spacing:7px 7px;border:none;margin:4px 0 6px">
-                <tr>
-                    <t t-call="care_hr.rpt_fld"><t t-set="en">Category</t><t t-set="ar">نوع المخالفة</t><t t-set="val" t-value="doc.category_id.name"/></t>
-                    <t t-call="care_hr.rpt_fld"><t t-set="en">Severity</t><t t-set="ar">الخطورة</t><t t-set="val" t-value="dict(doc._fields['severity'].selection).get(doc.severity)"/></t>
-                    <t t-call="care_hr.rpt_fld"><t t-set="en">Prior (year)</t><t t-set="ar">مخالفات سابقة</t><t t-set="val" t-value="doc.prior_count"/></t>
-                </tr>
-            </table>
-            <div style="font-size:10.5px;color:#444;font-weight:700;margin:2px 0 3px;text-transform:uppercase">Details · <span dir="rtl" style="text-transform:none">وصف الواقعة</span></div>
-            <div style="border:1px solid #9aa6bd;border-radius:5px;padding:9px 11px;margin-bottom:8px;min-height:46px;font-size:13px" dir="auto"><t t-esc="doc.description or ''"/></div>
+            <t t-call="care_discipline.complaint_head"/>
 
             <!-- 3) حق الدفاع -->
             <t t-call="care_hr.rpt_secbar"><t t-set="n">3</t><t t-set="en">DEFENSE</t><t t-set="ar">أقوال العامل / حق الدفاع</t></t>
@@ -55,24 +113,38 @@
                     <t t-call="care_hr.rpt_fld"><t t-set="en">Legal Article</t><t t-set="ar">السند القانوني</t><t t-set="val" t-value="doc.law_article_id.display_name or '—'"/></t>
                 </tr>
             </table>
+            <t t-if="doc.penalty_id">
+                <div style="font-size:12px;margin:2px 0 6px" dir="rtl"><b>سجلّ الخصم المرتبط:</b> <t t-esc="doc.penalty_id.display_name"/><t t-if="'amount' in doc.penalty_id._fields and doc.penalty_id.amount"> — <t t-esc="'%.3f' % doc.penalty_id.amount"/> د.ك</t></div>
+            </t>
+            <t t-if="doc.suspension_id">
+                <div style="font-size:12px;margin:2px 0 6px" dir="rtl"><b>سجلّ الإيقاف المرتبط:</b> <t t-esc="doc.suspension_id.display_name"/></div>
+            </t>
             <div style="font-size:10.5px;color:#444;font-weight:700;margin:2px 0 3px;text-transform:uppercase">Reasoning · <span dir="rtl" style="text-transform:none">الحيثيات</span></div>
             <div style="border:1px solid #9aa6bd;border-radius:5px;padding:9px 11px;margin-bottom:10px;min-height:40px;font-size:13px" dir="auto"><t t-esc="doc.legal_reasoning or ''"/></div>
 
-            <!-- 5) التواقيع -->
-            <table width="100%" style="border-collapse:separate;border-spacing:10px 0;margin-top:14px">
-                <tr>
-                    <td width="33%" style="text-align:center;font-size:12px">
-                        <div style="border-top:1px solid #333;padding-top:4px;margin-top:38px">مُقدّم الشكوى<br/><span style="font-size:11px;color:#555"><t t-esc="doc.complainant_id.name or ''"/></span></div>
-                    </td>
-                    <td width="33%" style="text-align:center;font-size:12px">
-                        <div style="border-top:1px solid #333;padding-top:4px;margin-top:38px">الموارد البشرية<br/><span style="font-size:11px;color:#555"><t t-esc="doc.hr_user_id.name or ''"/></span></div>
-                    </td>
-                    <td width="33%" style="text-align:center;font-size:12px">
-                        <div style="border-top:1px solid #333;padding-top:4px;margin-top:38px">الإدارة القانونية<br/><span style="font-size:11px;color:#555"><t t-esc="doc.legal_user_id.name or ''"/></span></div>
-                    </td>
-                </tr>
-            </table>
+            <t t-call="care_discipline.complaint_timeline"/>
+
+            <!-- 5) التواقيع (توقيع إلكتروني معتمد) -->
+            <table width="100%" style="border-collapse:separate;border-spacing:10px 0;margin-top:12px;table-layout:fixed" dir="rtl"><tr>
+                <t t-call="care_esignature.esign_box"><t t-set="role">مُقدّم الشكوى</t><t t-set="role_en">Complainant</t><t t-set="name" t-value="doc.complainant_id.name or ''"/><t t-set="sig" t-value="doc.env['care.esignature'].for_role(doc._name, doc.id, 'مُقدّم الشكوى')"/><t t-set="w">25%</t></t>
+                <t t-call="care_esignature.esign_box"><t t-set="role">المدير المباشر</t><t t-set="role_en">Line Manager</t><t t-set="name" t-value="doc.manager_id.name or ''"/><t t-set="sig" t-value="doc.env['care.esignature'].for_role(doc._name, doc.id, 'المدير المباشر')"/><t t-set="w">25%</t></t>
+                <t t-call="care_esignature.esign_box"><t t-set="role">الموارد البشرية</t><t t-set="role_en">HR</t><t t-set="name" t-value="doc.hr_user_id.name or ''"/><t t-set="sig" t-value="doc.env['care.esignature'].for_role(doc._name, doc.id, 'الموارد البشرية')"/><t t-set="w">25%</t></t>
+                <t t-call="care_esignature.esign_box"><t t-set="role">الإدارة القانونية</t><t t-set="role_en">Legal</t><t t-set="name" t-value="doc.legal_user_id.name or ''"/><t t-set="sig" t-value="doc.env['care.esignature'].for_role(doc._name, doc.id, 'المستشار القانوني')"/><t t-set="w">25%</t></t>
+            </tr></table>
         </div>
+    </template>
+
+    <template id="report_complaint_form">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="doc">
+                <t t-call="care_report_layout.external_layout_care">
+                    <t t-set="company" t-value="doc.company_id if 'company_id' in doc._fields else doc.env.company"/>
+                    <t t-set="record_title">شكوى تأديبية</t>
+                    <t t-set="record_title_en">DISCIPLINARY COMPLAINT</t>
+                    <t t-call="care_discipline.complaint_form_inner"/>
+                </t>
+            </t>
+        </t>
     </template>
 
     <template id="report_complaint">

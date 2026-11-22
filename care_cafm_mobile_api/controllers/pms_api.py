@@ -6024,7 +6024,17 @@ class PmsSectionsApi(Controller):
             'penalty_type': dict(r._fields['penalty_type']._description_selection(env)).get(r.penalty_type) if ('penalty_type' in r._fields and r.penalty_type) else None,
             'reject_reason': r.reject_reason or None,
             'state': r.state, 'state_label': ssel.get(r.state, r.state),
+            'reports': self._complaint_reports(r),
         }
+
+    def _complaint_reports(self, r):
+        """التقارير المتاحة لهذه الشكوى: «شكوى تأديبية» دائمًا، و«قرار تأديبي» بعد قرار القانونية."""
+        out = [{'name': 'شكوى تأديبية', 'ref': 'care_discipline.action_report_complaint_form',
+                'url': _abs('/api/v1/pms/record/report?model=care.complaint&id=%s&report=care_discipline.action_report_complaint_form' % r.id)}]
+        if r.state in ('penalty_decided', 'applied', 'closed'):
+            out.append({'name': 'قرار تأديبي', 'ref': 'care_discipline.action_report_complaint',
+                        'url': _abs('/api/v1/pms/record/report?model=care.complaint&id=%s&report=care_discipline.action_report_complaint' % r.id)})
+        return out
 
     @route(API + '/pms/discipline/categories', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
     def pms_discipline_categories(self, **kw):
