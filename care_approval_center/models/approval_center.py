@@ -827,15 +827,15 @@ class CareApprovalCenter(models.AbstractModel):
                 recipients = self._approver_recipients(entry)
                 if not recipients:
                     continue
-                # منظومة الصلاحيات (care_access_hub): احترام قناة الإشعار لكل مُعتمِد
-                # (🔔 فوري / 📧 بريد / 🔕 بلا) مع الإلزامي المقفل — حارس وجود الموديول.
+                # منظومة الصلاحيات (care_access_hub): القنوات الثلاث لكل مُعتمِد
+                # (📱 تطبيق / 🔔 أودو / 📧 بريد) مع الإلزامي المقفل — حارس وجود الموديول.
                 AN = self.env.get('care.access.notify.channel')
-                push_rcp, email_rcp = recipients, self.env['res.users']
+                app_rcp, odoo_rcp, email_rcp = recipients, self.env['res.users'], self.env['res.users']
                 if AN is not None:
                     try:
-                        push_rcp, email_rcp = AN.sudo().split_recipients(recipients, entry.get('key'))
+                        app_rcp, odoo_rcp, email_rcp = AN.sudo().split_recipients(recipients, entry.get('key'))
                     except Exception:
-                        push_rcp, email_rcp = recipients, self.env['res.users']
+                        app_rcp, odoo_rcp, email_rcp = recipients, self.env['res.users'], self.env['res.users']
                 for rec in recs:
                     batch = 'apnew-%s-%s' % (entry['model'], rec.id)
                     if Notif.sudo().search_count([('batch', '=', batch)]):
@@ -847,9 +847,11 @@ class CareApprovalCenter(models.AbstractModel):
                         if payload.get('by'):
                             body += '\nمن: %s' % payload['by']
                         action_url = '/approval?model=%s&id=%s' % (entry['model'], rec.id)
-                        if push_rcp:
-                            Notif.sudo().push(push_rcp, title, body=body, ntype='task',
+                        if app_rcp:
+                            Notif.sudo().push(app_rcp, title, body=body, ntype='task',
                                               action_url=action_url, batch=batch, record=rec)
+                        if odoo_rcp:
+                            self._notify_in_odoo(odoo_rcp, title, body, rec)
                         if email_rcp:
                             self._notify_by_email(email_rcp, title, body, action_url)
                     except Exception as ex:
@@ -858,6 +860,17 @@ class CareApprovalCenter(models.AbstractModel):
             except Exception as ex:
                 _logger.warning('approval-center: cron entry %s failed: %s', entry.get('key'), ex)
         ICP.set_param('care_approval.notify_last', fields.Datetime.to_string(now))
+
+    def _notify_in_odoo(self, users, title, body, rec):
+        """إشعار داخل أودو (صندوق الوارد/الجرس) للمعتمِدين عبر message_post."""
+        try:
+            partners = users.mapped('partner_id')
+            if partners and hasattr(rec, 'message_post'):
+                rec.sudo().message_post(
+                    body='%s — %s' % (title, body.replace('\n', ' · ')),
+                    partner_ids=partners.ids, subtype_xmlid='mail.mt_comment')
+        except Exception:
+            pass
 
     def _notify_by_email(self, users, title, body, action_url):
         """إشعار بريد خفيف للمعتمِدين الذين قناتهم «بريد» (منظومة الصلاحيات)."""

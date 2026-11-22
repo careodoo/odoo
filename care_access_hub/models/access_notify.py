@@ -17,13 +17,30 @@ class CareAccessNotifyChannel(models.Model):
     name = fields.Char(string='نوع الاعتماد', required=True)
     icon = fields.Char(string='الأيقونة')
     sequence = fields.Integer(default=10)
-    channel = fields.Selection(
-        [('push', '🔔 إشعار فوري'), ('email', '📧 بريد إلكتروني'), ('none', '🔕 بلا إشعار')],
-        string='القناة', default='push', required=True)
+    # ===== القنوات الثلاث المستقلّة (يمكن تفعيل أكثر من واحدة) =====
+    ch_app = fields.Boolean(string='📱 إشعار التطبيق', default=True,
+                            help='إشعار فوري (Push) على تطبيق الموبايل.')
+    ch_odoo = fields.Boolean(string='🔔 إشعار داخل أودو', default=True,
+                             help='إشعار في صندوق الوارد داخل أودو (الجرس).')
+    ch_email = fields.Boolean(string='📧 بريد إلكتروني', default=False,
+                              help='رسالة بريد إلكتروني.')
+    channels_label = fields.Char(string='القنوات', compute='_compute_channels_label')
     mandatory = fields.Boolean(
         string='إلزامي (مقفل على المستخدم)',
         help='الإشعار الإلزامي يصل دائمًا ولا يستطيع المستخدم تعطيله من لوحته.')
     company_id = fields.Many2one('res.company', default=lambda s: s.env.company)
+
+    @api.depends('ch_app', 'ch_odoo', 'ch_email')
+    def _compute_channels_label(self):
+        for c in self:
+            parts = []
+            if c.ch_app:
+                parts.append('📱 تطبيق')
+            if c.ch_odoo:
+                parts.append('🔔 أودو')
+            if c.ch_email:
+                parts.append('📧 بريد')
+            c.channels_label = ' · '.join(parts) or '🔕 بلا'
 
     _sql_constraints = [('key_company_uniq', 'unique(key, company_id)',
                          'نوع الاعتماد مُعرَّف مسبقًا لهذه الشركة.')]
@@ -56,42 +73,47 @@ class CareAccessNotifyChannel(models.Model):
                 n += 1
         return n
 
-    # ---------- القناة الفعلية لمستخدم ----------
+    # ---------- القنوات الفعّالة لمستخدم ----------
     @api.model
-    def effective(self, user, key):
-        """القناة الفعلية لهذا المستخدم ونوع الاعتماد: 'push' / 'email' / 'none'.
-        الإلزامي يتجاوز تعطيل المستخدم."""
+    def channels_for(self, user, key):
+        """مجموعة قنوات التسليم الفعّالة لهذا المستخدم ونوع الاعتماد ⊆ {'app','odoo','email'}.
+        الإلزامي يتجاوز تعطيل المستخدم؛ تعطيل المستخدم يُلغي كل القنوات."""
         ch = self.sudo().search([('key', '=', key)], limit=1)
         if not ch:
-            return 'push'  # الافتراضي عند غياب الإعداد
-        if ch.channel == 'none':
-            return 'none'
+            return {'app', 'odoo'}  # الافتراضي عند غياب الإعداد
+        chans = set()
+        if ch.ch_app:
+            chans.add('app')
+        if ch.ch_odoo:
+            chans.add('odoo')
+        if ch.ch_email:
+            chans.add('email')
+        if not chans:
+            return set()
         if ch.mandatory:
-            return ch.channel
+            return chans
         u = user if hasattr(user, '_name') else self.env['res.users'].sudo().browse(int(user))
-        # تفضيل المستخدم من «إشعاراتي» (care.user.notify.pref)
         pref = self.env['care.user.notify.pref'].sudo().search(
             [('user_id', '=', u.id), ('channel_id', '=', ch.id)], limit=1)
         if pref and not pref.enabled:
-            return 'none'
-        # توافق خلفي: m2m/opt-out القديمة
+            return set()
         if 'notify_disabled_ids' in u._fields and ch.id in u.sudo().notify_disabled_ids.ids:
-            return 'none'
-        off = self.env['care.access.notify.optout'].sudo().search_count(
-            [('user_id', '=', u.id), ('key', '=', key)])
-        return 'none' if off else ch.channel
+            return set()
+        return chans
 
     @api.model
     def split_recipients(self, users, key):
-        """يقسّم المستخدمين إلى (push, email) حسب قناتهم الفعلية؛ من قناته 'none' يُستبعد."""
-        push, email = self.env['res.users'], self.env['res.users']
+        """يقسّم المستخدمين حسب القناة: (app, odoo, email) — كلٌّ قد يظهر في أكثر من قناة."""
+        app, odoo, email = self.env['res.users'], self.env['res.users'], self.env['res.users']
         for u in users:
-            c = self.effective(u, key)
-            if c == 'push':
-                push |= u
-            elif c == 'email':
+            ch = self.channels_for(u, key)
+            if 'app' in ch:
+                app |= u
+            if 'odoo' in ch:
+                odoo |= u
+            if 'email' in ch:
                 email |= u
-        return push, email
+        return app, odoo, email
 
 
 class CareUserNotifyPref(models.Model):
@@ -104,7 +126,7 @@ class CareUserNotifyPref(models.Model):
     channel_id = fields.Many2one('care.access.notify.channel', required=True, ondelete='cascade')
     channel_name = fields.Char(related='channel_id.name', string='نوع الاعتماد', store=True)
     channel_icon = fields.Char(related='channel_id.icon', string='الأيقونة')
-    admin_channel = fields.Selection(related='channel_id.channel', string='القناة')
+    channels_label = fields.Char(related='channel_id.channels_label', string='القنوات')
     mandatory = fields.Boolean(related='channel_id.mandatory', string='إلزامي')
     enabled = fields.Boolean(string='مُفعّل', default=True)
 

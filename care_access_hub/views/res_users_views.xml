@@ -41,7 +41,7 @@
                         <tree editable="bottom" create="false" delete="false">
                             <field name="channel_icon" readonly="1" string=""/>
                             <field name="channel_name" readonly="1"/>
-                            <field name="admin_channel" readonly="1" string="القناة"/>
+                            <field name="channels_label" readonly="1" string="القنوات"/>
                             <field name="mandatory" readonly="1"/>
                             <field name="enabled" widget="boolean_toggle" readonly="mandatory"/>
                         </tree>
@@ -69,7 +69,7 @@
                         <tree editable="bottom" create="false" delete="false">
                             <field name="channel_icon" readonly="1" string=""/>
                             <field name="channel_name" readonly="1"/>
-                            <field name="admin_channel" readonly="1" string="القناة"/>
+                            <field name="channels_label" readonly="1" string="القنوات"/>
                             <field name="mandatory" readonly="1"/>
                             <field name="enabled" widget="boolean_toggle" readonly="mandatory"/>
                         </tree>

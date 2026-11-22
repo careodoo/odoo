@@ -10,7 +10,9 @@
                 <field name="icon" readonly="1"/>
                 <field name="name" readonly="1"/>
                 <field name="key" readonly="1" optional="hide"/>
-                <field name="channel"/>
+                <field name="ch_app" widget="boolean_toggle" string="📱 تطبيق"/>
+                <field name="ch_odoo" widget="boolean_toggle" string="🔔 أودو"/>
+                <field name="ch_email" widget="boolean_toggle" string="📧 بريد"/>
                 <field name="mandatory" widget="boolean_toggle"/>
             </tree>
         </field>
@@ -23,11 +25,11 @@
             <search>
                 <field name="name"/>
                 <filter name="f_mandatory" string="إلزامي" domain="[('mandatory','=',True)]"/>
-                <filter name="f_email" string="بريد" domain="[('channel','=','email')]"/>
-                <filter name="f_push" string="فوري" domain="[('channel','=','push')]"/>
-                <filter name="f_none" string="بلا" domain="[('channel','=','none')]"/>
+                <filter name="f_app" string="📱 تطبيق" domain="[('ch_app','=',True)]"/>
+                <filter name="f_odoo" string="🔔 أودو" domain="[('ch_odoo','=',True)]"/>
+                <filter name="f_email" string="📧 بريد" domain="[('ch_email','=',True)]"/>
                 <group expand="0" string="تجميع">
-                    <filter name="g_channel" string="القناة" context="{'group_by':'channel'}"/>
+                    <filter name="g_mandatory" string="الإلزامي" context="{'group_by':'mandatory'}"/>
                 </group>
             </search>
         </field>

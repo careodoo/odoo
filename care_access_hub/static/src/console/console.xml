@@ -141,16 +141,16 @@
           <div class="sect-h"><h2>إشعارات الاعتماد لكل نوع</h2>
             <span class="hint"><button class="fbtn" t-on-click="syncChannels">🔄 مزامنة من المركز</button></span></div>
           <div class="scopebanner gold">🔗 مربوط بمركز الموافقات — القناة تحكم تنبيهك لحظة ظهور الطلب. علّم «إلزامي 🔒» لما لا يستطيع المستخدم تعطيله.</div>
-          <div class="legend"><span class="lg">🔔 فوري</span><span class="lg">📧 بريد</span><span class="lg">🔕 بلا</span><span class="lg">🔒 إلزامي</span></div>
+          <div class="legend"><span class="lg">📱 تطبيق</span><span class="lg">🔔 أودو</span><span class="lg">📧 بريد</span><span class="lg">🔒 إلزامي</span></div>
           <div class="card ac-notify">
             <t t-foreach="state.data.channels" t-as="ch" t-key="ch.id">
               <div class="srow">
                 <div class="sic" t-esc="ch.mandatory ? '🔒' : '🔔'"/>
                 <div class="stx"><b t-esc="ch.name"/><span dir="ltr" t-esc="ch.key"/></div>
                 <div class="nch">
-                  <button t-attf-class="chipbtn {{ch.channel==='push'?'on':''}}" t-on-click="() => this.setChannel(ch,'push')">🔔</button>
-                  <button t-attf-class="chipbtn {{ch.channel==='email'?'on':''}}" t-on-click="() => this.setChannel(ch,'email')">📧</button>
-                  <button t-attf-class="chipbtn {{ch.channel==='none'?'on':''}}" t-on-click="() => this.setChannel(ch,'none')">🔕</button>
+                  <button t-attf-class="chipbtn {{ch.app?'on':''}}" t-on-click="() => this.toggleFlag(ch,'app')" title="إشعار التطبيق">📱</button>
+                  <button t-attf-class="chipbtn {{ch.odoo?'on':''}}" t-on-click="() => this.toggleFlag(ch,'odoo')" title="إشعار داخل أودو">🔔</button>
+                  <button t-attf-class="chipbtn {{ch.email?'on':''}}" t-on-click="() => this.toggleFlag(ch,'email')" title="بريد إلكتروني">📧</button>
                   <button t-attf-class="lockbtn {{ch.mandatory?'on':''}}" t-on-click="() => this.toggleMandatory(ch)"
                           t-esc="ch.mandatory ? '🔒 إلزامي' : 'اختياري'"/>
                 </div>

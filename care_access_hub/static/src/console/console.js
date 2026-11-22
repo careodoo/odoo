@@ -81,9 +81,9 @@ export class AccessConsole extends Component {
         await this.orm.call("care.access.console", "set_level", [line.id, next]);
         line.level = next;
     }
-    async setChannel(ch, value) {
-        await this.orm.call("care.access.console", "set_channel", [ch.id, value]);
-        ch.channel = value;
+    async toggleFlag(ch, flag) {
+        ch[flag] = !ch[flag];
+        await this.orm.call("care.access.console", "set_channel_flag", [ch.id, flag, ch[flag]]);
     }
     async toggleMandatory(ch) {
         ch.mandatory = await this.orm.call("care.access.console", "toggle_mandatory", [ch.id]);

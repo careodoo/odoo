@@ -44,7 +44,8 @@ class ResUsers(models.Model):
         relevant = Ch.browse()
         for e in Center.sudo()._entries():
             ch = Ch.search([('key', '=', e.get('key'))], limit=1)
-            if not ch or ch.channel == 'none':
+            ch_off = ch and not (ch.ch_app or ch.ch_odoo or ch.ch_email)
+            if not ch or ch_off:
                 if not (ch and ch.mandatory):
                     continue
             # مسمّيات/مستخدمو مراحل النوع (منظومة الصلاحيات)

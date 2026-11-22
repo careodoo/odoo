@@ -51,7 +51,8 @@ class CareAccessConsole(models.AbstractModel):
             })
         # الإشعارات
         channels = [{'id': c.id, 'key': c.key, 'name': c.name, 'icon': c.icon,
-                     'channel': c.channel, 'mandatory': c.mandatory}
+                     'app': c.ch_app, 'odoo': c.ch_odoo, 'email': c.ch_email,
+                     'mandatory': c.mandatory}
                     for c in Ch.search([], order='sequence')]
         # KPIs
         internal = self.env['res.users'].sudo().search_count([('share', '=', False)])
@@ -121,8 +122,11 @@ class CareAccessConsole(models.AbstractModel):
         return True
 
     @api.model
-    def set_channel(self, channel_id, channel):
-        self.env['care.access.notify.channel'].sudo().browse(int(channel_id)).write({'channel': channel})
+    def set_channel_flag(self, channel_id, flag, value):
+        fmap = {'app': 'ch_app', 'odoo': 'ch_odoo', 'email': 'ch_email'}
+        if flag in fmap:
+            self.env['care.access.notify.channel'].sudo().browse(int(channel_id)).write(
+                {fmap[flag]: bool(value)})
         return True
 
     @api.model
