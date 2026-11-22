@@ -90,6 +90,9 @@ action = {'type': 'ir.actions.act_window', 'res_model': 'care.access.snapshot', 
                 <field name="care_excess_count" string="زائدة ⚠️"/>
                 <field name="care_missing_count" string="ناقصة"/>
                 <button name="action_access_diff" type="object" string="تحليل" icon="fa-search" class="btn-link"/>
+                <button name="action_strip_excess" type="object" string="تجريد الفائض" icon="fa-scissors"
+                        class="btn-link text-danger"
+                        confirm="سيُزال الفائض غير المبرّر بالمسمّى لهذا المستخدم (مع لقطة احتياطية تلقائية وحماية مجموعات النظام). متابعة؟"/>
             </tree>
         </field>
     </record>

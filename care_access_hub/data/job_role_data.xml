@@ -367,6 +367,43 @@
             <field name="description">حارس سكن.</field>
         </record>
 
+        <!-- ==================== TIER: officer (added) ==================== -->
+        <record id="role_fleet_off" model="care.job.role">
+            <field name="name">مسؤول الأسطول</field>
+            <field name="name_en">Fleet Officer</field>
+            <field name="code">fleet_off</field>
+            <field name="sequence">275</field>
+            <field name="tier">officer</field>
+            <field name="data_scope">all</field>
+            <field name="is_readonly" eval="False"/>
+            <field name="can_approve" eval="False"/>
+            <field name="description">مسؤول حركة السيارات والأسطول.</field>
+        </record>
+
+        <record id="role_gov_rep" model="care.job.role">
+            <field name="name">مندوب علاقات عامة/حكومية</field>
+            <field name="name_en">Public/Government Relations Representative</field>
+            <field name="code">gov_rep</field>
+            <field name="sequence">276</field>
+            <field name="tier">officer</field>
+            <field name="data_scope">all</field>
+            <field name="is_readonly" eval="False"/>
+            <field name="can_approve" eval="False"/>
+            <field name="description">مندوب العلاقات العامة والمعاملات الحكومية (المندوب).</field>
+        </record>
+
+        <record id="role_sales_rep" model="care.job.role">
+            <field name="name">مندوب مبيعات</field>
+            <field name="name_en">Sales Representative</field>
+            <field name="code">sales_rep</field>
+            <field name="sequence">277</field>
+            <field name="tier">officer</field>
+            <field name="data_scope">all</field>
+            <field name="is_readonly" eval="False"/>
+            <field name="can_approve" eval="False"/>
+            <field name="description">مندوب مبيعات/تطوير أعمال.</field>
+        </record>
+
         <!-- ==================== Approval Types (no model_id) ==================== -->
         <record id="atype_1" model="care.approval.type">
             <field name="name">العمل الإضافي</field>

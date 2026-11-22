@@ -56,6 +56,41 @@ class ResUsers(models.Model):
                 'params': {'title': _('تحليل صلاحيات %s') % self.name,
                            'message': msg, 'sticky': True, 'type': 'warning'}}
 
+    def action_strip_excess(self):
+        """يُجرّد المجموعات الزائدة غير المبرّرة بالمسمّى — لقطة احتياطية تلقائية أولًا،
+        حماية مجموعات النظام/الأدمن من الإزالة، وتسجيل تدقيق. خاصّ بمدير المنظومة."""
+        if not self.env.user.has_group('care_access_hub.group_access_manager') \
+                and not self.env.user.has_group('base.group_system'):
+            raise UserError(_('التجريد خاصّ بمدير منظومة الصلاحيات.'))
+        protect = (self.env.ref('base.group_system') | self.env.ref('base.group_erp_manager')
+                   | self.env.ref('base.group_portal') | self.env.ref('base.group_public')
+                   | self.env.ref('base.group_user'))
+        # لقطة أمان قبل أي تعديل (تُتيح العكس لاحقًا)
+        snap = self.env['care.access.snapshot'].sudo().action_take_snapshot()
+        done = []
+        for u in self:
+            if not u.care_role_ids:
+                continue
+            rg = u.care_role_ids.mapped('odoo_group_ids')
+            strip = u.groups_id - rg - protect
+            if not strip:
+                continue
+            before = len(u.groups_id)
+            u.sudo().write({'groups_id': [(3, g.id) for g in strip]})
+            u.invalidate_recordset()
+            self.env['care.access.audit'].sudo().log(
+                'strip', _('تجريد %(n)s مجموعة من %(u)s (%(b)s→%(a)s)') % {
+                    'n': len(strip), 'u': u.name, 'b': before, 'a': len(u.groups_id)})
+            done.append('%s: %s→%s' % (u.name, before, len(u.groups_id)))
+        if not done:
+            return {'type': 'ir.actions.client', 'tag': 'display_notification',
+                    'params': {'title': _('التجريد'),
+                               'message': _('لا فائض قابل للتجريد (بلا مسمّى أو بلا فائض).'),
+                               'sticky': False, 'type': 'warning'}}
+        return {'type': 'ir.actions.client', 'tag': 'display_notification',
+                'params': {'title': _('تمّ التجريد — لقطة العكس #%s') % snap.id,
+                           'message': '\n'.join(done), 'sticky': True, 'type': 'success'}}
+
     def action_apply_roles(self):
         """تطبيق آمن (إضافة فقط): يمنح المستخدم مجموعات مسمّياته دون حذف شيء.
         التجريد الكامل للعشوائية مرحلة ترحيل لاحقة مُبوّبة ومُختبَرة."""
