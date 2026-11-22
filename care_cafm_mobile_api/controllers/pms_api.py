@@ -11,7 +11,7 @@ per-user project record rules already in place scope what each user sees.
 """
 from odoo.http import request, Controller, route
 
-from .api import _auth, _ok, _err, _abs, API
+from .api import _auth, _ok, _err, _abs, _bsig, _bsig_ok, API
 
 
 
@@ -227,6 +227,14 @@ class PmsApi(Controller):
             lambda: env['care.pms.supply'].sudo().search_count([('project_id', '=', p.id)]))
         add('requests', 'طلبات المستندات', 'description',
             lambda: env['care.pms.doc.request'].sudo().search_count([('project_id', '=', p.id)]))
+        if 'care.extra.work' in env:
+            add('extra_work', 'العمل الإضافي الوارد', 'group_add',
+                lambda: env['care.extra.work'].sudo().search_count([
+                    ('project_id', '=', p.id), ('same_project', '=', False),
+                    ('state', 'in', ('active', 'paused', 'pause_requested', 'end_requested'))]))
+        if 'care.extra.timesheet' in env:
+            add('extra_timesheet', 'التايم شيت الإضافي', 'bolt',
+                lambda: env['care.extra.timesheet'].sudo().search_count([('project_id', '=', p.id)]))
         add('timesheet', 'كشوف الساعات', 'timer',
             lambda: env['care.timesheet'].sudo().search_count([('department_id', '=', dept)]))
         add('petty', 'العهدة النقدية', 'payments',
@@ -271,7 +279,7 @@ class PmsApi(Controller):
             for e in env['hr.employee'].sudo().search([('department_id', '=', dept)], limit=8):
                 team_preview.append({'id': e.id, 'name': e.name,
                                      'job': e.job_title or None,
-                                     'avatar': _abs('/api/v1/pms/employee/%s/photo' % e.id)})
+                                     'avatar': _abs('/api/v1/pms/employee/%s/photo' % e.id) + '?s=' + _bsig('empphoto', e.id)})
         return _ok({
             'id': p.id, 'name': p.name,
             'partner': _m2o(p.partner_id), 'manager': _m2o(p.user_id),
@@ -366,7 +374,7 @@ class PmsApi(Controller):
             'department': _m2o(t.pms_department_id) if 'pms_department_id' in t._fields else None,
             'category': _m2o(t.pms_category_id) if 'pms_category_id' in t._fields else None,
             'time_committed': bool(t.x_time_committed) if 'x_time_committed' in t._fields else None,
-            'photos': [_abs('/api/v1/pms/task-photo/%s' % a.id)
+            'photos': [_abs('/api/v1/pms/task-photo/%s' % a.id) + '?s=' + _bsig('taskphoto', a.id)
                        for a in env['ir.attachment'].sudo().search(
                            [('res_model', '=', 'project.task'), ('res_id', '=', t.id),
                             ('mimetype', 'like', 'image/')], limit=8)],
@@ -398,12 +406,239 @@ class PmsApi(Controller):
             'messages': [{'author': m.author_id.display_name or '—', 'date': _d(m.date),
                           'body': (m.body or '')[:600],
                           # images attached to THIS comment, shown inline in it
-                          'images': [_abs('/api/v1/pms/task-photo/%s' % a.id)
+                          'images': [_abs('/api/v1/pms/task-photo/%s' % a.id) + '?s=' + _bsig('taskphoto', a.id)
                                      for a in m.attachment_ids
                                      if (a.mimetype or '').startswith('image/')]}
                          for m in t.message_ids.filtered(lambda x: x.body or x.attachment_ids)[:12]],
         })
         return _ok(d)
+
+    # ---- generic record detail (parity with /my/pm/x portal) -------------
+    # خريطة كود القسم → الموديل (مطابقة لبوابة care_pms_portal_x)
+    PMS_CODE_MODEL = {
+        'allowances': 'care.allowance', 'contracts': 'care.experience', 'invoices': 'request.invoice',
+        'petty': 'care.pms.petty.cash', 'permits': 'care.permit.request', 'overtime': 'overtime.request',
+        'penalties': 'care.penalty', 'bonuses': 'care.bonus', 'timesheet': 'care.timesheet',
+        'deliveries': 'care.pms.delivery.note', 'supplies': 'care.pms.supply', 'manpower': 'manpower.requisition',
+        'workshops': 'service.order', 'extrawork': 'care.extra.work', 'tasks': 'project.task',
+        'requests': 'care.document.request', 'materials': 'care.pms.material',
+        'suspension': 'care.suspension.request.line', 'resume': 'care.resume.request.line',
+        'attendance': 'hr.attendance', 'vehicles': 'fleet.vehicle', 'security': 'care.cafm.shift',
+        'leaves': 'hr.leave', 'passports': 'care.passport.request', 'loans': 'care.loan',
+        'resignations': 'hr.employee.resignation', 'eos': 'care.eos',
+        'fuel': 'care.fuel.entry', 'letters': 'care.letter', 'additional': 'employee.shift.request',
+        'assets': 'care.custody', 'petrol': 'petrol.tank', 'items': 'care.cafm.request',
+        'store': 'care.cafm.catalog.item',
+    }
+
+    def _pms_scope_ok(self, env, rec):
+        """فحص نطاق مدير المشروع (كبوابة /my/pm/x): السجل ضمن مشاريعه/أقسامه/عمّاله.
+        نقرأ المشاريع ببيئة المستخدم (قواعد السجلات تحصرها بمشاريعه) ثم نقارن بـsudo."""
+        try:
+            if not rec:
+                return False
+            proj = env['project.project'].search([])  # مقيّد بمشاريع المستخدم عبر record rules
+            proj_ids = proj.ids
+            dept_ids = proj.mapped('pms_department_id').ids if 'pms_department_id' in env['project.project']._fields else []
+            f = rec._fields
+            if 'employee_id' in f and rec.employee_id:
+                return bool(dept_ids) and bool(env['hr.employee'].sudo().search_count(
+                    [('id', '=', rec.employee_id.id), ('department_id', 'child_of', dept_ids)]))
+            if 'project_id' in f and rec.project_id:
+                return rec.project_id.id in proj_ids
+            if 'department_id' in f and rec.department_id and dept_ids:
+                return bool(env['hr.department'].sudo().search_count(
+                    [('id', '=', rec.department_id.id), ('id', 'child_of', dept_ids)]))
+            return True
+        except Exception:
+            return False
+
+    @route(API + '/pms/record/<string:code>/<int:rid>', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
+    def pms_record_detail(self, code, rid, **kw):
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        model = self.PMS_CODE_MODEL.get(code)
+        if not model or model not in env:
+            return _err('نموذج غير معروف', 404)
+        rec = env[model].sudo().browse(int(rid)).exists()
+        if not (rec and self._pms_scope_ok(env, rec)):
+            return _err('غير موجود أو غير مصرّح', 404)
+        f = rec._fields
+
+        # حقول مفيدة
+        fields = []
+        pref = ['request_date', 'date_from', 'date_to', 'start_date', 'end_date', 'expire_date',
+                'amount', 'amount_total', 'total_amount', 'fixed_amount', 'est_cost',
+                'reason', 'note', 'notes', 'description', 'project_id', 'department_id',
+                'requested_by', 'state']
+        for fn in pref:
+            if fn not in f:
+                continue
+            try:
+                val = rec[fn]
+                if not val:
+                    continue
+                if f[fn].type == 'many2one':
+                    val = val.sudo().display_name
+                elif f[fn].type in ('date', 'datetime'):
+                    val = str(val)
+                elif f[fn].type == 'selection':
+                    val = dict(f[fn]._description_selection(env)).get(val, val)
+                fields.append({'label': f[fn].string or fn, 'value': str(val)[:160]})
+            except Exception:
+                pass
+
+        # البنود (أول one2many حقيقي، باستبعاد mixins)
+        lines = {'cols': [], 'rows': []}
+        o2m = None
+        _pref = {'fleet.vehicle': 'log_services'}.get(model)
+        if _pref and _pref in f and f[_pref].type == 'one2many':
+            o2m = _pref
+        for cand in () if o2m else ('line_ids', 'order_line', 'input_line_ids', 'invoice_line_ids',
+                     'calc_line_ids', 'item_ids', 'detail_ids', 'expense_ids', 'request_line_ids'):
+            if cand in f and f[cand].type == 'one2many':
+                o2m = cand
+                break
+        if not o2m:
+            for fn, fo in f.items():
+                if fo.type != 'one2many' or fn.startswith(('message_', 'activity_', 'website_', 'rating_', 'access_', 'x_studio_')):
+                    continue
+                co = fo.comodel_name or ''
+                if co.startswith(('mail.', 'rating.', 'bus.')) or co in ('rating.rating',):
+                    continue
+                o2m = fn
+                break
+        if o2m:
+            try:
+                children = rec[o2m][:40]
+                if children:
+                    cf = children._fields
+                    num = [n for n in ('quantity', 'qty', 'product_qty', 'days', 'amount',
+                                       'price_unit', 'price_subtotal', 'daily_rate', 'number_of_days') if n in cf][:3]
+                    lines['cols'] = ['البند'] + [cf[n].string or n for n in num]
+                    for ch in children:
+                        row = [ch.sudo().display_name or '—']
+                        for n in num:
+                            v = ch[n]
+                            row.append(('{:,.3f}'.format(v).rstrip('0').rstrip('.')) if isinstance(v, float) else str(v or ''))
+                        lines['rows'].append(row)
+            except Exception:
+                pass
+
+        # المرفقات (صور تُعرض عبر task-photo عام؟ نُرجع روابط عامة)
+        files = []
+        try:
+            atts = env['ir.attachment'].sudo().search(
+                [('res_model', '=', model), ('res_id', '=', rec.id)], limit=20, order='id desc')
+            for a in atts:
+                kb = int((a.file_size or 0) / 1024)
+                files.append({'name': a.name or '—', 'info': ('%d KB' % kb) if kb else (a.mimetype or ''),
+                              'url': _abs('/api/v1/pms/task-photo/%s' % a.id) + '?s=' + _bsig('taskphoto', a.id) if (a.mimetype or '').startswith('image/') else None})
+        except Exception:
+            pass
+
+        # المناقشة + السجل الزمني
+        chatter, timeline = [], []
+        try:
+            import re as _re
+            msgs = rec.message_ids.sorted(lambda m: m.id, reverse=True)[:14] if 'message_ids' in f else []
+            for m in msgs:
+                body = _re.sub('<[^>]+>', ' ', str(m.body or '')).strip()
+                body = ' '.join(body.split())[:300]
+                auth = m.author_id.sudo().display_name or 'النظام'
+                dt = str(m.date or '')[:16]
+                if m.message_type == 'comment' and body:
+                    chatter.append({'author': auth, 'date': dt, 'body': body})
+                if body or (m.subtype_id and m.subtype_id.name):
+                    timeline.append({'title': (body or (m.subtype_id.name if m.subtype_id else 'تحديث'))[:90],
+                                     'author': auth, 'date': dt})
+        except Exception:
+            pass
+
+        # ذات صلة (نفس العامل/المشروع)
+        related = []
+        try:
+            dom = None
+            if 'employee_id' in f and rec.employee_id:
+                dom = [('employee_id', '=', rec.employee_id.id), ('id', '!=', rec.id)]
+            elif 'project_id' in f and rec.project_id:
+                dom = [('project_id', '=', rec.project_id.id), ('id', '!=', rec.id)]
+            if dom:
+                for s in env[model].sudo().search(dom, limit=6, order='id desc'):
+                    st = ''
+                    if 'state' in s._fields and s.state:
+                        try:
+                            st = dict(s._fields['state']._description_selection(env)).get(s.state, s.state)
+                        except Exception:
+                            st = s.state
+                    related.append({'name': s.sudo().display_name or '—', 'info': st or ''})
+        except Exception:
+            pass
+
+        can_write = True
+        try:
+            rec.check_access_rule('write')
+        except Exception:
+            can_write = False
+
+        # اسم التقرير (مع سقوط لتقرير سجل الأصل: request_id/parent_id/move_id…)
+        report_name, report_model, report_id = self._pms_resolve_report(env, model, rec)
+
+        return _ok({
+            'code': code, 'model': model, 'id': rec.id,
+            'name': rec.sudo().display_name,
+            'state': (rec.state if 'state' in f else None),
+            'fields': fields, 'lines': lines, 'files': files,
+            'timeline': timeline[:12], 'chatter': chatter, 'related': related,
+            'can_write': can_write,
+            'can_print': bool(report_name),
+            'report': report_name, 'report_model': report_model, 'report_id': report_id,
+        })
+
+    def _pms_resolve_report(self, env, model, rec):
+        """يرجع (report_name, model, id) لأقرب تقرير qweb-pdf: للموديل نفسه أو سجل أصله."""
+        Rep = env['ir.actions.report'].sudo()
+
+        def find(mdl):
+            r = (Rep.search([('model', '=', mdl), ('report_type', '=', 'qweb-pdf'), ('binding_model_id', '!=', False)], limit=1)
+                 or Rep.search([('model', '=', mdl), ('report_type', '=', 'qweb-pdf')], limit=1))
+            return r.report_name if r else None
+
+        rn = find(model)
+        if rn:
+            return rn, model, rec.id
+        f = rec._fields
+        for pf in ('request_id', 'parent_id', 'move_id', 'order_id', 'batch_id'):
+            if pf in f and rec[pf]:
+                parent = rec[pf]
+                prn = find(parent._name)
+                if prn:
+                    return prn, parent._name, parent.id
+        return None, None, None
+
+    @route(API + '/pms/record/<string:code>/<int:rid>/message', type='http', auth='public', methods=['POST'], csrf=False, cors='*')
+    def pms_record_message(self, code, rid, **kw):
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        model = self.PMS_CODE_MODEL.get(code)
+        if not model or model not in env:
+            return _err('نموذج غير معروف', 404)
+        rec = env[model].sudo().browse(int(rid)).exists()
+        if not (rec and self._pms_scope_ok(env, rec)):
+            return _err('غير مصرّح', 404)
+        body = (kw.get('body') or '').strip()
+        if not body:
+            return _err('الرسالة فارغة', 400)
+        if not hasattr(rec, 'message_post'):
+            return _err('لا تدعم المناقشة', 400)
+        try:
+            rec.message_post(body=body, author_id=env.user.partner_id.id, message_type='comment')
+            from odoo import fields as of
+            return _ok({'author': env.user.name, 'date': of.Datetime.now().strftime('%Y-%m-%d %H:%M')})
+        except Exception as e:
+            return _err(str(e)[:160], 500)
 
     # ---- write actions ---------------------------------------------------
     @route(API + '/pms/task/<int:tid>/stage', type='http', auth='public', methods=['POST'], csrf=False, cors='*')
@@ -423,6 +658,66 @@ class PmsApi(Controller):
             return _err(str(e) or 'غير مصرّح', 403)
         t.invalidate_recordset()
         return _ok(self._task_row(t))
+
+    # ======== البدلات: قائمة العامل + طلب إيقاف + طباعة نموذج الإيقاف ========
+    @route(API + '/pms/employee/<int:eid>/allowances', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
+    def pms_emp_allowances(self, eid, **kw):
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        if 'care.allowance' not in env:
+            return _ok({'rows': []})
+        if not self._emp_in_scope(env, int(eid)):
+            return _err('غير مصرّح', 403)
+        recs = env['care.allowance'].sudo().search([('employee_id', '=', int(eid))], order='id desc', limit=100)
+        stmap = {'running': 'سارٍ', 'stop_requested': 'طلب إيقاف', 'stopped': 'موقوف', 'resume_requested': 'طلب استئناف'}
+        rows = [{'id': r.id, 'name': r.name or '', 'type': (r.allowance_type_id.name if r.allowance_type_id else ''),
+                 'amount': r.amount, 'state': r.state or '', 'stop_state': r.stop_state or 'running',
+                 'stop_label': stmap.get(r.stop_state or 'running', ''),
+                 'report': _abs('/api/v1/pms/allowance/%s/stop-report' % r.id)} for r in recs]
+        return _ok({'rows': rows})
+
+    @route(API + '/pms/allowance/<int:aid>/stop', type='http', auth='public', methods=['POST'], csrf=False, cors='*')
+    def pms_allowance_stop(self, aid, **kw):
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        from .api import _body
+        _b = _body() or {}
+        reason = _b.get('reason')
+        stop_date = _b.get('stop_date')  # تاريخ الإيقاف الفعلي (يتأثّر به الاستحقاق)
+        al = env['care.allowance'].sudo().browse(int(aid)).exists()
+        if not al:
+            return _err('السجل غير موجود', 404)
+        if not self._emp_in_scope(env, al.employee_id.id):
+            return _err('غير مصرّح', 403)
+        try:
+            vals = {}
+            if reason:
+                vals['stop_reason'] = reason
+            if stop_date:
+                vals['stop_effective_date'] = stop_date
+            if vals:
+                al.write(vals)
+            al.action_request_stop()
+        except Exception as e:
+            return _err(str(e) or 'تعذّر إرسال الطلب', 422)
+        return _ok({'id': al.id, 'stop_state': al.stop_state})
+
+    @route(API + '/pms/allowance/<int:aid>/stop-report', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
+    def pms_allowance_stop_report(self, aid, **kw):
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        al = env['care.allowance'].sudo().browse(int(aid)).exists()
+        if not al:
+            return _err('السجل غير موجود', 404)
+        if not self._emp_in_scope(env, al.employee_id.id):
+            return _err('غير مصرّح', 403)
+        pdf, _ct = env['ir.actions.report'].sudo()._render_qweb_pdf('care_hr.report_allowance_stop', [al.id])
+        return request.make_response(pdf, headers=[
+            ('Content-Type', 'application/pdf'),
+            ('Content-Disposition', 'inline; filename=allowance_stop_%s.pdf' % al.id)])
 
     @route(API + '/pms/task/<int:tid>/note', type='http', auth='public', methods=['POST'], csrf=False, cors='*')
     def pms_task_note(self, tid, **kw):
@@ -621,9 +916,9 @@ class PmsApi(Controller):
             proj.check_access_rule('read')
         except Exception:
             return _err('لا صلاحية على هذا المشروع', 403)
-        # مستخدمو البورتال (مديرو/أعضاء المشاريع في التطبيق) لا يستطيعون كتابة
-        # project_id على مهمة جديدة (قيد ACL البورتال) — فبعد التأكّد من وصولهم
-        # للمشروع (أعلاه)، ننشئ بصلاحيات مرفوعة وننسب المهمة للمُنشئ.
+        # Portal users (project managers/members in the app) cannot write
+        # project_id on a new task (portal ACL restriction) -- so after confirming their access
+        # to the project (above), we create with elevated permissions and attribute the task to the creator.
         _elevate = not env.user.has_group('project.group_project_user')
         vals = {'name': name, 'project_id': proj.id}
         if b.get('description'):
@@ -643,7 +938,7 @@ class PmsApi(Controller):
             vals['x_time_committed'] = bool(b.get('time_committed'))
         try:
             if _elevate:
-                # ننشئ برفع الصلاحية (المستخدم مؤكّد وصوله للمشروع) ثم ننسبها له.
+                # Create with elevated permission (the user's access to the project is confirmed) then attribute it to them.
                 t = env['project.task'].sudo().create(vals)
                 try:
                     t.message_subscribe(partner_ids=[env.user.partner_id.id])
@@ -651,7 +946,7 @@ class PmsApi(Controller):
                 except Exception:
                     pass
             else:
-                # مستخدم داخلي بصلاحية مشاريع: يُنشأ كالمستخدم (تُطبَّق صلاحياته).
+                # Internal user with project permission: created as the user (their permissions apply).
                 t = env['project.task'].create(vals)
         except Exception as e:
             return _err(str(e) or 'تعذّر الإنشاء', 403)
@@ -864,7 +1159,7 @@ class PmsSectionsApi(Controller):
                 'state': (r.state if 'state' in r._fields else None),
                 'state_label': state_lbl.get(r.state) if 'state' in r._fields else None,
                 'badge': (emp.barcode if emp and 'barcode' in emp._fields else None),
-                'image': _abs('/api/v1/pms/employee/%s/photo' % emp.id) if emp else None,
+                'image': _abs('/api/v1/pms/employee/%s/photo' % emp.id) + '?s=' + _bsig('empphoto', emp.id) if emp else None,
                 'open': 'employee' if emp else None,
                 'search': ('%s %s' % (emp.name or '', emp.barcode or '')).lower() if emp else '',
                 'badges': ([_d(r.create_date)] if r.create_date else [])
@@ -939,7 +1234,7 @@ class PmsSectionsApi(Controller):
             rows.append({
                 'id': e.id, 'title': e.name,
                 'subtitle': e.job_title or None,
-                'image': _abs('/api/v1/pms/employee/%s/photo' % e.id),
+                'image': _abs('/api/v1/pms/employee/%s/photo' % e.id) + '?s=' + _bsig('empphoto', e.id),
                 'state': st, 'state_label': stl,
                 'badge': e.barcode or None,
                 'open': 'employee',
@@ -973,7 +1268,7 @@ class PmsSectionsApi(Controller):
             'state_label': 'بالموقع' if not a.check_out else 'انصرف',
             'search': (a.employee_id.name or '').lower(),
         } for a in recent]
-        # Non-attendees split into ON-LEAVE (shown as «في إجازة», not counted as
+        # Non-attendees split into ON-LEAVE (shown as "On leave", not counted as
         # absent) and truly ABSENT.
         absentees, on_leave = [], []
         for e in emps:
@@ -983,7 +1278,7 @@ class PmsSectionsApi(Controller):
             base = {
                 'id': e.id, 'title': e.name,
                 'subtitle': e.job_title or None,
-                'image': _abs('/api/v1/pms/employee/%s/photo' % e.id),
+                'image': _abs('/api/v1/pms/employee/%s/photo' % e.id) + '?s=' + _bsig('empphoto', e.id),
                 'badge': e.barcode or None,
                 'open': 'employee',
                 'search': ('%s %s' % (e.name or '', e.barcode or '')).lower(),
@@ -1027,6 +1322,8 @@ class PmsSectionsApi(Controller):
                     ('بصمة: %s' % t.total_biometric) if t.total_biometric else None,
                     ('معتمد: %s' % appr) if appr else None,
                     ('بانتظار: %s' % t.pending_count) if t.pending_count else None,
+                    ('اعتماد %s%%' % round(t.completion_rate)) if 'completion_rate' in t._fields and t.completion_rate else None,
+                    ('مدير: %s' % t.manager_id.name) if 'manager_id' in t._fields and t.manager_id else None,
                 ] if x]
             rows.append({
                 'id': t.id, 'title': '%s · %s' % (t.name or t.display_name, period),
@@ -1147,9 +1444,9 @@ class PmsSectionsApi(Controller):
         today = of.Date.today()
         # The real field names on this DB — checked against the model rather
         # than guessed (residency_expiry/permit_expiry do not exist here).
-        docs = [('residency_end_date', 'الإقامة'), ('affairs_permit_end_date', 'إذن الشؤون'),
-                ('visa_expire', 'التأشيرة'), ('work_permit_expiration_date', 'تصريح العمل'),
-                ('passport_expiry_date', 'الجواز')]
+        docs = [('residency_end_date', 'Residency'), ('affairs_permit_end_date', 'Affairs permission'),
+                ('visa_expire', 'Visa'), ('work_permit_expiration_date', 'Work permit'),
+                ('passport_expiry_date', 'Passport')]
         docs = [(f, l) for f, l in docs if f in E._fields]
         emps = E.search([('department_id', '=', dept)], limit=500)
         rows, soon, expired = [], 0, 0
@@ -1170,7 +1467,7 @@ class PmsSectionsApi(Controller):
                 soon += 1
             rows.append({
                 'id': e.id, 'title': e.name, 'subtitle': e.job_title or None,
-                'image': _abs('/api/v1/pms/employee/%s/photo' % e.id),
+                'image': _abs('/api/v1/pms/employee/%s/photo' % e.id) + '?s=' + _bsig('empphoto', e.id),
                 'badge': e.barcode or None,
                 'open': 'employee',
                 'value': worst, 'value_label': 'يوم',
@@ -1358,6 +1655,33 @@ class PmsSectionsApi(Controller):
             'الطلبات': len(rows), 'بانتظار الاعتماد': pend,
             'معتمدة': sum(1 for r in recs if r.state == 'approved')}}
 
+    def _sec_workshops(self, env, p):
+        """أوامر الورش المرتبطة بهذا المشروع (قائمة)."""
+        if 'c2c.workshop' not in env:
+            return {'rows': [], 'stats': {}, 'empty': 'وحدة الورش غير مثبّتة.'}
+        W = env['c2c.workshop'].sudo()
+        ssel = dict(W._fields['state'].selection)
+        csel = dict(W._fields['service_category'].selection)
+        recs = W.search([('project_id', '=', p.id)], order='id desc', limit=300)
+        rows, drafts = [], 0
+        for r in recs:
+            if r.state == 'draft':
+                drafts += 1
+            rows.append({
+                'id': r.id, 'title': r.title or r.name,
+                'subtitle': '%s · %s عامل' % (csel.get(r.service_category, ''), r.worker_count),
+                'state': r.state, 'state_label': ssel.get(r.state, r.state),
+                'value': round(r.total_cost, 3), 'value_label': 'التكلفة',
+                'open': 'workshop',
+                'badges': [x for x in [r.client_id.name or None,
+                                       (_d(r.date_start) if r.date_start else None)] if x],
+                'search': ('%s %s %s' % (r.name or '', r.title or '',
+                                         r.client_id.name or '')).lower(),
+            })
+        return {'rows': rows, 'stats': {
+            'الورش': len(rows), 'مسودّات': drafts,
+            'التكلفة': round(sum(recs.mapped('total_cost')), 1)}}
+
     def _sec_suspension(self, env, p):
         """Work-suspension requests raised for this project's workers."""
         if 'care.suspension.request' not in env:
@@ -1370,23 +1694,174 @@ class PmsSectionsApi(Controller):
         for r in recs:
             if r.state == 'submitted':
                 pend += 1
+            emps = r.line_ids.mapped('employee_id')
+            title = (emps[0].name if len(emps) == 1 else _('%d عمّال') % len(emps)) or r.name
             rows.append({
-                'id': r.id, 'title': r.employee_id.name or r.name,
+                'id': r.id, 'title': title,
                 'subtitle': '%s · %s' % (rsel.get(r.reason, r.reason or '—'), _d(r.date)),
                 'state': r.state, 'state_label': ssel.get(r.state, r.state),
                 'open': 'suspension',
-                'badges': [x for x in [
-                    ('بادج: %s' % r.badge) if r.badge else None,
-                    'لديه بدلات' if r.has_allowance else None,
-                ] if x],
-                'search': ('%s %s %s' % (r.name or '', r.employee_id.name or '', r.badge or '')).lower(),
+                'badges': [x for x in [('عمّال: %d' % len(emps)) if emps else None] if x],
+                'search': ('%s %s' % (r.name or '', ' '.join(emps.mapped('name')))).lower(),
             })
         return {'rows': rows, 'stats': {
             'الطلبات': len(rows),
             'بانتظار الاعتماد': pend,
             'معتمدة': sum(1 for r in recs if r.state == 'approved')}}
 
+    def _sec_resume(self, env, p):
+        """طلبات مباشرة العمل (بعد توقف) لعمّال هذا المشروع."""
+        if 'care.resume.request' not in env:
+            return {'rows': [], 'stats': {}, 'empty': 'وحدة مباشرة العمل غير مثبّتة.'}
+        R = env['care.resume.request'].sudo()
+        ssel = dict(R._fields['state'].selection)
+        dept = self._dept(p)
+        emp_ids = env['hr.employee'].sudo().search(
+            [('department_id', '=', dept.id)]).ids if dept else []
+        recs = R.search([('line_ids.employee_id', 'in', emp_ids)], order='id desc', limit=300) if emp_ids else R.browse()
+        rows, pend = [], 0
+        for r in recs:
+            if r.state == 'submitted':
+                pend += 1
+            emps = r.line_ids.mapped('employee_id')
+            title = (emps[0].name if len(emps) == 1 else _('%d عمّال') % len(emps)) or r.name
+            rows.append({
+                'id': r.id, 'title': title,
+                'subtitle': 'مباشرة عمل · %s' % _d(r.date),
+                'state': r.state, 'state_label': ssel.get(r.state, r.state),
+                'open': 'resume',
+                'badges': [x for x in [('عمّال: %d' % len(emps)) if emps else None,
+                                       ('مباشرون: %d' % r.resumed_count) if r.resumed_count else None] if x],
+                'search': ('%s %s' % (r.name or '', ' '.join(emps.mapped('name')))).lower(),
+            })
+        return {'rows': rows, 'stats': {
+            'الطلبات': len(rows), 'بانتظار الاعتماد': pend,
+            'معتمدة': sum(1 for r in recs if r.state == 'approved')}}
+
+    def _sec_vehicles(self, env, p):
+        """صيانة المركبات — fleet.vehicle بقسم المشروع (مكافئ لبوابة /my/pm/x)."""
+        dept = self._dept(p)
+        if not dept or 'fleet.vehicle' not in env:
+            return {'rows': [], 'stats': {}, 'empty': 'لا مركبات مرتبطة بهذا المشروع.'}
+        veh = env['fleet.vehicle'].sudo().search([('department_id', 'child_of', dept)], limit=200)
+        rows = [{
+            'id': v.id, 'title': v.name or (v.license_plate or '—'),
+            'subtitle': (v.driver_id.name if v.driver_id else None),
+            'badge': v.license_plate or None,
+            'value': round(getattr(v, 'odometer', 0) or 0, 0), 'value_label': 'كم',
+            'state': 'open', 'state_label': (v.state_id.name or 'نشطة'),
+            'open': 'vehicles',
+            'search': ('%s %s' % (v.name or '', v.license_plate or '')).lower(),
+        } for v in veh]
+        return {'rows': rows, 'stats': {'المركبات': len(veh),
+                                        'تكلفة الأسطول': round(getattr(p, 'pms_fleet_cost', 0) or 0, 3)}}
+
+    def _sec_security(self, env, p):
+        """إدارة الأمن — ورديات care.cafm.shift لعمّال قسم المشروع (مكافئ للبوابة)."""
+        dept = self._dept(p)
+        if not dept or 'care.cafm.shift' not in env:
+            return {'rows': [], 'stats': {}, 'empty': 'لا ورديات أمن لهذا المشروع.'}
+        emps = env['hr.employee'].sudo().search([('department_id', 'child_of', dept)]).ids
+        SH = env['care.cafm.shift'].sudo()
+        recs = SH.search([('employee_id', 'in', emps)], order='id desc', limit=150) if emps else SH.browse()
+        stsel = dict(SH._fields['state']._description_selection(env)) if 'state' in SH._fields else {}
+        rows = [{
+            'id': s.id, 'title': s.employee_id.name or '—',
+            'subtitle': '%s → %s' % (_d(getattr(s, 'check_in', None)) or '—', _d(getattr(s, 'check_out', None)) or '—'),
+            'badge': s.name or None,
+            'state': 'open', 'state_label': (stsel.get(s.state, s.state or '') if 'state' in s._fields else ''),
+            'open': 'security',
+            'search': (s.employee_id.name or '').lower(),
+        } for s in recs]
+        return {'rows': rows, 'stats': {'الورديات': len(recs)}}
+
+    def _emp_ids(self, env, p):
+        dept = self._dept(p)
+        return env['hr.employee'].sudo().search([('department_id', 'child_of', dept)]).ids if dept else []
+
+    def _sel_label(self, env, model, field, val):
+        try:
+            return dict(env[model]._fields[field]._description_selection(env)).get(val, val) or val
+        except Exception:
+            return val
+
+    def _sec_leaves(self, env, p):
+        """طلبات الإجازة لعمّال المشروع (مكافئ لبوابة /my/pm/x)."""
+        emp_ids = self._emp_ids(env, p)
+        if not emp_ids:
+            return {'rows': [], 'stats': {}, 'empty': 'لا عمّال لهذا المشروع.'}
+        recs = env['hr.leave'].sudo().search([('employee_id', 'in', emp_ids)], order='id desc', limit=200)
+        smap = {'validate': 'open', 'confirm': 'pending', 'refuse': 'closed', 'draft': 'pending'}
+        rows = [{
+            'id': r.id, 'title': r.employee_id.name,
+            'subtitle': '%s · %s → %s' % (r.holiday_status_id.name or '', _d(getattr(r, 'request_date_from', None)) or '—', _d(getattr(r, 'request_date_to', None)) or '—'),
+            'value': round(getattr(r, 'number_of_days', 0) or 0, 1), 'value_label': 'يوم',
+            'state': smap.get(r.state, 'pending'), 'state_label': self._sel_label(env, 'hr.leave', 'state', r.state),
+            'open': 'leaves', 'search': (r.employee_id.name or '').lower(),
+        } for r in recs]
+        return {'rows': rows, 'stats': {'إجازات': len(recs),
+                                        'معتمدة': sum(1 for r in recs if r.state == 'validate')}}
+
+    def _sec_passports(self, env, p):
+        emp_ids = self._emp_ids(env, p)
+        if not emp_ids:
+            return {'rows': [], 'stats': {}, 'empty': 'لا عمّال لهذا المشروع.'}
+        recs = env['care.passport.request'].sudo().search([('employee_id', 'in', emp_ids)], order='id desc', limit=200)
+        rows = [{
+            'id': r.id, 'title': r.employee_id.name, 'badge': r.name or None,
+            'subtitle': (getattr(r, 'reason', '') or getattr(r, 'purpose', '') or None),
+            'state': 'pending', 'state_label': self._sel_label(env, 'care.passport.request', 'state', getattr(r, 'state', '')),
+            'open': 'passports', 'search': (r.employee_id.name or '').lower(),
+        } for r in recs]
+        return {'rows': rows, 'stats': {'طلبات سحب': len(recs)}}
+
+    def _sec_loans(self, env, p):
+        emp_ids = self._emp_ids(env, p)
+        if not emp_ids:
+            return {'rows': [], 'stats': {}, 'empty': 'لا عمّال لهذا المشروع.'}
+        recs = env['care.loan'].sudo().search([('employee_id', 'in', emp_ids)], order='id desc', limit=200)
+        rows = [{
+            'id': r.id, 'title': r.employee_id.name, 'badge': r.name or None,
+            'subtitle': 'المتبقّي: %s' % round(getattr(r, 'balance', 0) or 0, 3),
+            'value': round(getattr(r, 'amount', 0) or 0, 3), 'value_label': 'د.ك',
+            'state': 'pending', 'state_label': self._sel_label(env, 'care.loan', 'state', getattr(r, 'state', '')),
+            'open': 'loans', 'search': (r.employee_id.name or '').lower(),
+        } for r in recs]
+        return {'rows': rows, 'stats': {'سلف': len(recs)}}
+
+    def _sec_resignations(self, env, p):
+        emp_ids = self._emp_ids(env, p)
+        if not emp_ids:
+            return {'rows': [], 'stats': {}, 'empty': 'لا عمّال لهذا المشروع.'}
+        recs = env['hr.employee.resignation'].sudo().search([('employee_id', 'in', emp_ids)], order='id desc', limit=200)
+        rows = [{
+            'id': r.id, 'title': r.employee_id.name, 'badge': r.name or None,
+            'subtitle': 'آخر يوم: %s' % (_d(getattr(r, 'leave_date', None)) or '—'),
+            'state': 'pending', 'state_label': self._sel_label(env, 'hr.employee.resignation', 'state', getattr(r, 'state', '')),
+            'open': 'resignations', 'search': (r.employee_id.name or '').lower(),
+        } for r in recs]
+        return {'rows': rows, 'stats': {'استقالات': len(recs)}}
+
+    def _sec_eos(self, env, p):
+        emp_ids = self._emp_ids(env, p)
+        if not emp_ids:
+            return {'rows': [], 'stats': {}, 'empty': 'لا عمّال لهذا المشروع.'}
+        recs = env['care.eos'].sudo().search([('employee_id', 'in', emp_ids)], order='id desc', limit=200)
+        rows = [{
+            'id': r.id, 'title': r.employee_id.name, 'badge': r.name or None,
+            'subtitle': 'آخر يوم: %s' % (_d(getattr(r, 'last_working_day', None)) or '—'),
+            'value': round(getattr(r, 'net_amount', 0) or 0, 3), 'value_label': 'د.ك',
+            'state': 'pending', 'state_label': self._sel_label(env, 'care.eos', 'state', getattr(r, 'state', '')),
+            'open': 'eos', 'search': (r.employee_id.name or '').lower(),
+        } for r in recs]
+        return {'rows': rows, 'stats': {'نهاية خدمة': len(recs)}}
+
     SECTIONS = {
+        'leaves': ('طلبات الإجازة', 'event_busy', _sec_leaves),
+        'passports': ('سحب الجوازات', 'badge', _sec_passports),
+        'loans': ('السلف والقروض', 'savings', _sec_loans),
+        'resignations': ('الاستقالات', 'logout', _sec_resignations),
+        'eos': ('نهاية الخدمة', 'request_quote', _sec_eos),
         'materials': ('المواد', 'inventory', _sec_materials),
         'deliveries': ('إشعارات التسليم', 'receipt', _sec_deliveries),
         'supplies': ('التوريدات', 'local_shipping', _sec_supplies),
@@ -1403,9 +1878,18 @@ class PmsSectionsApi(Controller):
         'contracts': ('العقود', 'assignment', _sec_contracts),
         'performance': ('الأداء', 'trending_up', _sec_performance),
         'suspension': ('الإيقاف عن العمل', 'block', _sec_suspension),
+        'resume': ('مباشرة العمل (بعد توقف)', 'play_circle', _sec_resume),
         'items': ('طلب الأصناف', 'playlist_add_check', _sec_items),
         'manpower': ('طلب قوى عاملة', 'groups_3', _sec_manpower),
         'permits': ('التصاريح', 'verified_user', _sec_permits),
+        'workshops': ('أوامر الورش', 'handyman', _sec_workshops),
+        'vehicles': ('صيانة المركبات', 'local_shipping', _sec_vehicles),
+        'security': ('إدارة الأمن', 'shield', _sec_security),
+        # أقسام تُفتح من شاشة مخصّصة في التطبيق (API خاص بها) — لا builder عام
+        'extra_work': ('العمل الإضافي الوارد', 'group_add', None),
+        'extra_timesheet': ('التايم شيت الإضافي', 'bolt', None),
+        'overtime': ('طلبات العمل الإضافي', 'schedule', None),
+        'discipline': ('الشكاوى التأديبية', 'gavel', None),
     }
 
     @route(API + '/pms/project/<int:pid>/sections', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
@@ -1430,7 +1914,8 @@ class PmsSectionsApi(Controller):
             'project': {'id': p.id, 'name': p.name},
             'sections': [{'code': c, 'label': v[0], 'icon': v[1],
                           'delegated': c in deleg,
-                          'delegate': deleg.get(c)} for c, v in self.SECTIONS.items()],
+                          'delegate': deleg.get(c)} for c, v in self.SECTIONS.items()
+                         if c != 'discipline' or 'care.complaint' in env],
         })
 
     @route(API + '/pms/project/<int:pid>/section/<string:code>', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
@@ -1441,6 +1926,9 @@ class PmsSectionsApi(Controller):
         spec = self.SECTIONS.get(code)
         if not spec:
             return _err('قسم غير معروف', 404)
+        if spec[2] is None:
+            # قسم له شاشة مخصّصة في التطبيق؛ لا يُقرأ عبر هذه النقطة العامة
+            return _err('هذا القسم يُفتح من شاشته المخصّصة', 400)
         try:
             p = self._project(env, pid)
         except Exception:
@@ -1482,7 +1970,7 @@ class PmsSectionsApi(Controller):
                       if 'worker_status' in e._fields and e.worker_status else None)
             out.append({
                 'id': e.id, 'name': e.name, 'badge': e.barcode or None,
-                'avatar': _abs('/api/v1/pms/employee/%s/photo' % e.id),
+                'avatar': _abs('/api/v1/pms/employee/%s/photo' % e.id) + '?s=' + _bsig('empphoto', e.id),
                 'status': status,
                 'on_leave': bool('current_leave_state' in e._fields
                                  and e.current_leave_state in ('validate', 'validate1')),
@@ -1567,7 +2055,278 @@ class PmsSectionsApi(Controller):
             if 'care.suspension.request' in env:
                 out['reasons'] = [{'value': k, 'label': v}
                                   for k, v in env['care.suspension.request']._fields['reason'].selection]
+        elif code == 'resume':
+            # Suspended workers only + departments for return
+            susp = env['hr.employee'].sudo().search(
+                [('department_id', '=', dept.id), ('worker_status', '=', 'suspended')]) if dept else env['hr.employee'].sudo().browse()
+            out['employees'] = [{'id': e.id, 'name': e.name, 'badge': e.barcode or None} for e in susp]
+            out['departments'] = [{'id': d.id, 'name': d.display_name}
+                                  for d in env['hr.department'].sudo().search([], limit=500)]
+        elif code == 'workshops':
+            out['clients'] = [{'id': c.id, 'name': c.name} for c in env['res.partner'].sudo().search(
+                ['|', ('customer_rank', '>', 0), ('is_company', '=', True)], order='name', limit=400)]
+            out['employees'] = [{'id': e.id, 'name': e.name, 'badge': e.barcode or None,
+                                 'search': ('%s %s' % (e.name or '', e.barcode or '')).lower()}
+                                for e in env['hr.employee'].sudo().search([('active', '=', True)], order='name', limit=2000)]
+            out['products'] = [{'id': pr.id, 'name': pr.display_name, 'cost': pr.standard_price}
+                               for pr in env['product.product'].sudo().search([('type', 'in', ('product', 'consu'))], order='name', limit=600)]
+            W = env['c2c.workshop']
+            out['categories'] = [{'v': k, 'l': l} for k, l in W._fields['service_category'].selection]
+            out['types'] = [{'v': k, 'l': l} for k, l in W._fields['workshop_type'].selection]
+            out['rate_types'] = [{'v': k, 'l': l} for k, l in env['c2c.workshop.worker']._fields['rate_type'].selection]
+            out['sources'] = [{'v': k, 'l': l} for k, l in env['c2c.workshop.material']._fields['source'].selection]
+            out['ownerships'] = [{'v': k, 'l': l} for k, l in env['c2c.workshop.equipment']._fields['ownership'].selection]
         return _ok(out)
+
+    # ==================== Workshop orders (Workshops) ====================
+    def _workshop_scoped(self, env, wid):
+        """الورشة إن كان للمستخدم صلاحية عليها (مشروع قابل للكتابة / مدير ورش / منشئ)."""
+        ws = env['c2c.workshop'].sudo().browse(int(wid))
+        if not ws.exists():
+            return None
+        if ws.project_id and self._writable_project(env, ws.project_id.id):
+            return ws
+        if env.user.has_group('care2care_workshop.group_workshop_manager'):
+            return ws
+        if (ws.project_manager_id.user_id.id == env.uid) or (ws.create_uid.id == env.uid):
+            return ws
+        return None
+
+    def _workshop_json(self, env, ws):
+        ssel = dict(ws._fields['state'].selection)
+        csel = dict(ws._fields['service_category'].selection)
+        tsel = dict(ws._fields['workshop_type'].selection)
+        rsel = dict(env['c2c.workshop.worker']._fields['rate_type'].selection)
+        return {
+            'id': ws.id, 'name': ws.name, 'title': ws.title,
+            'state': ws.state, 'state_label': ssel.get(ws.state, ws.state),
+            'client': ws.client_id.name or '—',
+            'category': csel.get(ws.service_category, ''),
+            'type': tsel.get(ws.workshop_type, ''),
+            'project': ws.project_id.name or '—',
+            'project_id': ws.project_id.id or None,
+            'site': ws.site_location or '—',
+            'date_start': str(ws.date_start) if ws.date_start else None,
+            'date_end': str(ws.date_end) if ws.date_end else None,
+            'currency': ws.currency_id.name or 'KD',
+            'worker_count': ws.worker_count,
+            # Raw values for editing (the edit form in the app is populated from them)
+            'client_id': ws.client_id.id or None, 'client_name': ws.client_id.name or '',
+            'category_key': ws.service_category, 'type_key': ws.workshop_type,
+            'client_price_raw': ws.client_price,
+            'totals': {
+                'labor': round(ws.total_labor, 3), 'materials': round(ws.total_materials, 3),
+                'cost': round(ws.total_cost, 3), 'client_price': round(ws.client_price, 3),
+                'margin': round(ws.margin, 3),
+            },
+            'workers': [{'name': w.employee_id.name, 'badge': w.employee_id.barcode or None,
+                         'employee_id': w.employee_id.id, 'employee_name': w.employee_id.name,
+                         'rate_type': rsel.get(w.rate_type, w.rate_type), 'rate_type_key': w.rate_type,
+                         'rate': w.rate, 'qty': w.quantity, 'allowance': w.allowance,
+                         'amount': round(w.amount, 3)} for w in ws.worker_line_ids],
+            'materials': [{'name': m.name or (m.product_id.display_name if m.product_id else ''),
+                           'product_id': m.product_id.id or None,
+                           'product_name': m.product_id.display_name or m.name or '',
+                           'qty': m.qty, 'unit_cost': m.unit_cost,
+                           'amount': round(m.amount, 3)} for m in ws.material_line_ids],
+            'can_submit': ws.state == 'draft',
+            'can_edit': ws.state == 'draft',
+            'report': _abs('/api/v1/pms/workshop/%s/report' % ws.id),
+        }
+
+    @route(API + '/pms/project/<int:pid>/workshop/create', type='http', auth='public',
+           methods=['POST'], csrf=False, cors='*')
+    def pms_workshop_create(self, pid, **kw):
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        if 'c2c.workshop' not in env:
+            return _err('وحدة الورش غير مثبّتة', 404)
+        p = self._writable_project(env, pid)
+        if not p:
+            return _err('لا صلاحية على هذا المشروع', 403)
+        from .api import _body
+        b = _body() or {}
+        if not (b.get('title') or '').strip():
+            return _err('العنوان مطلوب', 422)
+        if not b.get('client_id'):
+            return _err('العميل مطلوب', 422)
+        wcmds = []
+        for w in (b.get('workers') or []):
+            if not w.get('employee_id'):
+                continue
+            wcmds.append((0, 0, {'employee_id': int(w['employee_id']),
+                                 'classification': w.get('classification') or '',
+                                 'rate_type': w.get('rate_type') or 'daily',
+                                 'rate': float(w.get('rate') or 0),
+                                 'quantity': float(w.get('quantity') or 0),
+                                 'allowance': float(w.get('allowance') or 0),
+                                 'deduction': float(w.get('deduction') or 0)}))
+        if not wcmds:
+            return _err('أضف عاملاً واحداً على الأقل', 422)
+        Prod = env['product.product'].sudo()
+        mcmds = []
+        for m in (b.get('materials') or []):
+            if not m.get('product_id'):
+                continue
+            prod = Prod.browse(int(m['product_id']))
+            cost = float(m.get('unit_cost') or 0) or prod.standard_price
+            mcmds.append((0, 0, {'product_id': prod.id, 'name': prod.display_name,
+                                 'source': m.get('source') or 'stock',
+                                 'source_ref': m.get('source_ref') or '',
+                                 'qty': float(m.get('qty') or 0), 'unit_cost': cost}))
+        # Equipment + transport + other expenses (identical to the portal entirely)
+        ecmds = []
+        for e in (b.get('equipment') or []):
+            if not (e.get('name') or '').strip():
+                continue
+            ecmds.append((0, 0, {'name': e['name'].strip(), 'ownership': e.get('ownership') or 'own',
+                                 'qty': float(e.get('qty') or 1), 'unit_cost': float(e.get('unit_cost') or 0)}))
+        tcmds = []
+        for t in (b.get('transport') or []):
+            if not (t.get('name') or '').strip():
+                continue
+            tcmds.append((0, 0, {'name': t['name'].strip(), 'description': t.get('description') or '',
+                                 'trips': int(t.get('trips') or 0), 'amount': float(t.get('amount') or 0)}))
+        xcmds = []
+        for x in (b.get('expenses') or []):
+            if not (x.get('name') or '').strip():
+                continue
+            xcmds.append((0, 0, {'name': x['name'].strip(), 'amount': float(x.get('amount') or 0)}))
+        emp = env['hr.employee'].sudo().search([('user_id', '=', env.uid)], limit=1)
+        vals = {
+            'title': b['title'].strip(), 'client_id': int(b['client_id']),
+            'service_category': b.get('service_category') or 'carpet',
+            'workshop_type': b.get('workshop_type') or 'one_time',
+            'pricing_source': 'internal',
+            'client_price': float(b.get('client_price') or 0),
+            'project_id': p.id, 'site_location': b.get('site_location') or False,
+            'date_start': b.get('date_start') or False,
+            'date_end': b.get('date_end') or False,
+            'worker_line_ids': wcmds,
+        }
+        if emp:
+            vals['project_manager_id'] = emp.id
+        if mcmds:
+            vals['material_line_ids'] = mcmds
+        if ecmds:
+            vals['equipment_line_ids'] = ecmds
+        if tcmds:
+            vals['transport_line_ids'] = tcmds
+        if xcmds:
+            vals['expense_line_ids'] = xcmds
+        try:
+            ws = env['c2c.workshop'].sudo().create(vals)
+            if b.get('submit'):
+                ws.action_submit()
+        except Exception as e:
+            return _err(str(e) or 'تعذّر إنشاء الورشة', 422)
+        return _ok(self._workshop_json(env, ws))
+
+    @route(API + '/pms/workshop/<int:wid>', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
+    def pms_workshop_get(self, wid, **kw):
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        ws = self._workshop_scoped(env, wid)
+        if not ws:
+            return _err('غير موجود أو لا صلاحية', 404)
+        return _ok(self._workshop_json(env, ws))
+
+    @route(API + '/pms/workshop/<int:wid>/<string:act>', type='http', auth='public',
+           methods=['POST'], csrf=False, cors='*')
+    def pms_workshop_action(self, wid, act, **kw):
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        ws = self._workshop_scoped(env, wid)
+        if not ws:
+            return _err('غير موجود أو لا صلاحية', 404)
+        try:
+            if act == 'submit':
+                ws.action_submit()
+            else:
+                return _err('إجراء غير معروف', 400)
+        except Exception as e:
+            return _err(str(e) or 'تعذّر التنفيذ', 422)
+        return _ok(self._workshop_json(env, ws))
+
+    @route(API + '/pms/workshop/<int:wid>/update', type='http', auth='public',
+           methods=['POST'], csrf=False, cors='*')
+    def pms_workshop_update(self, wid, **kw):
+        """تعديل ورشة مسودّة قبل الإرسال (رأس + صفوف عمال/مواد)."""
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        ws = self._workshop_scoped(env, wid)
+        if not ws:
+            return _err('غير موجود أو لا صلاحية', 404)
+        if ws.state != 'draft':
+            return _err('لا يمكن تعديل ورشة بعد الإرسال', 422)
+        from .api import _body
+        b = _body() or {}
+        vals = {}
+        if (b.get('title') or '').strip():
+            vals['title'] = b['title'].strip()
+        if b.get('client_id'):
+            vals['client_id'] = int(b['client_id'])
+        for k in ('service_category', 'workshop_type', 'site_location'):
+            if b.get(k) is not None:
+                vals[k] = b[k] or False
+        if b.get('client_price') is not None:
+            vals['client_price'] = float(b.get('client_price') or 0)
+        if 'date_start' in b:
+            vals['date_start'] = b.get('date_start') or False
+        if 'date_end' in b:
+            vals['date_end'] = b.get('date_end') or False
+        if 'workers' in b:
+            wcmds = [(5, 0, 0)]
+            for w in (b.get('workers') or []):
+                if not w.get('employee_id'):
+                    continue
+                wcmds.append((0, 0, {'employee_id': int(w['employee_id']),
+                                     'rate_type': w.get('rate_type') or 'daily',
+                                     'rate': float(w.get('rate') or 0),
+                                     'quantity': float(w.get('quantity') or 0),
+                                     'allowance': float(w.get('allowance') or 0)}))
+            if len(wcmds) == 1:
+                return _err('أضف عاملاً واحداً على الأقل', 422)
+            vals['worker_line_ids'] = wcmds
+        if 'materials' in b:
+            Prod = env['product.product'].sudo()
+            mcmds = [(5, 0, 0)]
+            for m in (b.get('materials') or []):
+                if not m.get('product_id'):
+                    continue
+                prod = Prod.browse(int(m['product_id']))
+                cost = float(m.get('unit_cost') or 0) or prod.standard_price
+                mcmds.append((0, 0, {'product_id': prod.id, 'name': prod.display_name,
+                                     'source': m.get('source') or 'stock',
+                                     'qty': float(m.get('qty') or 0), 'unit_cost': cost}))
+            vals['material_line_ids'] = mcmds
+        try:
+            ws.sudo().write(vals)
+            if b.get('submit'):
+                ws.action_submit()
+        except Exception as e:
+            return _err(str(e) or 'تعذّر حفظ التعديل', 422)
+        return _ok(self._workshop_json(env, ws))
+
+    @route([API + '/pms/workshop/<int:wid>/report', API + '/pms/workshop/<int:wid>/report/pdf'],
+           type='http', auth='public', methods=['GET'], csrf=False, cors='*')
+    def pms_workshop_report(self, wid, **kw):
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        ws = self._workshop_scoped(env, wid)
+        if not ws:
+            return _err('غير موجود أو لا صلاحية', 404)
+        from odoo.http import content_disposition
+        pdf, _ct = env['ir.actions.report'].sudo()._render_qweb_pdf(
+            'care2care_workshop.report_workshop_expense', [ws.id])
+        return request.make_response(pdf, headers=[
+            ('Content-Type', 'application/pdf'),
+            ('Content-Disposition', content_disposition('Workshop-%s.pdf' % (ws.name or wid)))])
 
     @route(API + '/pms/project/<int:pid>/custody/create', type='http', auth='public',
            methods=['POST'], csrf=False, cors='*')
@@ -1769,7 +2528,7 @@ class PmsSectionsApi(Controller):
             'state': e.state, 'state_label': ssel.get(e.state, e.state),
             'is_latest': e.is_latest, 'editable': e.is_latest,
             'has_receipt': bool(e.receipt),
-            'receipt_url': _abs('/api/v1/pms/fuel/%s/receipt' % e.id) if e.receipt else None,
+            'receipt_url': _abs('/api/v1/pms/fuel/%s/receipt' % e.id) + '?s=' + _bsig('fuelrcpt', e.id) if e.receipt else None,
             'report_url': _abs('/api/v1/pms/fuel/%s/report' % e.id),
             'can_confirm': e.state == 'draft',
             'can_draft': e.state == 'confirmed' and e.is_latest,
@@ -1896,8 +2655,10 @@ class PmsSectionsApi(Controller):
 
     @route(API + '/pms/fuel/<int:fid>/receipt', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
     def pms_fuel_receipt(self, fid, **kw):
-        # Token-free image endpoint (same pattern as petty-expense receipts) so it
+        # Signed image endpoint (same pattern as petty-expense receipts) so it
         # renders inline in Image.network without threading an auth header.
+        if not _bsig_ok('fuelrcpt', fid):
+            return request.not_found()
         e = request.env['care.fuel.entry'].sudo().browse(int(fid)).exists()
         if not e or not e.receipt:
             return request.not_found()
@@ -1936,6 +2697,8 @@ class PmsSectionsApi(Controller):
         ts = env['care.timesheet'].sudo().browse(tid).exists()
         if not ts:
             return _err('غير موجود', 404)
+        if not self._pms_scope_ok(env, ts):
+            return _err('غير مصرّح', 403)
         st_lbl = dict(ts._fields['state'].selection) if 'state' in ts._fields else {}
         is_draft = (ts.state == 'draft') if 'state' in ts._fields else False
         has_new = 'adjusted_days' in env['care.timesheet.line']._fields
@@ -1961,7 +2724,7 @@ class PmsSectionsApi(Controller):
                     'adjusted': l.adjusted_days, 'approved': l.approved_days,
                     'diff': l.diff, 'note': l.note or None,
                     'has_doc': bool(l.document),
-                    'doc_url': _abs('/api/v1/pms/timesheet/line/%s/doc' % l.id) if l.document else None,
+                    'doc_url': _abs('/api/v1/pms/timesheet/line/%s/doc' % l.id) + '?s=' + _bsig('tsdoc', l.id) if l.document else None,
                     'line_state': l.line_state, 'line_state_label': lsel.get(l.line_state, l.line_state),
                     'approved_by': l.approved_by.name if l.approved_by else None,
                     # HR may approve/reject; the PM may adjust while pending & not final
@@ -1992,10 +2755,15 @@ class PmsSectionsApi(Controller):
             'report_url': _abs('/api/v1/pms/timesheet/%s/report' % ts.id),
         }
         if has_new:
+            stats = {'العمال': ts.emp_count, 'أيام البصمة': ts.total_biometric,
+                     'المعتمد': ts.total_approved, 'بانتظار': ts.pending_count}
+            if 'completion_rate' in ts._fields:
+                stats['نسبة الاعتماد %'] = round(ts.completion_rate)
             out.update({
-                'period': ts.period_label, 'new_model': True,
-                'stats': {'العمال': ts.emp_count, 'أيام البصمة': ts.total_biometric,
-                          'المعتمد': ts.total_approved, 'بانتظار': ts.pending_count}})
+                'period': ts.period_label, 'new_model': True, 'stats': stats,
+                'manager': (ts.manager_id.name if 'manager_id' in ts._fields and ts.manager_id else None),
+                'project': (ts.project_id.name if 'project_id' in ts._fields and ts.project_id else None),
+            })
         return _ok(out)
 
     @route(API + '/pms/timesheet/line/<int:lid>', type='http', auth='public',
@@ -2010,6 +2778,8 @@ class PmsSectionsApi(Controller):
         if not line:
             return _err('غير موجود', 404)
         ts = line.timesheet_id if 'timesheet_id' in line._fields else None
+        if not (ts and self._pms_scope_ok(env, ts)):
+            return _err('غير مصرّح', 403)
         has_new = 'adjusted_days' in L._fields
         # New model: edit the ADJUSTED value (biometric stays the source of truth),
         # allowed while the line is still pending and the sheet not finalised.
@@ -2070,17 +2840,26 @@ class PmsSectionsApi(Controller):
             if act == 'approve':
                 line.action_approve_line()
             elif act == 'reject':
-                line.action_reject_line()
+                reason = (kw.get('reason') or '').strip()
+                if not reason:
+                    return _err('سبب الرفض إلزامي', 422)
+                if hasattr(line, 'reject_with_reason'):
+                    line.reject_with_reason(reason)
+                else:
+                    line.action_reject_line()
             else:
                 return _err('إجراء غير معروف', 422)
         except Exception as e:
             return _err(str(e) or 'تعذّر التنفيذ', 422)
-        return _ok({'id': line.id, 'line_state': line.line_state, 'approved': line.approved_days})
+        return _ok({'id': line.id, 'line_state': line.line_state, 'approved': line.approved_days,
+                    'reject_reason': (line.reject_reason if 'reject_reason' in line._fields else None)})
 
     @route(API + '/pms/timesheet/line/<int:lid>/doc', type='http', auth='public',
            methods=['GET'], csrf=False, cors='*')
     def pms_timesheet_line_doc(self, lid, **kw):
-        # token-free image endpoint (attachment for a timesheet adjustment)
+        # signed image endpoint (attachment for a timesheet adjustment)
+        if not _bsig_ok('tsdoc', lid):
+            return request.not_found()
         line = request.env['care.timesheet.line'].sudo().browse(int(lid)).exists()
         if not line or not line.document:
             return request.not_found()
@@ -2098,6 +2877,8 @@ class PmsSectionsApi(Controller):
         ts = env['care.timesheet'].sudo().browse(int(tid)).exists()
         if not ts:
             return request.make_response('غير موجود', status=404)
+        if not self._pms_scope_ok(env, ts):
+            return request.make_response('لا صلاحية', status=403)
         try:
             pdf, _t = env['ir.actions.report'].sudo()._render_qweb_pdf(
                 'care_timesheet.report_timesheet_doc', [ts.id])
@@ -2116,6 +2897,8 @@ class PmsSectionsApi(Controller):
         ts = env['care.timesheet'].sudo().browse(tid).exists()
         if not ts:
             return _err('غير موجود', 404)
+        if not self._pms_scope_ok(env, ts):
+            return _err('غير مصرّح', 403)
         from .api import _body
         akey = (_body() or {}).get('action')
         is_hr = bool(env.user.has_group('hr.group_hr_user')
@@ -2142,7 +2925,7 @@ class PmsSectionsApi(Controller):
             return _err(str(e) or 'تعذّر تنفيذ الإجراء', 422)
         return _err('إجراء غير معروف أو غير مسموح', 422)
 
-    # ---- cash custody (العهدة النقدية): request + settle workflow ----------
+    # ---- cash custody: request + settle workflow ----------
     _PETTY_ACTIONS = [
         {'key': 'request', 'method': 'action_request', 'ar': 'تقديم الطلب', 'states': ['draft'], 'style': 'primary'},
         {'key': 'approve', 'method': 'action_approve', 'ar': 'اعتماد', 'states': ['requested'], 'style': 'primary'},
@@ -2236,6 +3019,10 @@ class PmsSectionsApi(Controller):
         rec = env['care.pms.petty.cash'].sudo().browse(cid).exists()
         if not rec:
             return _err('غير موجودة', 404)
+        try:
+            env['care.pms.petty.cash'].browse(cid).check_access_rule('read')
+        except Exception:
+            return _err('غير مصرّح', 403)
         state_lbl = dict(rec._fields['state'].selection)
         expenses = [{'id': e.id, 'name': e.name or e.display_name,
                      'amount': round(e.amount, 3) if 'amount' in e._fields else None,
@@ -2244,7 +3031,7 @@ class PmsSectionsApi(Controller):
                      'note': (e.note or None) if 'note' in e._fields else None,
                      'invoice_number': (e.invoice_number or None) if 'invoice_number' in e._fields else None,
                      'has_receipt': bool(e.attachment) if 'attachment' in e._fields else False,
-                     'receipt': (_abs('/pms/petty-expense/%s/receipt' % e.id)
+                     'receipt': (_abs('/pms/petty-expense/%s/receipt' % e.id) + '?s=' + _bsig('pettyrcpt', e.id)
                                  if 'attachment' in e._fields and e.attachment else None)}
                     for e in rec.expense_ids]
         return _ok({
@@ -2645,6 +3432,8 @@ class PmsSectionsApi(Controller):
     @route('/pms/petty-expense/<int:eid>/receipt', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
     def pms_petty_receipt(self, eid, **kw):
         """Serve a petty-cash expense receipt image/PDF."""
+        if not _bsig_ok('pettyrcpt', eid):
+            return request.not_found()
         import base64
         e = request.env['care.pms.petty.cash.expense'].sudo().browse(int(eid)).exists()
         if not e or not e.attachment:
@@ -2676,6 +3465,8 @@ class PmsSectionsApi(Controller):
     @route('/pms/emp-doc-file/<int:aid>', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
     def pms_emp_doc_file(self, aid, **kw):
         """Serve an employee-document attachment (image or PDF)."""
+        if not _bsig_ok('empdoc', aid):
+            return request.not_found()
         import base64
         a = request.env['ir.attachment'].sudo().browse(int(aid)).exists()
         if not a or a.res_model != 'hr.employee.document' or not a.datas:
@@ -2684,6 +3475,25 @@ class PmsSectionsApi(Controller):
         return request.make_response(raw, headers=[
             ('Content-Type', a.mimetype or 'application/octet-stream'),
             ('Content-Disposition', 'inline; filename="%s"' % (a.name or 'doc'))])
+
+    @route(['/api/v1/pms/emp-file/<int:aid>', '/pms/emp-file/<int:aid>'], type='http', auth='public', methods=['GET'], csrf=False, cors='*')
+    def pms_emp_chatter_file(self, aid, **kw):
+        """خدمة ورقة من شتر العامل (إجازة/عودة/أي مستند) — نفس نمط خدمة مستندات
+        العامل: عامة بمعرّف المرفق مع التأكد أنه على hr.employee (كي يعرضها Image.network
+        في التطبيق بلا توكن)."""
+        if not _bsig_ok('empfile', aid):
+            return request.not_found()
+        import base64
+        a = request.env['ir.attachment'].sudo().browse(int(aid)).exists()
+        if not a or a.res_model != 'hr.employee':
+            return request.not_found()
+        raw = a.raw or (a.datas and base64.b64decode(a.datas)) or b''
+        if not raw:
+            return request.not_found()
+        disp = 'inline' if (a.mimetype or '').startswith(('image/', 'application/pdf')) else 'attachment'
+        return request.make_response(raw, headers=[
+            ('Content-Type', a.mimetype or 'application/octet-stream'),
+            ('Content-Disposition', '%s; filename="%s"' % (disp, (a.name or 'file').replace('"', '')))])
 
     @route('/pms/product/<int:pid>/image', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
     def pms_product_image(self, pid, **kw):
@@ -2745,7 +3555,7 @@ class PmsSectionsApi(Controller):
             summary.append({
                 'id': e.id, 'name': e.name, 'badge': e.barcode or None,
                 'job': e.job_title or None,
-                'image': _abs('/api/v1/pms/employee/%s/photo' % e.id),
+                'image': _abs('/api/v1/pms/employee/%s/photo' % e.id) + '?s=' + _bsig('empphoto', e.id),
                 'present': bool(b), 'days': len(b['days']) if b else 0,
                 'hours': round(b['hours'], 1) if b else 0.0,
             })
@@ -2917,7 +3727,7 @@ class PmsSectionsApi(Controller):
         leaderboard = [{
             'id': b['e'].id, 'name': b['e'].name, 'badge': b['e'].barcode or None,
             'job': b['e'].job_title or None,
-            'image': _abs('/api/v1/pms/employee/%s/photo' % b['e'].id),
+            'image': _abs('/api/v1/pms/employee/%s/photo' % b['e'].id) + '?s=' + _bsig('empphoto', b['e'].id),
             'points': round(b['points'], 1), 'events': b['n'],
             'pos': b['pos'], 'neg': b['neg'],
         } for b in sorted(by_emp.values(), key=lambda x: -x['points'])]
@@ -3229,7 +4039,7 @@ class PmsSectionsApi(Controller):
         return _ok({'id': loan.id, 'name': loan.display_name,
                     'state': loan.state if 'state' in loan._fields else None})
 
-    # ============ WORK SUSPENSION (طلب الإيقاف عن العمل) ============
+    # ============ WORK SUSPENSION (work suspension request) ============
     def _susp_can_approve(self, env):
         return bool(env.user.has_group('hr.group_hr_user')
                     or env.user.has_group('base.group_erp_manager')
@@ -3239,19 +4049,28 @@ class PmsSectionsApi(Controller):
         S = env['care.suspension.request']
         rsel = dict(S._fields['reason'].selection)
         ssel = dict(S._fields['state'].selection)
+        workers = [{
+            'id': l.id, 'employee_id': l.employee_id.id, 'employee': l.employee_id.name,
+            'avatar': _abs('/api/v1/pms/employee/%s/photo' % l.employee_id.id) + '?s=' + _bsig('empphoto', l.employee_id.id),
+            'badge': l.badge or None, 'job': l.job_title or None,
+            'department': l.department_id.name if l.department_id else None,
+            'dept_snapshot': l.dept_snapshot or None,
+            'effective_date': _d(l.effective_date),
+            'reason': l.reason_display, 'status': l.status_display, 'lifted': l.lifted,
+        } for l in r.line_ids]
+        first = r.line_ids[:1].employee_id
         return {
             'id': r.id, 'name': r.name,
-            'employee_id': r.employee_id.id, 'employee': r.employee_id.name,
-            'avatar': _abs('/api/v1/pms/employee/%s/photo' % r.employee_id.id),
-            'badge': r.badge or None, 'job': r.job_title or None,
-            'department': r.department_id.name if r.department_id else None,
+            'workers': workers, 'worker_count': r.worker_count, 'lifted_count': r.lifted_count,
+            # Backward compatibility with old interfaces (first worker)
+            'employee_id': first.id or None, 'employee': first.name or None,
+            'avatar': _abs('/api/v1/pms/employee/%s/photo' % first.id) + '?s=' + _bsig('empphoto', first.id) if first else None,
             'project': r.project_id.name if r.project_id else None,
             'reason': r.reason, 'reason_label': rsel.get(r.reason, r.reason),
+            'use_unified_reason': r.use_unified_reason,
             'other_reason': r.other_reason or None,
-            'date': _d(r.date), 'effective_date': _d(r.effective_date),
-            'note': r.note or None,
-            'wage': r.wage, 'currency': r.currency_id.name if r.currency_id else None,
-            'has_allowance': r.has_allowance, 'allowance_note': r.allowance_note or None,
+            'date': _d(r.date), 'note': r.note or None,
+            'currency': r.currency_id.name if r.currency_id else None,
             'state': r.state, 'state_label': ssel.get(r.state, r.state),
             'requested_by': r.requested_by.name if r.requested_by else None,
             'approved_by': r.approved_by.name if r.approved_by else None,
@@ -3269,8 +4088,9 @@ class PmsSectionsApi(Controller):
         r = env['care.suspension.request'].sudo().browse(int(sid)).exists()
         if not r:
             return None
-        # visible if the worker is in the caller's scope, or the caller may approve
-        if self._susp_can_approve(env) or self._emp_in_scope(env, r.employee_id.id):
+        # visible if any worker is in the caller's scope, or the caller may approve
+        emp_ids = r.line_ids.mapped('employee_id').ids or ([r.employee_id.id] if r.employee_id else [])
+        if self._susp_can_approve(env) or any(self._emp_in_scope(env, e) for e in emp_ids):
             return r
         return None
 
@@ -3298,9 +4118,13 @@ class PmsSectionsApi(Controller):
         b = _body() or {}
         if not b.get('reason'):
             return _err('اختر سبب الإيقاف', 422)
-        vals = {'employee_id': emp.id, 'reason': b['reason'],
+        from odoo import fields as _f
+        line = {'employee_id': emp.id,
+                'effective_date': b.get('effective_date') or _f.Date.today()}
+        vals = {'reason': b['reason'], 'use_unified_reason': True,
                 'other_reason': b.get('other_reason') or False,
-                'note': b.get('note') or False}
+                'note': b.get('note') or False,
+                'line_ids': [(0, 0, line)]}
         if b.get('project_id'):
             vals['project_id'] = int(b['project_id'])
         else:
@@ -3311,8 +4135,6 @@ class PmsSectionsApi(Controller):
                 vals['project_id'] = pj.id
         if b.get('date'):
             vals['date'] = b['date']
-        if b.get('effective_date'):
-            vals['effective_date'] = b['effective_date']
         try:
             rec = env['care.suspension.request'].sudo().create(vals)
             if b.get('submit'):
@@ -3356,14 +4178,131 @@ class PmsSectionsApi(Controller):
             return request.make_response('لا صلاحية', status=403)
         try:
             pdf, _t = env['ir.actions.report'].sudo()._render_qweb_pdf(
-                'care_suspension.report_suspension_doc', [r.id])
+                'care_suspension.report_suspension', [r.id])
         except Exception as e:
             return request.make_response(str(e), status=500)
         return request.make_response(pdf, headers=[
             ('Content-Type', 'application/pdf'),
             ('Content-Disposition', 'inline; filename="suspension-%s.pdf"' % sid)])
 
-    # ============ REQUEST ITEMS (طلب الأصناف) ============
+    # ============ RESUME WORK (resuming work after a stoppage) ============
+    def _resume_json(self, env, r):
+        R = env['care.resume.request']
+        ssel = dict(R._fields['state'].selection)
+        workers = [{
+            'id': l.id, 'employee_id': l.employee_id.id, 'employee': l.employee_id.name,
+            'avatar': _abs('/api/v1/pms/employee/%s/photo' % l.employee_id.id) + '?s=' + _bsig('empphoto', l.employee_id.id),
+            'badge': l.badge or None, 'job': l.job_title or None,
+            'suspension_ref': l.suspension_ref or None, 'suspension_date': _d(l.suspension_date),
+            'suspension_reason': l.suspension_reason or None, 'duration_days': l.duration_days,
+            'last_project': l.last_project or None, 'last_working_day': _d(l.last_working_day),
+            'return_date': _d(l.return_date),
+            'return_department': l.return_department_id.display_name if l.return_department_id else None,
+            'status': l.status_display, 'resumed': l.resumed,
+        } for l in r.line_ids]
+        first = r.line_ids[:1].employee_id
+        return {
+            'id': r.id, 'name': r.name, 'workers': workers,
+            'worker_count': r.worker_count, 'resumed_count': r.resumed_count,
+            'employee': first.name or None, 'employee_id': first.id or None,
+            'date': _d(r.date), 'note': r.note or None,
+            'state': r.state, 'state_label': ssel.get(r.state, r.state),
+            'requested_by': r.requested_by.name if r.requested_by else None,
+            'approved_by': r.approved_by.name if r.approved_by else None,
+            'approval_date': _d(r.approval_date) if r.approval_date else None,
+            'can_submit': r.state == 'draft',
+            'can_approve': r.state == 'submitted' and self._susp_can_approve(env),
+            'can_reject': r.state == 'submitted' and self._susp_can_approve(env),
+            'report_url': _abs('/api/v1/pms/resume/%s/report' % r.id),
+        }
+
+    def _resume_scoped(self, env, rid):
+        if 'care.resume.request' not in env:
+            return None
+        r = env['care.resume.request'].sudo().browse(int(rid)).exists()
+        if not r:
+            return None
+        emp_ids = r.line_ids.mapped('employee_id').ids
+        if self._susp_can_approve(env) or any(self._emp_in_scope(env, e) for e in emp_ids):
+            return r
+        return None
+
+    @route(API + '/pms/employee/<int:eid>/resume-create', type='http', auth='public', methods=['POST'], csrf=False, cors='*')
+    def pms_resume_create(self, eid, **kw):
+        """طلب مباشرة عمل لعاملٍ موقوف من ملفه بالتطبيق."""
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        if 'care.resume.request' not in env:
+            return _err('وحدة مباشرة العمل غير مثبّتة', 404)
+        emp = self._emp_viewable(env, eid)
+        if not emp:
+            return _err('هذا الموظف ليس ضمن مشاريعك', 403)
+        if emp.worker_status != 'suspended':
+            return _err('العامل ليس موقوفاً', 422)
+        from .api import _body
+        from odoo import fields as _f
+        b = _body() or {}
+        dept = b.get('return_department_id')
+        if not dept:
+            sus = emp.active_suspension_line_id if 'active_suspension_line_id' in emp._fields else False
+            dept = (sus.dept_snapshot_id.id if sus and sus.dept_snapshot_id else emp.department_id.id) or None
+        if not dept:
+            return _err('حدّد الإدارة/المشروع عند العودة', 422)
+        try:
+            rec = env['care.resume.request'].sudo().create({
+                'note': b.get('note') or False,
+                'line_ids': [(0, 0, {'employee_id': emp.id, 'return_department_id': int(dept),
+                                     'return_date': b.get('return_date') or _f.Date.today()})]})
+            rec.line_ids._onchange_employee_id()
+            if b.get('submit', True):
+                rec.action_submit()
+        except Exception as e:
+            return _err(str(e) or 'تعذّر إنشاء الطلب', 422)
+        return _ok(self._resume_json(env, rec))
+
+    @route(API + '/pms/resume/<int:rid>', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
+    def pms_resume_get(self, rid, **kw):
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        r = self._resume_scoped(env, rid)
+        return _ok(self._resume_json(env, r)) if r else _err('غير موجود', 404)
+
+    @route(API + '/pms/resume/<int:rid>/<string:act>', type='http', auth='public', methods=['POST'], csrf=False, cors='*')
+    def pms_resume_action(self, rid, act, **kw):
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        r = self._resume_scoped(env, rid)
+        if not r:
+            return _err('غير موجود أو لا صلاحية', 404)
+        if act in ('approve', 'reject') and not self._susp_can_approve(env):
+            return _err('الاعتماد من صلاحية الموارد البشرية فقط', 403)
+        try:
+            {'submit': r.action_submit, 'approve': r.action_approve,
+             'reject': r.action_reject, 'reset': r.action_reset}.get(act, lambda: None)()
+        except Exception as e:
+            return _err(str(e) or 'تعذّر تنفيذ الإجراء', 422)
+        return _ok(self._resume_json(env, r))
+
+    @route([API + '/pms/resume/<int:rid>/report', '/pms/resume/<int:rid>/report'], type='http', auth='public', methods=['GET'], csrf=False, cors='*')
+    def pms_resume_report(self, rid, token=None, **kw):
+        env = _auth()
+        if not env:
+            return request.not_found()
+        r = self._resume_scoped(env, rid)
+        if not r:
+            return request.make_response('لا صلاحية', status=403)
+        try:
+            pdf, _t = env['ir.actions.report'].sudo()._render_qweb_pdf('care_suspension.report_resume', [r.id])
+        except Exception as e:
+            return request.make_response(str(e), status=500)
+        return request.make_response(pdf, headers=[
+            ('Content-Type', 'application/pdf'),
+            ('Content-Disposition', 'inline; filename="resume-%s.pdf"' % rid)])
+
+    # ============ REQUEST ITEMS (item request) ============
     def _item_can_approve(self, env):
         return bool(env.user.has_group('care_item_request.group_item_manager')
                     if 'care.item.request' in env else False) or bool(
@@ -3391,7 +4330,7 @@ class PmsSectionsApi(Controller):
                        'unit_price': round(l.unit_price or 0.0, 3),
                        'subtotal': round(l.subtotal or 0.0, 3)} for l in r.line_ids],
             'total_qty': round(r.total_qty, 1), 'line_count': r.line_count,
-            # التكلفة والميزانية الشهرية
+            # Cost and monthly budget
             'estimated_cost': round(r.estimated_cost or 0.0, 3),
             'currency': r.currency_id.symbol or r.currency_id.name or 'د.ك' if r.currency_id else 'د.ك',
             'cost_center': r.cost_center_id.name if r.cost_center_id else None,
@@ -3483,7 +4422,7 @@ class PmsSectionsApi(Controller):
             elif act == 'reset':
                 r.action_reset()
             elif act == 'duplicate':
-                # نسخ طلب سابق كمسودّة جديدة قابلة للتعديل
+                # Copy a previous request as a new editable draft
                 new = r.copy({'state': 'draft', 'name': '/', 'supply_id': False,
                               'approved_by': False, 'approval_date': False,
                               'reject_reason': False})
@@ -3511,7 +4450,7 @@ class PmsSectionsApi(Controller):
         p = self._writable_project(env, pid)
         if not p:
             return _err('لا صلاحية على هذا المشروع', 403)
-        # نستخدم طلباً مؤقتاً (بدون حفظ) لإعادة استخدام منطق الحساب في الموديل
+        # We use a temporary request (without saving) to reuse the calculation logic in the model
         tmp = env['care.item.request'].sudo().new({'project_id': p.id})
         tmp._compute_cost_center()
         tmp._compute_budget()
@@ -3543,7 +4482,7 @@ class PmsSectionsApi(Controller):
             ('Content-Type', 'application/pdf'),
             ('Content-Disposition', 'inline; filename="item-request-%s.pdf"' % rid)])
 
-    # ============ MANPOWER REQUISITION (طلب قوى عاملة) ============
+    # ============ MANPOWER REQUISITION (manpower request) ============
     def _mp_can_approve(self, env):
         return bool(env.user.has_group('hr.group_hr_user')
                     or env.user.has_group('base.group_erp_manager')
@@ -3707,7 +4646,7 @@ class PmsSectionsApi(Controller):
             ('Content-Type', 'application/pdf'),
             ('Content-Disposition', 'inline; filename="manpower-%s.pdf"' % rid)])
 
-    # ============ PROJECT PERMITS (التصاريح) ============
+    # ============ PROJECT PERMITS (permits) ============
     def _permit_json(self, env, r):
         M = env['care.project.permit']
         tsel = dict(M._fields['permit_type'].selection)
@@ -3725,7 +4664,7 @@ class PmsSectionsApi(Controller):
             'state': r.state, 'state_label': ssel.get(r.state, r.state),
             'note': r.note or None,
             'has_attachment': bool(r.attachment),
-            'attachment_url': _abs('/api/v1/pms/permit/%s/attachment' % r.id) if r.attachment else None,
+            'attachment_url': _abs('/api/v1/pms/permit/%s/attachment' % r.id) + '?s=' + _bsig('permitatt', r.id) if r.attachment else None,
             'report_url': _abs('/api/v1/pms/permit/%s/report' % r.id),
             'can_activate': r.state != 'active',
             'can_renew': r.state == 'active',
@@ -3816,7 +4755,9 @@ class PmsSectionsApi(Controller):
 
     @route(API + '/pms/permit/<int:rid>/attachment', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
     def pms_permit_attachment(self, rid, **kw):
-        # token-free image endpoint (same pattern as fuel receipts)
+        # signed image endpoint (same pattern as fuel receipts)
+        if not _bsig_ok('permitatt', rid):
+            return request.not_found()
         r = request.env['care.project.permit'].sudo().browse(int(rid)).exists()
         if not r or not r.attachment:
             return request.not_found()
@@ -3842,7 +4783,7 @@ class PmsSectionsApi(Controller):
             ('Content-Type', 'application/pdf'),
             ('Content-Disposition', 'inline; filename="permit-%s.pdf"' % rid)])
 
-    # ============ SAVED FILTERS (قوائم محفوظة) ============
+    # ============ SAVED FILTERS (saved lists) ============
     @route(API + '/pms/saved-filters', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
     def pms_saved_filters(self, project_id=None, section=None, **kw):
         env = _auth()
@@ -3957,6 +4898,9 @@ class PmsSectionsApi(Controller):
         try:
             rec = env[model].browse(int(id))
             rec.check_access_rule('read')
+            rep = env['ir.actions.report'].sudo().search([('report_name', '=', report)], limit=1)
+            if not rep or rep.model != model:
+                return request.not_found()
             pdf, _t = env['ir.actions.report'].sudo()._render_qweb_pdf(report, [rec.id])
         except Exception as e:
             return request.make_response(str(e), status=500)
@@ -4267,6 +5211,63 @@ class PmsSectionsApi(Controller):
         my_depts = env['project.project'].search([]).mapped('pms_department_id')
         return emp if emp.department_id and emp.department_id.id in my_depts.ids else None
 
+    def _emp_viewable(self, env, eid):
+        """أوسع من _emp_in_scope: للعرض فقط (لا للكتابة). يشمل عاملاً محلّ «طلب نقل/
+        تكليف» يخصّ المدير — كي يظهر عامل قادم من مشروع آخر في سياق النقل. لا يُستخدم
+        في مسارات الإنشاء (إجازة/سلفة/…) التي تبقى على _emp_in_scope الصارم."""
+        emp = self._emp_in_scope(env, eid)
+        if emp:
+            return emp
+        cand = env['hr.employee'].sudo().browse(int(eid))
+        if not cand.exists() or 'employee.shift.request' not in env:
+            return None
+        my_depts = env['project.project'].search([]).mapped('pms_department_id')
+        u = env.user
+        req = env['employee.shift.request'].sudo().search([
+            ('employee_id', '=', cand.id),
+            '|', '|', '|', '|', '|',
+            ('new_department', 'in', my_depts.ids),
+            ('current_department', 'in', my_depts.ids),
+            ('approver_1', '=', u.id), ('approver_2', '=', u.id),
+            ('approver_3', '=', u.id), ('create_uid', '=', u.id),
+        ], limit=1)
+        return cand if req else None
+
+    @route(API + '/pms/employee/<int:eid>/sizes', type='http', auth='public', methods=['POST'], csrf=False, cors='*')
+    def pms_employee_sizes_save(self, eid, **kw):
+        """تحديث مقاسات الزي والقياسات للعامل من التطبيق (مدير المشروع).
+        الكتابة تختم «مَن/متى» تلقائياً عبر write على hr.employee."""
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        emp = self._emp_in_scope(env, eid)
+        if not emp:
+            return _err('هذا الموظف ليس ضمن مشاريعك', 403)
+        from .api import _body
+        b = _body() or {}
+        vals = {}
+        for f in ('uniform_top_size', 'uniform_bottom_size', 'shoe_size',
+                  'cap_size', 'uniform_size_note'):
+            if f in b:
+                vals[f] = (str(b.get(f) or '').strip()) or False
+        for f in ('body_weight', 'body_height'):
+            if f in b:
+                try:
+                    vals[f] = float(b.get(f) or 0) or 0.0
+                except (TypeError, ValueError):
+                    vals[f] = 0.0
+        if not vals:
+            return _err('لا توجد بيانات للحفظ', 422)
+        try:
+            emp.sudo().write(vals)
+        except Exception as e:
+            return _err(str(e) or 'تعذّر الحفظ', 422)
+        return _ok({
+            'saved': True,
+            'updated_by': emp.uniform_size_updated_by.name if emp.uniform_size_updated_by else None,
+            'updated_at': str(emp.uniform_size_update_date) if emp.uniform_size_update_date else None,
+        })
+
     @route(API + '/pms/employee/<int:eid>/file', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
     def pms_employee_file(self, eid, **kw):
         """The employee file a PM sees on the portal: identity, contract wage,
@@ -4275,9 +5276,9 @@ class PmsSectionsApi(Controller):
         env = _auth()
         if not env:
             return _err('غير مصرّح', 401)
-        emp = self._emp_in_scope(env, eid)
+        emp = self._emp_viewable(env, eid)   # A lenient view that includes transfer-request workers
         _mgr_view = bool(emp)   # a manager viewing a worker (vs. self-view)
-        # Everyone may open their OWN file (بياناتي) even when not a manager.
+        # Everyone may open their OWN file (My Data) even when not a manager.
         if not emp:
             own = env.user.employee_id if 'employee_id' in env.user._fields else None
             if own and own.id == int(eid):
@@ -4304,6 +5305,9 @@ class PmsSectionsApi(Controller):
                     sel = dict(r._fields['state'].selection)
                     d['state'] = r.state
                     d['state_label'] = sel.get(r.state, r.state)
+                    d['editable'] = r.state in ('draft', 'new', False, None)
+                else:
+                    d['editable'] = True
                 for f in (extra or []):
                     if f in r._fields:
                         v = r[f]
@@ -4314,9 +5318,9 @@ class PmsSectionsApi(Controller):
         from odoo import fields as of
         today = of.Date.today()
         compliance = []
-        for fld, lbl in (('residency_end_date', 'الإقامة'), ('affairs_permit_end_date', 'إذن الشؤون'),
-                         ('visa_expire', 'التأشيرة'), ('work_permit_expiration_date', 'تصريح العمل'),
-                         ('passport_expiry_date', 'الجواز')):
+        for fld, lbl in (('residency_end_date', 'Residency'), ('affairs_permit_end_date', 'Affairs permission'),
+                         ('visa_expire', 'Visa'), ('work_permit_expiration_date', 'Work permit'),
+                         ('passport_expiry_date', 'Passport')):
             if fld in emp._fields and emp[fld]:
                 compliance.append({'label': lbl, 'date': str(emp[fld]),
                                    'days': (emp[fld] - today).days})
@@ -4369,29 +5373,61 @@ class PmsSectionsApi(Controller):
                 details.append({'title': title, 'fields': rows})
 
         _grp('معلومات العمل', [
-            ('job_title', 'المسمى الوظيفي'), ('department_id', 'الإدارة'),
-            ('work_department', 'القسم'), ('employee_type', 'نوع التوظيف'),
-            ('worker_status', 'حالة العامل'), ('parent_id', 'المدير المباشر'),
-            ('coach_id', 'المشرف'), ('work_phone', 'هاتف العمل'),
-            ('mobile_phone', 'الجوال'), ('work_email', 'البريد'),
-            ('cafm_workorder_count', 'أوامر العمل')])
+            ('job_title', 'Job title'), ('department_id', 'Department'),
+            ('work_department', 'Department'), ('employee_type', 'Employment type'),
+            ('worker_status', 'Worker status'), ('parent_id', 'Direct manager'),
+            ('coach_id', 'Supervisor'), ('work_phone', 'Work phone'),
+            ('mobile_phone', 'Mobile'), ('work_email', 'Email'),
+            ('cafm_workorder_count', 'Work orders')])
         _grp('الهوية والإقامة', [
-            ('barcode', 'رقم البادج'), ('civil_code', 'الرقم المدني'),
-            ('identification_id', 'رقم التعريف'),
-            ('residency_type', 'نوع الإقامة'), ('residency_start_date', 'بداية الإقامة'),
-            ('residency_end_date', 'نهاية الإقامة'), ('work_permit_name', 'تصريح العمل'),
-            ('passport_no', 'رقم الجواز'), ('passport_type', 'نوع الجواز'),
-            ('passport_status', 'حالة الجواز')])
+            ('barcode', 'Badge number'), ('civil_code', 'Civil ID'),
+            ('identification_id', 'Identification number'),
+            ('residency_type', 'Residency type'), ('residency_start_date', 'Residency start'),
+            ('residency_end_date', 'Residency end'), ('work_permit_name', 'Work permit'),
+            ('passport_no', 'Passport number'), ('passport_type', 'Passport type'),
+            ('passport_status', 'Passport status')])
         _grp('معلومات شخصية', [
-            ('country_id', 'الجنسية'), ('gender', 'الجنس'),
-            ('marital', 'الحالة الاجتماعية'), ('birthday', 'تاريخ الميلاد')])
+            ('country_id', 'Nationality'), ('gender', 'Gender'),
+            ('marital', 'Marital status'), ('birthday', 'Date of birth')])
         _grp('الإجازات', [
-            ('remaining_leaves', 'رصيد الإجازات'), ('leaves_count', 'إجازات مأخوذة')])
+            ('remaining_leaves', 'Leave balance'), ('leaves_count', 'Leaves taken')])
         _grp('السكن', [
-            ('is_company_accommodation', 'سكن الشركة'),
-            ('housing_hostel_id', 'الهوستل'), ('hostel_id', 'المبنى'),
-            ('housing_floor_id', 'الطابق'), ('room_id', 'الغرفة'),
-            ('bed_id', 'السرير')])
+            ('is_company_accommodation', 'Company accommodation'),
+            ('housing_hostel_id', 'Hostel'), ('hostel_id', 'Building'),
+            ('housing_floor_id', 'Floor'), ('room_id', 'Room'),
+            ('bed_id', 'Bed')])
+        _grp('مقاسات الزي والقياسات', [
+            ('uniform_top_size', 'Top size'), ('uniform_bottom_size', 'Trousers size'),
+            ('shoe_size', 'Shoe size'), ('cap_size', 'Cap size'),
+            ('body_weight', 'Weight (kg)'), ('body_height', 'Height (cm)'),
+            ('uniform_size_note', 'Size notes')])
+
+        # ===== Editable sizes card (PM can update from the app) =====
+        def _selopts(fname):
+            f = emp._fields.get(fname)
+            return [{'value': o[0], 'label': o[1]} for o in (f.selection if f else [])]
+        _sz_age = emp.uniform_size_age_days if 'uniform_size_age_days' in emp._fields else -1
+        sizes_block = {
+            'can_edit': _mgr_view,
+            'values': {
+                'uniform_top_size': emp.uniform_top_size or '',
+                'uniform_bottom_size': emp.uniform_bottom_size or '',
+                'shoe_size': emp.shoe_size or '',
+                'cap_size': emp.cap_size or '',
+                'body_weight': emp.body_weight or 0.0,
+                'body_height': emp.body_height or 0.0,
+                'uniform_size_note': emp.uniform_size_note or '',
+            },
+            'options': {
+                'uniform_top_size': _selopts('uniform_top_size'),
+                'uniform_bottom_size': _selopts('uniform_bottom_size'),
+                'shoe_size': _selopts('shoe_size'),
+                'cap_size': _selopts('cap_size'),
+            },
+            'updated_by': emp.uniform_size_updated_by.name if emp.uniform_size_updated_by else None,
+            'updated_at': str(emp.uniform_size_update_date) if emp.uniform_size_update_date else None,
+            'age_days': _sz_age if _sz_age is not None and _sz_age >= 0 else None,
+        }
 
         # ============ RICH PROFILE SECTIONS (all best-effort/guarded) ============
         # -- tags --
@@ -4409,14 +5445,15 @@ class PmsSectionsApi(Controller):
         if ws:
             wl = (wsel.get(ws) or ws)
             low = ('%s %s' % (ws, wl)).lower()
-            color = '#6B7280'
+            color, icon = '#6B7280', 'badge'
             if 'abscond' in low or 'هروب' in low or 'هارب' in low:
                 color = '#B91C1C'
-            elif 'suspend' in low or 'موقوف' in low or 'stop' in low:
-                color = '#D97706'
+            elif ws == 'suspended' or 'suspend' in low or 'موقوف' in low or 'stop' in low:
+                # Suspended from work -- a prominent bilingual red badge on all surfaces
+                color, icon, wl = '#DC2626', 'block', 'موقوف · Suspended'
             elif 'active' in low or 'يعمل' in low or 'on_job' in low:
                 color = '#16A34A'
-            marks.append({'key': 'worker_status', 'label': wl, 'icon': 'badge', 'color': color})
+            marks.append({'key': 'worker_status', 'label': wl, 'icon': icon, 'color': color})
 
         # -- leaves + return status --
         leaves = []
@@ -4439,12 +5476,20 @@ class PmsSectionsApi(Controller):
         if 'employee.shift.request' in env:
             for t in env['employee.shift.request'].sudo().search([('employee_id', '=', emp.id)], order='id desc', limit=30):
                 sl = dict(t._fields['state']._description_selection(env)) if 'state' in t._fields else {}
+                # Transfer type: permanent or additional assignment (work in another department/project with my salary counted)
+                stype = t.shift_type if 'shift_type' in t._fields else 'permanent'
+                is_additional = stype == 'additional'
                 transfers.append({
                     'id': t.id, 'from': (t.current_department.name if getattr(t, 'current_department', False) else None),
                     'to': (t.new_department.name if getattr(t, 'new_department', False) else None),
                     'date': _d(t.date) if 'date' in t._fields else None,
                     'state': t.state if 'state' in t._fields else None,
                     'state_label': sl.get(t.state) if 'state' in t._fields else None,
+                    'shift_type': stype,
+                    'shift_type_label': ('تكليف إضافي' if is_additional else 'نقل دائم'),
+                    'additional_project': (t.additional_project_id.name if (is_additional and getattr(t, 'additional_project_id', False)) else None),
+                    'additional_amount': (t.additional_amount if (is_additional and 'additional_amount' in t._fields) else None),
+                    'additional_recurring': (bool(t.additional_recurring) if (is_additional and 'additional_recurring' in t._fields) else False),
                 })
 
         # -- uniform --
@@ -4506,7 +5551,7 @@ class PmsSectionsApi(Controller):
         documents = []
         if 'hr.employee.document' in env:
             for dc in env['hr.employee.document'].sudo().search([('employee_ref_id', '=', emp.id)], limit=40):
-                imgs = [_abs('/api/v1/pms/emp-doc-file/%s' % a.id) for a in dc.doc_attachment_ids] if 'doc_attachment_ids' in dc._fields else []
+                imgs = [_abs('/api/v1/pms/emp-doc-file/%s' % a.id) + '?s=' + _bsig('empdoc', a.id) for a in dc.doc_attachment_ids] if 'doc_attachment_ids' in dc._fields else []
                 exp = dc.expiry_date if 'expiry_date' in dc._fields else None
                 documents.append({
                     'id': dc.id, 'type': dc.document_type_id.name if dc.document_type_id else None,
@@ -4569,10 +5614,23 @@ class PmsSectionsApi(Controller):
                     'reason': rsel.get(s.reason, s.reason),
                     'date': _d(s.date), 'state': s.state,
                     'state_label': ssel.get(s.state, s.state),
-                    'has_allowance': s.has_allowance,
+                    'has_allowance': s.has_allowance if 'has_allowance' in s._fields else False,
                     'open': 'suspension',
                 })
             _suspension_block = {'available': True, 'can_create': _mgr_view, 'rows': srows}
+
+        # -- all papers attached in the worker's file (leaves/returns/any document) --
+        attachments = []
+        for a in env['ir.attachment'].sudo().search(
+                [('res_model', '=', 'hr.employee'), ('res_id', '=', emp.id)],
+                order='id desc', limit=200):
+            mt = a.mimetype or ''
+            kind = 'pdf' if 'pdf' in mt else ('image' if mt.startswith('image/') else 'file')
+            attachments.append({
+                'id': a.id, 'name': a.name or 'ملف', 'mimetype': mt, 'kind': kind,
+                'date': _d(a.create_date) if a.create_date else None,
+                'url': _abs('/api/v1/pms/emp-file/%s' % a.id) + '?s=' + _bsig('empfile', a.id),
+            })
 
         return _ok({
             'employee': {
@@ -4580,7 +5638,7 @@ class PmsSectionsApi(Controller):
                 'department': emp.department_id.name or None,
                 'manager': emp.parent_id.name or None,
                 'badge': emp.barcode or None,
-                # "المدني" is the dedicated Civil Code field, not Identification No.
+                # "Civil" is the dedicated Civil Code field, not Identification No.
                 'civil': (emp.civil_code if 'civil_code' in emp._fields and emp.civil_code
                           else (emp.identification_id if 'identification_id' in emp._fields else None)),
                 'residency_end': str(emp.residency_end_date) if 'residency_end_date' in emp._fields and emp.residency_end_date else None,
@@ -4588,12 +5646,13 @@ class PmsSectionsApi(Controller):
                 'mobile': emp.mobile_phone or None,
                 'email': emp.work_email or None,
                 'nationality': emp.country_id.name or None,
-                'photo': _abs('/api/v1/pms/employee/%s/photo' % emp.id),
+                'photo': _abs('/api/v1/pms/employee/%s/photo' % emp.id) + '?s=' + _bsig('empphoto', emp.id),
                 'duty': _duty, 'duty_label': _duty_lbl,
                 'wage': round(emp.contract_id.wage, 3) if emp.contract_id else None,
                 'tags': tags, 'marks': marks, 'on_leave': on_leave,
             },
             'details': details,
+            'sizes': sizes_block,
             'compliance': sorted(compliance, key=lambda c: c['days']),
             'docs': _rows('care.pms.doc.request'),
             'loans': _rows('hr.loan', ['loan_amount', 'balance_amount', 'total_amount']) + _rows('care.loan', ['amount']),
@@ -4603,6 +5662,19 @@ class PmsSectionsApi(Controller):
             'eos': _rows('care.eos', ['last_working_day']),
             'permissions': _rows('permission.request', ['permission_hours']),
             'custody': _rows('care.custody', ['issue_date']),
+            # ===== Worker procedures (prior records for the app tiles) =====
+            'return': _rows('hr.action.leave.return', ['start_work_date']),
+            'joining': _rows('hr.action.joining', ['join_date']),
+            'absence': _rows('hr.action.absence'),
+            'passport_req': _rows('care.passport.request', ['request_date']),
+            'absconding': _rows('care.absconding.report', ['start_date']),
+            'bankcard': _rows('care.bank.card.request', ['request_date']),
+            'clearance': _rows('hr.action.clearance'),
+            'worker_doc': _rows('care.worker.document'),
+            'resignation': _rows('hr.employee.resignation', ['leave_date']),
+            'resign_withdraw': _rows('care.resignation.withdrawal', ['request_date']),
+            'eos_withdraw': _rows('care.eos.withdrawal', ['request_date']),
+            'exit_iv': _rows('exit.interview', ['date']),
             'attendance': [{
                 'id': a.id, 'date': str(a.check_in)[:10] if a.check_in else None,
                 'check_in': _d(a.check_in), 'check_out': _d(a.check_out),
@@ -4615,6 +5687,78 @@ class PmsSectionsApi(Controller):
             'violations': violations, 'documents': documents,
             'payslips': payslips, 'devices': devices, 'legal': legal,
             'suspension': _suspension_block,
+            'attachments': attachments,
+        })
+
+    # ============ Worker records (aggregated at the manager's projects level + period filter + statistics) ============
+    # Matches the portal screen /my/pm/worker-records: each request type has a counter that changes with the period,
+    # and a list of all records in that period across all worker procedure types.
+    @route(API + '/pms/worker-records', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
+    def pms_worker_records(self, **kw):
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        from odoo import fields as of
+        from datetime import timedelta
+        # The same procedures structure used in the portal (safe lazy import)
+        from odoo.addons.care2care_workshop.controllers.portal import WORKER_PROCS
+
+        today = of.Date.today()
+
+        def _pd(s, default):
+            try:
+                return of.Date.to_date(s) or default
+            except Exception:
+                return default
+        df = _pd(kw.get('date_from'), today - timedelta(days=30))
+        dt = _pd(kw.get('date_to'), today)
+        if df > dt:
+            df, dt = dt, df
+        dstart, dend = str(df) + ' 00:00:00', str(dt) + ' 23:59:59'
+
+        # Worker scope = the departments of the user's projects (already restricted by record rules).
+        # A PMS manager/supervisor sees all projects => all departments => all workers, without a manual group check.
+        depts = env['project.project'].search([]).mapped('pms_department_id')
+        emp_ids = (env['hr.employee'].sudo().search([('department_id', 'child_of', depts.ids)]).ids
+                   if depts else [])
+
+        procs = [p for p in WORKER_PROCS if p['model'] in env]
+        stats, rows, total = [], [], 0
+        for p in procs:
+            M = env[p['model']].sudo()
+            efield = p['emp']
+            if efield not in M._fields:
+                continue
+            dom = [(efield, 'in', emp_ids),
+                   ('create_date', '>=', dstart), ('create_date', '<=', dend)]
+            cnt = M.search_count(dom)
+            stats.append({'key': p['key'], 'label': p['label'], 'icon': p['icon'], 'count': cnt})
+            total += cnt
+            # State labels (selection) if present
+            ssel = {}
+            try:
+                if 'state' in M._fields and M._fields['state'].type == 'selection':
+                    ssel = dict(M._fields['state']._description_selection(env))
+            except Exception:
+                ssel = {}
+            for r in M.search(dom, order='id desc', limit=80):
+                emp = r[efield] if efield in r._fields else False
+                st = getattr(r, 'state', '') or ''
+                rows.append({
+                    'proc_key': p['key'], 'proc_label': p['label'], 'icon': p['icon'],
+                    'id': r.id, 'model': p['model'],
+                    'emp': emp.name if emp else '—',
+                    'emp_id': emp.id if emp else None,
+                    'ref': r.display_name,
+                    'date': str(r.create_date or '')[:10],
+                    'state': st, 'state_label': ssel.get(st, st) if st else '',
+                })
+        rows.sort(key=lambda x: x['id'], reverse=True)
+        rows = rows[:250]
+        return _ok({
+            'date_from': str(df), 'date_to': str(dt),
+            'stats': stats, 'total': total, 'rows': rows,
+            'worker_count': len(emp_ids),
         })
 
     @route(API + '/pms/vehicle/<int:vid>/file', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
@@ -4671,15 +5815,15 @@ class PmsSectionsApi(Controller):
                 vdetails.append({'title': title, 'fields': rows})
 
         _vgrp('بيانات المركبة', [
-            ('brand_id', 'الماركة'), ('model_id', 'الطراز'), ('model_year', 'سنة الصنع'),
-            ('vehicle_type', 'النوع'), ('category_id', 'الفئة'), ('color', 'اللون'),
-            ('fuel_type', 'نوع الوقود')])
+            ('brand_id', 'Brand'), ('model_id', 'Model'), ('model_year', 'Manufacture year'),
+            ('vehicle_type', 'Type'), ('category_id', 'Category'), ('color', 'Color'),
+            ('fuel_type', 'Fuel type')])
         _vgrp('التشغيل', [
-            ('odometer', 'العدّاد'), ('driver_id', 'السائق'), ('manager_id', 'المسؤول'),
-            ('department_id', 'الإدارة'), ('location', 'الموقع'), ('state_id', 'الحالة')])
+            ('odometer', 'Counter'), ('driver_id', 'Driver'), ('manager_id', 'Responsible'),
+            ('department_id', 'Department'), ('location', 'Location'), ('state_id', 'Status')])
         _vgrp('السجل', [
-            ('license_plate', 'رقم اللوحة'), ('acquisition_date', 'تاريخ الاقتناء'),
-            ('first_contract_date', 'أول عقد'), ('service_count', 'عدد الخدمات')])
+            ('license_plate', 'Plate number'), ('acquisition_date', 'Acquisition date'),
+            ('first_contract_date', 'First contract'), ('service_count', 'Services count')])
 
         return _ok({
             'vehicle': {
@@ -4699,6 +5843,8 @@ class PmsSectionsApi(Controller):
 
     @route(API + '/pms/employee/<int:eid>/photo', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
     def pms_emp_photo(self, eid, **kw):
+        if not _bsig_ok('empphoto', eid):
+            return request.not_found()
         import base64
         e = request.env['hr.employee'].sudo().browse(int(eid)).exists()
         data = (e.image_256 or e.image_1920) if e else None
@@ -4714,6 +5860,8 @@ class PmsSectionsApi(Controller):
     def pms_task_photo(self, aid, **kw):
         """Serve a task's image attachment (token-free, but strictly limited to
         image attachments that live on a project.task)."""
+        if not _bsig_ok('taskphoto', aid):
+            return request.not_found()
         import base64
         a = request.env['ir.attachment'].sudo().browse(int(aid)).exists()
         raw = None
@@ -4732,3 +5880,557 @@ class PmsSectionsApi(Controller):
         return request.make_response(raw, headers=[
             ('Content-Type', ctype), ('Content-Length', str(len(raw))),
             ('Cache-Control', 'private, max-age=3600')])
+
+    # ============ PENALTY & BONUS (penalties and bonuses) ============
+    def _pb_can_approve(self, env):
+        return bool(env.user.has_group('hr.group_hr_user')
+                    or env.user.has_group('base.group_erp_manager')
+                    or env.user.has_group('base.group_system'))
+
+    def _pb_worker_ids(self, env):
+        """معرّفات عمّال مشاريع مدير المشروع (أقسام مشاريعه وفروعها)."""
+        depts = env['project.project'].search([]).mapped('pms_department_id')
+        if not depts:
+            return []
+        return env['hr.employee'].sudo().search([('department_id', 'child_of', depts.ids)]).ids
+
+    def _sel_list(self, model, field, env):
+        return [{'value': k, 'label': v}
+                for k, v in env[model]._fields[field]._description_selection(env)]
+
+    # ---------- Penalty ----------
+    def _penalty_json(self, env, r):
+        P = env['care.penalty']
+        ssel = dict(P._fields['state']._description_selection(env))
+        csel = dict(P._fields['violation_category']._description_selection(env))
+        lsel = dict(P._fields['escalation_level']._description_selection(env))
+        msel = dict(P._fields['settle_mode']._description_selection(env))
+        return {
+            'id': r.id, 'name': r.name,
+            'employee_id': r.employee_id.id or None, 'employee': r.employee_id.name or None,
+            'avatar': _abs('/api/v1/pms/employee/%s/photo' % r.employee_id.id) + '?s=' + _bsig('empphoto', r.employee_id.id) if r.employee_id else None,
+            'project': r.project_id.name if r.project_id else None,
+            'amount': r.amount, 'currency': r.currency_id.name if r.currency_id else None,
+            'settle_mode': r.settle_mode, 'settle_label': msel.get(r.settle_mode, ''),
+            'violation_category': r.violation_category, 'category_label': csel.get(r.violation_category, ''),
+            'escalation_level': r.escalation_level or None,
+            'level_label': lsel.get(r.escalation_level, '') if r.escalation_level else None,
+            'reason': r.reason or None, 'date': _d(r.date),
+            'prior_count': r.prior_count, 'suggested_level': r.suggested_level or None,
+            'ack_state': r.ack_state,
+            'state': r.state, 'state_label': ssel.get(r.state, r.state),
+            'can_submit': r.state == 'draft',
+            'can_review': r.state == 'submitted' and self._pb_can_approve(env),
+            'can_approve': r.state == 'hr_review' and self._pb_can_approve(env),
+            'can_reject': r.state in ('submitted', 'hr_review', 'approved') and self._pb_can_approve(env),
+            'can_cash': r.state == 'approved' and r.settle_mode == 'cash' and self._pb_can_approve(env),
+            'report_url': _abs('/api/v1/pms/penalty/%s/report' % r.id),
+        }
+
+    def _penalty_scoped(self, env, rid):
+        if 'care.penalty' not in env:
+            return None
+        r = env['care.penalty'].sudo().browse(int(rid)).exists()
+        if not r:
+            return None
+        if self._pb_can_approve(env) or (r.employee_id and r.employee_id.id in self._pb_worker_ids(env)):
+            return r
+        return None
+
+    @route(API + '/pms/penalties', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
+    def pms_penalties(self, **kw):
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        if 'care.penalty' not in env:
+            return _err('الوحدة غير مثبّتة', 404)
+        wids = self._pb_worker_ids(env)
+        recs = env['care.penalty'].sudo().search(
+            [('employee_id', 'in', wids)], order='id desc', limit=50) if wids else []
+        meta = {
+            'categories': self._sel_list('care.penalty', 'violation_category', env),
+            'levels': self._sel_list('care.penalty', 'escalation_level', env),
+            'settle_modes': self._sel_list('care.penalty', 'settle_mode', env),
+        }
+        meta['workers'] = [{'id': w.id, 'name': w.name, 'dept': w.department_id.name or ''}
+                           for w in env['hr.employee'].sudo().browse(wids)]
+        return _ok({'items': [self._penalty_json(env, r) for r in recs], 'meta': meta})
+
+    @route(API + '/pms/penalty/<int:rid>', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
+    def pms_penalty_get(self, rid, **kw):
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        r = self._penalty_scoped(env, rid)
+        if not r:
+            return _err('غير موجود أو لا صلاحية', 404)
+        return _ok(self._penalty_json(env, r))
+
+    @route(API + '/pms/employee/<int:eid>/penalty-create', type='http', auth='public', methods=['POST'], csrf=False, cors='*')
+    def pms_penalty_create(self, eid, **kw):
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        if 'care.penalty' not in env:
+            return _err('الوحدة غير مثبّتة', 404)
+        emp = self._emp_in_scope(env, eid)
+        if not emp:
+            return _err('هذا الموظف ليس ضمن مشاريعك', 403)
+        from .api import _body
+        from odoo import fields as _f
+        b = _body() or {}
+        try:
+            amount = float(b.get('amount') or 0)
+        except Exception:
+            amount = 0.0
+        if amount <= 0:
+            return _err('أدخل قيمة جزاء صحيحة', 422)
+        vals = {
+            'employee_id': emp.id, 'date': _f.Date.today(), 'amount': amount,
+            'settle_mode': b.get('settle_mode') or 'payroll',
+            'violation_category': b.get('violation_category') or 'behavior',
+            'escalation_level': b.get('escalation_level') or False,
+            'reason': b.get('reason') or False,
+            'manager_id': emp.parent_id.id if emp.parent_id else False,
+        }
+        if b.get('project_id'):
+            vals['project_id'] = int(b['project_id'])
+        elif emp.department_id:
+            pj = env['project.project'].search([('pms_department_id', '=', emp.department_id.id)], limit=1)
+            if pj:
+                vals['project_id'] = pj.id
+        if b.get('violation_datetime'):
+            vals['violation_datetime'] = b['violation_datetime']
+        try:
+            rec = env['care.penalty'].sudo().create(vals)
+            if b.get('submit', True):
+                rec.action_submit()
+        except Exception as e:
+            return _err(str(e) or 'تعذّر إنشاء الطلب', 422)
+        return _ok(self._penalty_json(env, rec))
+
+    @route(API + '/pms/penalty/<int:rid>/<string:act>', type='http', auth='public', methods=['POST'], csrf=False, cors='*')
+    def pms_penalty_action(self, rid, act, **kw):
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        r = self._penalty_scoped(env, rid)
+        if not r:
+            return _err('غير موجود أو لا صلاحية', 404)
+        if act in ('review', 'approve', 'refuse', 'cash') and not self._pb_can_approve(env):
+            return _err('الاعتماد من صلاحية الموارد البشرية', 403)
+        try:
+            fn = {'submit': 'action_submit', 'review': 'action_hr_review',
+                  'approve': 'action_approve', 'refuse': 'action_refuse',
+                  'cancel': 'action_cancel', 'reset': 'action_reset',
+                  'cash': 'action_mark_cash_paid',
+                  'ack_sign': 'action_ack_sign', 'ack_refuse': 'action_ack_refuse'}.get(act)
+            if not fn:
+                return _err('إجراء غير معروف', 422)
+            getattr(r, fn)()
+        except Exception as e:
+            return _err(str(e) or 'تعذّر تنفيذ الإجراء', 422)
+        return _ok(self._penalty_json(env, r))
+
+    @route([API + '/pms/penalty/<int:rid>/report'], type='http', auth='public', methods=['GET'], csrf=False, cors='*')
+    def pms_penalty_report(self, rid, token=None, **kw):
+        env = _auth()
+        if not env:
+            return request.not_found()
+        r = self._penalty_scoped(env, rid)
+        if not r:
+            return request.make_response('لا صلاحية', status=403)
+        try:
+            pdf, _t = env['ir.actions.report'].sudo()._render_qweb_pdf(
+                'care_penalty_bonus.report_penalty_request_form', [r.id])
+        except Exception as e:
+            return request.make_response(str(e), status=500)
+        return request.make_response(pdf, headers=[
+            ('Content-Type', 'application/pdf'),
+            ('Content-Disposition', 'inline; filename="penalty-%s.pdf"' % rid)])
+
+    # ---------- Bonus ----------
+    def _bonus_json(self, env, r):
+        B = env['care.bonus']
+        ssel = dict(B._fields['state']._description_selection(env))
+        tsel = dict(B._fields['bonus_type']._description_selection(env))
+        psel = dict(B._fields['payment_method']._description_selection(env))
+        rsel = dict(B._fields['recurrence']._description_selection(env))
+        return {
+            'id': r.id, 'name': r.name,
+            'employee_id': r.employee_id.id or None, 'employee': r.employee_id.name or None,
+            'avatar': _abs('/api/v1/pms/employee/%s/photo' % r.employee_id.id) + '?s=' + _bsig('empphoto', r.employee_id.id) if r.employee_id else None,
+            'project': r.project_id.name if r.project_id else None,
+            'amount': r.amount, 'currency': r.currency_id.name if r.currency_id else None,
+            'bonus_type': r.bonus_type, 'type_label': tsel.get(r.bonus_type, ''),
+            'payment_method': r.payment_method, 'pay_label': psel.get(r.payment_method, ''),
+            'recurrence': r.recurrence, 'recurrence_label': rsel.get(r.recurrence, ''),
+            'reason': r.reason or None, 'date': _d(r.date),
+            'state': r.state, 'state_label': ssel.get(r.state, r.state),
+            'can_submit': r.state == 'draft',
+            'can_review': r.state == 'submitted' and self._pb_can_approve(env),
+            'can_approve': r.state == 'hr_review' and self._pb_can_approve(env),
+            'can_reject': r.state in ('submitted', 'hr_review', 'approved') and self._pb_can_approve(env),
+            'can_cash': r.state == 'approved' and r.payment_method == 'cash' and self._pb_can_approve(env),
+            'report_url': _abs('/api/v1/pms/bonus/%s/report' % r.id),
+        }
+
+    def _bonus_scoped(self, env, rid):
+        if 'care.bonus' not in env:
+            return None
+        r = env['care.bonus'].sudo().browse(int(rid)).exists()
+        if not r:
+            return None
+        if self._pb_can_approve(env) or (r.employee_id and r.employee_id.id in self._pb_worker_ids(env)):
+            return r
+        return None
+
+    @route(API + '/pms/bonuses', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
+    def pms_bonuses(self, **kw):
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        if 'care.bonus' not in env:
+            return _err('الوحدة غير مثبّتة', 404)
+        wids = self._pb_worker_ids(env)
+        recs = env['care.bonus'].sudo().search(
+            [('employee_id', 'in', wids)], order='id desc', limit=50) if wids else []
+        meta = {
+            'types': self._sel_list('care.bonus', 'bonus_type', env),
+            'pays': self._sel_list('care.bonus', 'payment_method', env),
+            'recurrences': self._sel_list('care.bonus', 'recurrence', env),
+        }
+        meta['workers'] = [{'id': w.id, 'name': w.name, 'dept': w.department_id.name or ''}
+                           for w in env['hr.employee'].sudo().browse(wids)]
+        return _ok({'items': [self._bonus_json(env, r) for r in recs], 'meta': meta})
+
+    @route(API + '/pms/bonus/<int:rid>', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
+    def pms_bonus_get(self, rid, **kw):
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        r = self._bonus_scoped(env, rid)
+        if not r:
+            return _err('غير موجود أو لا صلاحية', 404)
+        return _ok(self._bonus_json(env, r))
+
+    @route(API + '/pms/employee/<int:eid>/bonus-create', type='http', auth='public', methods=['POST'], csrf=False, cors='*')
+    def pms_bonus_create(self, eid, **kw):
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        if 'care.bonus' not in env:
+            return _err('الوحدة غير مثبّتة', 404)
+        emp = self._emp_in_scope(env, eid)
+        if not emp:
+            return _err('هذا الموظف ليس ضمن مشاريعك', 403)
+        from .api import _body
+        from odoo import fields as _f
+        b = _body() or {}
+        try:
+            amount = float(b.get('amount') or 0)
+        except Exception:
+            amount = 0.0
+        if amount <= 0:
+            return _err('أدخل قيمة مكافأة صحيحة', 422)
+        vals = {
+            'employee_id': emp.id, 'date': _f.Date.today(), 'amount': amount,
+            'bonus_type': b.get('bonus_type') or 'performance',
+            'payment_method': b.get('payment_method') or 'in_payslip',
+            'recurrence': b.get('recurrence') or 'once',
+            'reason': b.get('reason') or False,
+            'manager_id': emp.parent_id.id if emp.parent_id else False,
+        }
+        if b.get('project_id'):
+            vals['project_id'] = int(b['project_id'])
+        elif emp.department_id:
+            pj = env['project.project'].search([('pms_department_id', '=', emp.department_id.id)], limit=1)
+            if pj:
+                vals['project_id'] = pj.id
+        try:
+            rec = env['care.bonus'].sudo().create(vals)
+            if b.get('submit', True):
+                rec.action_submit()
+        except Exception as e:
+            return _err(str(e) or 'تعذّر إنشاء الطلب', 422)
+        return _ok(self._bonus_json(env, rec))
+
+    @route(API + '/pms/bonus/<int:rid>/<string:act>', type='http', auth='public', methods=['POST'], csrf=False, cors='*')
+    def pms_bonus_action(self, rid, act, **kw):
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        r = self._bonus_scoped(env, rid)
+        if not r:
+            return _err('غير موجود أو لا صلاحية', 404)
+        if act in ('review', 'approve', 'refuse', 'cash') and not self._pb_can_approve(env):
+            return _err('الاعتماد من صلاحية الموارد البشرية', 403)
+        try:
+            fn = {'submit': 'action_submit', 'review': 'action_hr_review',
+                  'approve': 'action_approve', 'refuse': 'action_refuse',
+                  'cancel': 'action_cancel', 'reset': 'action_reset',
+                  'cash': 'action_mark_cash_paid'}.get(act)
+            if not fn:
+                return _err('إجراء غير معروف', 422)
+            getattr(r, fn)()
+        except Exception as e:
+            return _err(str(e) or 'تعذّر تنفيذ الإجراء', 422)
+        return _ok(self._bonus_json(env, r))
+
+    @route([API + '/pms/bonus/<int:rid>/report'], type='http', auth='public', methods=['GET'], csrf=False, cors='*')
+    def pms_bonus_report(self, rid, token=None, **kw):
+        env = _auth()
+        if not env:
+            return request.not_found()
+        r = self._bonus_scoped(env, rid)
+        if not r:
+            return request.make_response('لا صلاحية', status=403)
+        try:
+            pdf, _t = env['ir.actions.report'].sudo()._render_qweb_pdf(
+                'care_penalty_bonus.report_bonus_request_form', [r.id])
+        except Exception as e:
+            return request.make_response(str(e), status=500)
+        return request.make_response(pdf, headers=[
+            ('Content-Type', 'application/pdf'),
+            ('Content-Disposition', 'inline; filename="bonus-%s.pdf"' % rid)])
+
+    # ============ VEHICLE SERVICES & PETROL STATION (vehicle maintenance + petrol) ============
+    def _fp_depts(self, env):
+        return env['project.project'].search([]).mapped('pms_department_id')
+
+    def _fp_vehicle_ids(self, env):
+        depts = self._fp_depts(env)
+        if not depts:
+            return []
+        return env['fleet.vehicle'].sudo().search([('department_id', 'child_of', depts.ids)]).ids
+
+    def _veh_json(self, env, s):
+        S = env['fleet.vehicle.log.services']
+        ssel = dict(S._fields['state']._description_selection(env))
+        tsel = dict(S._fields['type']._description_selection(env)) if 'type' in S._fields else {}
+        return {
+            'id': s.id, 'vehicle_id': s.vehicle_id.id, 'vehicle': s.vehicle_id.name,
+            'plate': s.vehicle_id.license_plate or '', 'model': s.vehicle_id.model_id.name or '',
+            'service_type': s.service_type_id.name or '', 'type': getattr(s, 'type', ''),
+            'type_label': tsel.get(getattr(s, 'type', ''), ''),
+            'date': _d(s.date), 'next_date': _d(getattr(s, 'next_service_date', False)),
+            'amount': s.amount, 'total_cost': getattr(s, 'total_cost', 0.0),
+            'currency': s.currency_id.name or '', 'vendor': s.vendor_id.name or '',
+            'driver': (s.purchaser_id.name or s.vehicle_id.driver_id.name or ''),
+            'odometer': s.odometer, 'description': s.description or '', 'notes': s.notes or '',
+            'state': s.state, 'state_label': ssel.get(s.state, s.state),
+            'fire': getattr(s, 'is_fire_extinguisher', False),
+            'damages': [{'name': d.name, 'desc': d.description, 'cost': d.cost}
+                        for d in s.damage_line] if 'damage_line' in s._fields else [],
+            'report_url': _abs('/api/v1/pms/vehicle/%s/report' % s.id),
+        }
+
+    @route(API + '/pms/vehicles', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
+    def pms_vehicles(self, **kw):
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        if 'fleet.vehicle.log.services' not in env:
+            return _err('وحدة المركبات غير مثبّتة', 404)
+        vids = self._fp_vehicle_ids(env)
+        S = env['fleet.vehicle.log.services'].sudo()
+        recs = S.search([('vehicle_id', 'in', vids)], order='date desc, id desc', limit=60) if vids else []
+        from odoo import fields as _f
+        y0 = _f.Date.today().replace(month=1, day=1)
+        by_state = {}
+        for g in S.read_group([('vehicle_id', 'in', vids)], ['state'], ['state']):
+            by_state[g['state']] = g.get('__count') or 0
+        total_year = sum(S.search([('vehicle_id', 'in', vids), ('date', '>=', y0)]).mapped('amount')) if vids else 0
+        meta = {
+            'vehicles': [{'id': v.id, 'name': v.name} for v in env['fleet.vehicle'].sudo().browse(vids)],
+            'service_types': [{'id': t.id, 'name': t.name} for t in env['fleet.service.type'].sudo().search([])],
+            'types': self._sel_list('fleet.vehicle.log.services', 'type', env) if 'type' in S._fields else [],
+            'vendors': [{'id': p.id, 'name': p.name} for p in env['res.partner'].sudo().search([('supplier_rank', '>', 0)], limit=200)],
+        }
+        kpi = {'total': S.search_count([('vehicle_id', 'in', vids)]) if vids else 0,
+               'running': by_state.get('new', 0) + by_state.get('running', 0),
+               'done': by_state.get('done', 0), 'total_year': round(total_year, 2),
+               'currency': env.company.currency_id.name or ''}
+        return _ok({'items': [self._veh_json(env, s) for s in recs], 'meta': meta, 'kpi': kpi})
+
+    @route(API + '/pms/vehicle/<int:sid>', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
+    def pms_vehicle_get(self, sid, **kw):
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        s = env['fleet.vehicle.log.services'].sudo().browse(int(sid)).exists()
+        if not s or s.vehicle_id.id not in self._fp_vehicle_ids(env):
+            return _err('غير موجود أو لا صلاحية', 404)
+        return _ok(self._veh_json(env, s))
+
+    @route(API + '/pms/vehicle-service/create', type='http', auth='public', methods=['POST'], csrf=False, cors='*')
+    def pms_vehicle_create(self, **kw):
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        from .api import _body
+        from odoo import fields as _f
+        from dateutil.relativedelta import relativedelta as _rd
+        b = _body() or {}
+        vid = int(b.get('vehicle_id') or 0)
+        if vid not in self._fp_vehicle_ids(env):
+            return _err('المركبة ليست ضمن مشاريعك', 403)
+        S = env['fleet.vehicle.log.services'].sudo()
+        vals = {'vehicle_id': vid, 'date': b.get('date') or _f.Date.today(),
+                'amount': float(b.get('amount') or 0),
+                'description': b.get('description') or '', 'notes': b.get('notes') or ''}
+        if b.get('service_type_id'):
+            vals['service_type_id'] = int(b['service_type_id'])
+        if b.get('vendor_id'):
+            vals['vendor_id'] = int(b['vendor_id'])
+        if b.get('odometer_value'):
+            vals['odometer'] = float(b['odometer_value'])
+        if 'type' in S._fields:
+            vals['type'] = b.get('type') or 'service'
+        if 'next_service_date' in S._fields:
+            vals['next_service_date'] = b.get('next_service_date') or (_f.Date.today() + _rd(months=6))
+        if 'is_fire_extinguisher' in S._fields:
+            vals['is_fire_extinguisher'] = bool(b.get('fire'))
+        try:
+            rec = S.create(vals)
+        except Exception as e:
+            return _err(str(e) or 'تعذّر الإنشاء', 422)
+        return _ok(self._veh_json(env, rec))
+
+    @route(API + '/pms/vehicle/<int:sid>/state', type='http', auth='public', methods=['POST'], csrf=False, cors='*')
+    def pms_vehicle_state(self, sid, **kw):
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        s = env['fleet.vehicle.log.services'].sudo().browse(int(sid)).exists()
+        if not s or s.vehicle_id.id not in self._fp_vehicle_ids(env):
+            return _err('غير موجود أو لا صلاحية', 404)
+        from .api import _body
+        b = _body() or {}
+        if b.get('state'):
+            s.write({'state': b['state']})
+        return _ok(self._veh_json(env, s))
+
+    @route([API + '/pms/vehicle/<int:sid>/report'], type='http', auth='public', methods=['GET'], csrf=False, cors='*')
+    def pms_vehicle_report(self, sid, token=None, **kw):
+        env = _auth()
+        if not env:
+            return request.not_found()
+        s = env['fleet.vehicle.log.services'].sudo().browse(int(sid)).exists()
+        if not s or s.vehicle_id.id not in self._fp_vehicle_ids(env):
+            return request.make_response('لا صلاحية', status=403)
+        try:
+            pdf, _t = env['ir.actions.report'].sudo()._render_qweb_pdf(
+                'care_pms_fleet_petrol.report_vehicle_service', [s.id])
+        except Exception as e:
+            return request.make_response(str(e), status=500)
+        return request.make_response(pdf, headers=[
+            ('Content-Type', 'application/pdf'),
+            ('Content-Disposition', 'inline; filename="vehicle-%s.pdf"' % sid)])
+
+    # ---------- Petrol station ----------
+    def _tank_json(self, env, t):
+        return {'id': t.id, 'name': t.name, 'capacity': t.capacity, 'balance': t.balance,
+                'charged': t.charged, 'used': t.used, 'progress': round(t.balance_progress or 0),
+                'stage': t.stage_id.name or '', 'last_charge': _d(t.last_charge),
+                'report_url': _abs('/api/v1/pms/petrol/tank/%s/report' % t.id)}
+
+    @route(API + '/pms/petrol', type='http', auth='public', methods=['GET'], csrf=False, cors='*')
+    def pms_petrol(self, **kw):
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        if 'petrol.tank' not in env:
+            return _err('وحدة البترول غير مثبّتة', 404)
+        from odoo import fields as _f
+        from datetime import datetime as _dt, time as _tm
+        tanks = env['petrol.tank'].sudo().search([], order='name')
+        Use = env['petrol.tank.use'].sudo()
+        Charge = env['petrol.tank.charge'].sudo()
+        m0 = _f.Date.today().replace(day=1)
+        used_month = sum(Use.search([('datetime', '>=', _dt.combine(m0, _tm.min))]).mapped('quantity'))
+        vids = self._fp_vehicle_ids(env)
+        meta = {'vehicles': [{'id': v.id, 'name': v.name} for v in env['fleet.vehicle'].sudo().browse(vids)]
+                            or [{'id': v.id, 'name': v.name} for v in env['fleet.vehicle'].sudo().search([], limit=300)]}
+        kpi = {'tanks': len(tanks), 'total_balance': round(sum(tanks.mapped('balance')), 1),
+               'total_capacity': round(sum(tanks.mapped('capacity')), 1), 'used_month': round(used_month, 1)}
+        recent_use = [{'name': u.name, 'tank': u.tank_id.name, 'vehicle': u.vehicle_id.name or '',
+                       'qty': u.quantity, 'dt': _d(u.datetime.date()) if u.datetime else ''}
+                      for u in Use.search([], order='id desc', limit=15)]
+        recent_charge = [{'name': c.name, 'tank': c.tank_id.name, 'qty': c.quantity, 'cost': c.cost, 'date': _d(c.charge_date)}
+                         for c in Charge.search([], order='id desc', limit=15)]
+        return _ok({'tanks': [self._tank_json(env, t) for t in tanks], 'meta': meta, 'kpi': kpi,
+                    'recent_use': recent_use, 'recent_charge': recent_charge})
+
+    @route(API + '/pms/petrol/charge', type='http', auth='public', methods=['POST'], csrf=False, cors='*')
+    def pms_petrol_charge(self, **kw):
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        from .api import _body
+        from odoo import fields as _f
+        b = _body() or {}
+        try:
+            env['petrol.tank.charge'].sudo().create({
+                'tank_id': int(b['tank_id']), 'charge_date': b.get('charge_date') or _f.Date.today(),
+                'quantity': float(b.get('quantity') or 0), 'cost': float(b.get('cost') or 0)})
+        except Exception as e:
+            return _err(str(e) or 'تعذّر', 422)
+        return _ok({'done': True})
+
+    @route(API + '/pms/petrol/use', type='http', auth='public', methods=['POST'], csrf=False, cors='*')
+    def pms_petrol_use(self, **kw):
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        from .api import _body
+        from odoo import fields as _f
+        b = _body() or {}
+        try:
+            vals = {'tank_id': int(b['tank_id']), 'quantity': float(b.get('quantity') or 0),
+                    'datetime': b.get('datetime') or _f.Datetime.now()}
+            if b.get('vehicle_id'):
+                vals['vehicle_id'] = int(b['vehicle_id'])
+            if b.get('odometer_value'):
+                vals['odometer_value'] = float(b['odometer_value'])
+            env['petrol.tank.use'].sudo().create(vals)
+        except Exception as e:
+            return _err(str(e) or 'تعذّر', 422)
+        return _ok({'done': True})
+
+    @route(API + '/pms/petrol/transfer', type='http', auth='public', methods=['POST'], csrf=False, cors='*')
+    def pms_petrol_transfer(self, **kw):
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        from .api import _body
+        from odoo import fields as _f
+        b = _body() or {}
+        try:
+            tr = env['petrol.tank.transfer'].sudo().create({
+                'tank_id': int(b['from_tank_id']), 'from_tank_id': int(b['from_tank_id']),
+                'to_tank_id': int(b['to_tank_id']), 'quantity': float(b.get('quantity') or 0),
+                'date': b.get('date') or _f.Date.today()})
+            tr.button_transfer()
+        except Exception as e:
+            return _err(str(e) or 'تعذّر التحويل', 422)
+        return _ok({'done': True})
+
+    @route([API + '/pms/petrol/tank/<int:tid>/report'], type='http', auth='public', methods=['GET'], csrf=False, cors='*')
+    def pms_petrol_report(self, tid, token=None, **kw):
+        env = _auth()
+        if not env:
+            return request.not_found()
+        t = env['petrol.tank'].sudo().browse(int(tid)).exists()
+        if not t:
+            return request.not_found()
+        if not t.department_id or t.department_id.id not in self._fp_depts(env).ids:
+            return request.make_response('لا صلاحية', status=403)
+        try:
+            pdf, _t = env['ir.actions.report'].sudo()._render_qweb_pdf(
+                'care_pms_fleet_petrol.report_petrol_tank', [t.id])
+        except Exception as e:
+            return request.make_response(str(e), status=500)
+        return request.make_response(pdf, headers=[
+            ('Content-Type', 'application/pdf'),
+            ('Content-Disposition', 'inline; filename="petrol-tank-%s.pdf"' % tid)])
