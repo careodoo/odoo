@@ -85,7 +85,7 @@ class _ApprovalsScreenState extends State<ApprovalsScreen> {
     final out = <Map>[];
     for (final g in _groups) {
       final recs = ((g['records'] as List?) ?? const []).cast<Map>().where((r) {
-        final hay = [r['title'], r['ref'], r['subject'], r['by']]
+        final hay = [r['title'], r['ref'], r['subject'], r['by'], r['badge']]
             .map((v) => '${v ?? ''}'.toLowerCase()).join(' ');
         return hay.contains(q);
       }).toList();
@@ -278,7 +278,7 @@ class _ApprovalsScreenState extends State<ApprovalsScreen> {
           textInputAction: TextInputAction.search,
           decoration: InputDecoration(
             isDense: true,
-            hintText: tr('ابحث بالعنوان أو الرقم أو مقدّم الطلب…', 'Search title, ref or requester…'),
+            hintText: tr('ابحث بالعنوان أو الرقم أو البادج أو مقدّم الطلب…', 'Search title, ref, badge or requester…'),
             prefixIcon: const Icon(Icons.search_rounded, size: 20),
             suffixIcon: _query.isEmpty ? null : IconButton(
               icon: const Icon(Icons.close_rounded, size: 18),
