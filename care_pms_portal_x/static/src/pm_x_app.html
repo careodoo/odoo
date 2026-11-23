@@ -955,7 +955,7 @@ function detailAction(code,idx,label){
   if(/تعديل/.test(label)){ openEditForm(code,idx); return; }
   if(/إلغاء|حذف المسوّدة/.test(label)){
     if(!rid){ toast('لا يوجد سجل مرتبط'); return; }
-    if(!confirm('إلغاء هذا الطلب (المسوّدة)؟')) return;
+    if(!confirm('إلغاء/سحب هذا الطلب؟')) return;
     xpost('/my/pm/x/cancel/'+code+'/'+rid,{}).then(function(r){
       if(r&&r.ok){ toast(r.msg||'أُلغي الطلب'); setTimeout(function(){ render(code); },650); }
       else toast((r&&r.error)||'تعذّر الإلغاء');
@@ -1125,7 +1125,7 @@ function renderWorkerReqModal(code,empId,label,d){
       +(x.can_print?'<button class="wrq-ic" title="طباعة التقرير" onclick="wrqPrint(\''+code+'\','+x.id+')">'+ic('print',15)+'</button>':'')
       +(x.can_submit?'<button class="wrq-ic ok" title="إرسال للاعتماد" onclick="wrqSubmit(\''+code+'\','+x.id+','+empId+',\''+_esc(label)+'\')">'+ic('check',15)+'</button>':'')
       +'<button class="wrq-ic" title="التفاصيل والإشعارات" onclick="wrqDetail(\''+code+'\','+x.id+',\''+_esc(x.ref)+'\')">'+ic('eye',15)+'</button>'
-      +(x.can_cancel?'<button class="wrq-ic danger" title="إلغاء المسوّدة" onclick="wrqCancel(\''+code+'\','+x.id+','+empId+',\''+_esc(label)+'\')">'+ic('x',15)+'</button>':'');
+      +(x.can_cancel?'<button class="wrq-ic danger" title="إلغاء / سحب" onclick="wrqCancel(\''+code+'\','+x.id+','+empId+',\''+_esc(label)+'\')">'+ic('x',15)+'</button>':'');
     return '<div style="display:flex;align-items:center;gap:10px;padding:11px 13px;border:1px solid var(--line);border-radius:12px;margin-bottom:9px;background:var(--surface-2)">'
       +'<div style="flex:1;min-width:0"><div style="font-weight:800;font-size:13px;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+_esc(x.ref)+'</div>'
       +(x.date?'<div style="font-size:11px;color:var(--muted);margin-top:2px">'+_esc(x.date)+'</div>':'')+'</div>'
@@ -1164,7 +1164,7 @@ function wrqSubmit(code,id,empId,label){
   }).catch(function(){ toast('تعذّر الاتصال'); });
 }
 function wrqCancel(code,id,empId,label){
-  if(!confirm('إلغاء هذا الطلب (المسوّدة)؟')) return;
+  if(!confirm('إلغاء/سحب هذا الطلب؟')) return;
   xpost('/my/pm/x/cancel/'+code+'/'+id,{}).then(function(r){
     if(r&&r.ok){ toast(r.msg||'أُلغي الطلب'); openWorkerRequests(code,empId,label); }
     else toast((r&&r.error)||'تعذّر الإلغاء');
@@ -4006,7 +4006,7 @@ const TR={
  'قيمة التأمين:':'Insurance value: ','مطلوب:':'Required: ','حاضر من 14 يومًا':'present of 14 days',
  '» يُنفَّذ من داخل النظام حاليًّا':'» is currently handled inside the system',
  'لا سجلات بعد في «':'No records yet in «','لا نتائج لـ «':'No results for «','إجراء: ':'Action: ',
- 'إلغاء هذا الطلب (المسوّدة)؟':'Cancel this request (draft)?','أُلغي الطلب':'Request cancelled',
+ 'إلغاء/سحب هذا الطلب؟':'Cancel / withdraw this request?','أُلغي الطلب':'Request cancelled',
  'تعذّر الإلغاء':'Could not cancel','تعذّر تنفيذ الإجراء':'Could not perform the action',
  'تعذّر الإرسال':'Send failed','تعذّر فتح الطلبات':'Could not open requests',
  'تعذّر فتح التفاصيل':'Could not open details','تعذّر تحميل الشبكة':'Could not load the grid',

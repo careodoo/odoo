@@ -54,6 +54,8 @@
                     </div>
                     <widget name="web_ribbon" title="مرفوضة" bg_color="text-bg-danger"
                             invisible="state != 'rejected'"/>
+                    <widget name="web_ribbon" title="ملغاة" bg_color="text-bg-warning"
+                            invisible="state != 'cancelled'"/>
                     <widget name="web_ribbon" title="مُغلقة" bg_color="text-bg-secondary"
                             invisible="state != 'closed'"/>
                     <div class="oe_title">
@@ -146,7 +148,7 @@
         <field name="model">care.complaint</field>
         <field name="arch" type="xml">
             <tree string="الشكاوى التأديبية"
-                  decoration-muted="state in ('closed','rejected')"
+                  decoration-muted="state in ('closed','rejected','cancelled')"
                   decoration-danger="penalty_type == 'termination'"
                   decoration-info="state == 'draft'">
                 <field name="name"/>

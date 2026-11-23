@@ -2740,7 +2740,9 @@ td.k{color:#657086;font-size:11px}td.v{font-weight:700;font-size:11.5px}td.p,td.
         can_reject = (not _finalized) and ('reject' not in _excl) and _has('reject')
         can_submit = (not _finalized) and _has('submit') and self._x_editable(rec)
         can_edit = self._x_editable(rec) and (CODE_MODEL.get(code) == model) and (code in self.pm_x_create_models())
-        can_cancel = self._x_editable(rec)
+        # الإلغاء/السحب أوسع من التعديل: يشمل السجلّات التي لها دالة إلغاء صريحة وما زالت مفتوحة
+        # (كالشكوى التأديبية تُسحب حتى بعد اعتماد المدير وقبل التطبيق)
+        can_cancel = self._x_cancellable(rec)
         # هل يوجد تقرير قابل للطباعة (للموديل أو لسجل الأصل)؟
         Rep = request.env['ir.actions.report'].sudo()
         has_report = bool(Rep.search_count([('model', '=', model), ('report_type', '=', 'qweb-pdf')]))
@@ -3202,6 +3204,17 @@ td.k{color:#657086;font-size:11px}td.v{font-weight:700;font-size:11.5px}td.p,td.
             return st in ('draft', 'confirm', False, None)
         return st in ('draft', 'submitted', False, None)
 
+    def _x_cancellable(self, rec):
+        """هل يُسمح بإلغاء/سحب السجلّ من البوابة؟ مسوّدة/قبل الاعتماد، أو أي سجلّ
+        له دالة إلغاء صريحة (كالشكوى التأديبية: تُسحب حتى قبل التطبيق) وما زال مفتوحًا.
+        النموذج نفسه يحرس حالاته المنتهية وصلاحية المُلغِي، فالتوسيع هنا آمن."""
+        if self._x_editable(rec):
+            return True
+        if callable(getattr(rec, 'action_cancel', None)):
+            _, _, _, is_open = self._x_state_info(rec)
+            return bool(is_open)
+        return False
+
     # أكواد «طلب واحد مفتوح في المرّة» (سياسة: لا طلب جديد وثمّة غير منجَز) —
     # للطلبات الفردية ذاتيّة البدء فقط (لا الجزاءات/المكافآت/البدلات التي تتعدّد)
     _X_SINGLE_OPEN = {'leaves', 'permission', 'loans', 'resignations', 'eos', 'bankcard',
@@ -3308,8 +3321,8 @@ td.k{color:#657086;font-size:11px}td.v{font-weight:700;font-size:11.5px}td.p,td.
         rec = request.env[model].sudo().browse(int(rid or 0)).exists()
         if not (rec and self._x_rec_allowed(rec)):
             return {'ok': False, 'error': 'غير مصرّح'}
-        if not self._x_editable(rec):
-            return {'ok': False, 'error': 'يُلغى فقط ما كان مسوّدة/قبل الاعتماد'}
+        if not self._x_cancellable(rec):
+            return {'ok': False, 'error': 'لا يمكن إلغاء هذا السجلّ في حالته الحالية'}
         st = getattr(rec, 'state', None)
         # مسوّدة خالصة → حذفها هو الإلغاء الأنظف (تختفي ويُسمح بطلب جديد)
         if st in _X_DRAFT_STATES:
@@ -3318,7 +3331,9 @@ td.k{color:#657086;font-size:11px}td.v{font-weight:700;font-size:11.5px}td.p,td.
                 return {'ok': True, 'msg': 'أُلغيت المسوّدة', 'method': 'unlink'}
             except Exception:
                 pass
-        # غير مسوّدة (مثلاً مُقدَّمة قبل الاعتماد) → دالة إلغاء/رفض تنقلها لحالة منتهية
+        # غير مسوّدة (مثلاً مُقدَّمة قبل الاعتماد) → دالة إلغاء/رفض تنقلها لحالة منتهية.
+        # نجرّب الدوال بالتسلسل ونحتفظ بآخر خطأ؛ لا نُرجعه إلا بعد فشل الجميع.
+        last_err = ''
         for m in ('action_cancel', 'button_cancel', 'action_draft_cancel', 'action_refuse', 'action_reject'):
             fn = getattr(rec, m, None)
             if callable(fn):
@@ -3327,14 +3342,16 @@ td.k{color:#657086;font-size:11px}td.v{font-weight:700;font-size:11.5px}td.p,td.
                     _, _, _, still_open = self._x_state_info(rec.exists())
                     if not rec.exists() or not still_open:
                         return {'ok': True, 'msg': 'أُلغي الطلب', 'method': m}
-                except Exception:
-                    pass
-        # محاولة أخيرة: حذف
-        try:
-            rec.unlink()
-            return {'ok': True, 'msg': 'أُلغي الطلب', 'method': 'unlink'}
-        except Exception as e:
-            return {'ok': False, 'error': _x_safe_error(e)}
+                except Exception as e:
+                    last_err = _x_safe_error(e)
+        # محاولة أخيرة: حذف — للمسوّدات فقط، كي لا يُحذف سجلّ تقدّم في مساره
+        if st in _X_DRAFT_STATES:
+            try:
+                rec.unlink()
+                return {'ok': True, 'msg': 'أُلغيت المسوّدة', 'method': 'unlink'}
+            except Exception as e:
+                return {'ok': False, 'error': _x_safe_error(e)}
+        return {'ok': False, 'error': last_err or 'تعذّر إلغاء السجلّ في حالته الحالية'}
 
     # ============ الإجراءات الجماعية على القوائم ============
     @http.route(['/my/pm/x/bulk/<string:code>/<string:action>'], type='json', auth='user', website=False)
