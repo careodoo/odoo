@@ -58,6 +58,7 @@ class _PmsRecordDetailScreenState extends State<PmsRecordDetailScreen> {
   bool _chatterSeeded = false;
   final _msgCtrl = TextEditingController();
   bool _sending = false;
+  bool _busy = false;
 
   Color get _c => widget.accent ?? kPmsSectionColors[widget.code] ?? Pms.violet;
 
@@ -114,6 +115,78 @@ class _PmsRecordDetailScreenState extends State<PmsRecordDetailScreen> {
     }
   }
 
+  // إرسال للاعتماد / إلغاء — يستدعي POST /pms/record/<code>/<id>/action.
+  Future<void> _action(String act, {String? reason}) async {
+    if (_busy) return;
+    setState(() => _busy = true);
+    try {
+      final res = await context.read<AuthProvider>().api.pmsRecordAction(widget.code, widget.id, act, reason: reason);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('${res['msg'] ?? tr('تم', 'Done')}'),
+          backgroundColor: const Color(0xFF15803D), behavior: SnackBarBehavior.floating));
+      if (res['deleted'] == true) { Navigator.pop(context, true); return; }
+      setState(() => _busy = false);
+      await _refresh();
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _busy = false);
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(tr('تعذّر: $e', 'Failed: $e')),
+          backgroundColor: Pms.red, behavior: SnackBarBehavior.floating));
+    }
+  }
+
+  Future<void> _cancelDialog() async {
+    final ctrl = TextEditingController();
+    final ok = await showDialog<bool>(context: context, builder: (c) => AlertDialog(
+          title: Text(tr('إلغاء الطلب', 'Cancel request')),
+          content: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text(tr('سيُلغى هذا الطلب (أو تُحذف المسودة). متابعة؟',
+                    'This request will be cancelled (drafts are deleted). Continue?')),
+            const SizedBox(height: 10),
+            TextField(controller: ctrl, maxLines: 2, decoration: InputDecoration(
+                hintText: tr('السبب (اختياري)', 'Reason (optional)'),
+                border: const OutlineInputBorder(), isDense: true)),
+          ]),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(c, false), child: Text(tr('تراجع', 'Back'))),
+            FilledButton(style: FilledButton.styleFrom(backgroundColor: const Color(0xFFB91C1C)),
+                onPressed: () => Navigator.pop(c, true), child: Text(tr('إلغاء الطلب', 'Cancel request'))),
+          ],
+        ));
+    if (ok == true) {
+      final r = ctrl.text.trim();
+      _action('cancel', reason: r.isEmpty ? null : r);
+    }
+  }
+
+  Widget _actionButtons(bool canSubmit, bool canCancel) => Padding(
+        padding: const EdgeInsets.only(top: 10),
+        child: Row(children: [
+          if (canSubmit)
+            Expanded(child: SizedBox(height: 46, child: FilledButton.icon(
+              style: FilledButton.styleFrom(backgroundColor: const Color(0xFF15803D),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+              onPressed: _busy ? null : () => _action('submit'),
+              icon: _busy
+                  ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                  : const Icon(Icons.send_rounded, size: 18),
+              label: Text(tr('إرسال للاعتماد', 'Submit'), style: const TextStyle(fontWeight: FontWeight.w900)),
+            ))),
+          if (canSubmit && canCancel) const SizedBox(width: 10),
+          if (canCancel)
+            Expanded(child: SizedBox(height: 46, child: OutlinedButton.icon(
+              style: OutlinedButton.styleFrom(foregroundColor: const Color(0xFFB91C1C),
+                  side: const BorderSide(color: Color(0xFFB91C1C)),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+              onPressed: _busy ? null : _cancelDialog,
+              icon: const Icon(Icons.cancel_outlined, size: 18),
+              label: Text(tr('إلغاء', 'Cancel'), style: const TextStyle(fontWeight: FontWeight.w900)),
+            ))),
+        ]),
+      );
+
   void _print(Map<String, dynamic> d) {
     // The backend resolves the right report (and falls back to the origin
     // record for stop/resume), so use report_model/report_id/report as-is —
@@ -169,6 +242,8 @@ class _PmsRecordDetailScreenState extends State<PmsRecordDetailScreen> {
           final timeline = ((d['timeline'] as List?) ?? const []);
           final related = ((d['related'] as List?) ?? const []);
           final canPrint = d['report'] != null && '${d['report']}'.isNotEmpty;
+          final canSubmit = d['can_submit'] == true;
+          final canCancel = d['can_cancel'] == true;
 
           return RefreshIndicator(
             onRefresh: _refresh,
@@ -191,6 +266,7 @@ class _PmsRecordDetailScreenState extends State<PmsRecordDetailScreen> {
                     ),
                   ),
                 ],
+                if (canSubmit || canCancel) _actionButtons(canSubmit, canCancel),
                 if (fields.isNotEmpty) _fieldsCard(fields),
                 if (cols.isNotEmpty && lineRows.isNotEmpty) _linesCard(cols, lineRows),
                 if (files.isNotEmpty) _filesCard(files),

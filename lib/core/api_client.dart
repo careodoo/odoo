@@ -2294,6 +2294,14 @@ class ApiClient {
           _u('/pms/record/$code/$id/message?body=${Uri.encodeQueryComponent(body)}'),
           headers: await _headers())))['data'] as Map);
 
+  /// Generic workflow action on a PMS request the PM created: submit for
+  /// approval / cancel (withdraw) / edit-check. `act` is submit|cancel|edit.
+  /// Mirrors the /my/pm/x portal action+cancel routes. Returns {msg, state, …}.
+  Future<Map<String, dynamic>> pmsRecordAction(String code, int id, String act, {String? reason}) async =>
+      Map<String, dynamic>.from((await _handle(await _net.post(
+          _u('/pms/record/$code/$id/action'), headers: await _headers(),
+          body: jsonEncode({'act': act, if (reason != null) 'reason': reason}))))['data'] as Map);
+
   /// Generic record report: renders any whitelisted QWeb report for a record
   /// the caller may read (e.g. the resignation request form after creating it).
   String pmsRecordReportPath(String model, int id, String report) =>
