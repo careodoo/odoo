@@ -22,6 +22,13 @@ class ResUsers(models.Model):
     menu_hide_ids = fields.Many2many('ir.ui.menu', 'care_user_menu_hide_rel', 'user_id', 'menu_id',
                                      string='القوائم المخفية عن هذا المستخدم')
 
+    # إزالة قيد المجموعة عن attendance_manager_id (hr_attendance) — كان يسبّب
+    # «Access Error: res.users read attendance_manager_id» لكل مستخدم غير مخوّل
+    # عند فتح شاشة التفضيلات/البروفايل (قراءة مختلطة تُبطِل تجاوز self-readable).
+    # الحقل مجرّد مرجع لمدير الحضور (غير حسّاس) فجعله مقروءًا للجميع آمن.
+    attendance_manager_id = fields.Many2one(
+        related='employee_id.attendance_manager_id', groups=False, readonly=True)
+
     def write(self, vals):
         res = super().write(vals)
         # تحديث «إشعاراتي» تلقائيًّا عند تغيّر مسمّيات المستخدم (بلا حاجة لزرّ)
