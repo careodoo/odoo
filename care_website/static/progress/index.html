@@ -1,0 +1,272 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<meta http-equiv="refresh" content="60"/>
+<title>لوحة متابعة التطوير — CARE</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet"/>
+<style>
+  :root{
+    --navy:#102A54; --navy2:#1e3a66; --red:#B3121F; --gold:#d9b45b;
+    --ok:#16a34a; --work:#2563eb; --wait:#9aa3b2; --block:#e11d48;
+    --bg:#eef2f8; --card:#ffffff; --ink:#1d2433; --mut:#6b7280; --line:#e4e9f2;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:'Tajawal',Arial,sans-serif;font-size:15px;line-height:1.6}
+  .wrap{max-width:1180px;margin:0 auto;padding:18px max(16px,env(safe-area-inset-right,0px)) 60px max(16px,env(safe-area-inset-left,0px))}
+  header.top{background:linear-gradient(135deg,var(--navy),var(--navy2));color:#fff;border-radius:18px;padding:22px 24px;box-shadow:0 18px 40px -22px rgba(16,42,84,.6);position:relative;overflow:hidden}
+  header.top::after{content:"";position:absolute;inset-inline-start:-40px;top:-40px;width:200px;height:200px;background:radial-gradient(circle,rgba(217,180,91,.28),transparent 70%)}
+  .brand{display:flex;align-items:center;gap:12px;font-weight:800;font-size:22px;letter-spacing:.3px}
+  .brand .dot{width:12px;height:12px;border-radius:50%;background:var(--gold);box-shadow:0 0 0 4px rgba(217,180,91,.25)}
+  header.top h1{margin:10px 0 4px;font-size:26px;font-weight:800}
+  header.top .sub{opacity:.85;font-size:14px}
+  .upd{margin-top:10px;display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,.14);padding:6px 14px;border-radius:30px;font-size:13px;font-weight:600}
+  .pulse{width:9px;height:9px;border-radius:50%;background:#38e08a;box-shadow:0 0 0 0 rgba(56,224,138,.7);animation:pl 1.8s infinite}
+  @keyframes pl{0%{box-shadow:0 0 0 0 rgba(56,224,138,.6)}70%{box-shadow:0 0 0 10px rgba(56,224,138,0)}100%{box-shadow:0 0 0 0 rgba(56,224,138,0)}}
+
+  .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:18px 0}
+  .kpi{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 16px;text-align:center;box-shadow:0 6px 18px -14px rgba(16,42,84,.4)}
+  .kpi .n{font-size:30px;font-weight:800;line-height:1}
+  .kpi .l{font-size:13px;color:var(--mut);margin-top:4px;font-weight:600}
+  .kpi.ok .n{color:var(--ok)} .kpi.work .n{color:var(--work)} .kpi.wait .n{color:var(--wait)} .kpi.all .n{color:var(--navy)}
+
+  .bar{height:16px;background:#dce3ee;border-radius:30px;overflow:hidden;margin:4px 0 22px;box-shadow:inset 0 1px 3px rgba(0,0,0,.08)}
+  .bar > i{display:block;height:100%;background:linear-gradient(90deg,var(--ok),#34d399);width:0;transition:width .6s;border-radius:30px}
+  .barlbl{display:flex;justify-content:space-between;font-size:13px;color:var(--mut);font-weight:600;margin-bottom:6px}
+
+  section.blk{background:var(--card);border:1px solid var(--line);border-radius:16px;margin:16px 0;overflow:hidden;box-shadow:0 8px 24px -20px rgba(16,42,84,.5)}
+  .blk > h2{margin:0;padding:14px 18px;font-size:17px;font-weight:800;color:#fff;display:flex;align-items:center;gap:10px}
+  .blk.A > h2{background:linear-gradient(90deg,#1f6f4f,#2b9a6e)}
+  .blk.B > h2{background:linear-gradient(90deg,#1d4ed8,#3b82f6)}
+  .blk.C > h2{background:linear-gradient(90deg,#9a5b16,#c6821f)}
+  .blk.D > h2{background:linear-gradient(90deg,#7c2d12,#b3451f)}
+  .blk.M > h2{background:linear-gradient(90deg,#4b3b8f,#6d33d6)}
+  .blk .tag{margin-inline-start:auto;font-size:12px;font-weight:700;background:rgba(255,255,255,.2);padding:3px 11px;border-radius:20px}
+  table{width:100%;border-collapse:collapse}
+  th,td{padding:11px 14px;text-align:right;border-bottom:1px solid var(--line);vertical-align:top}
+  th{background:#f6f8fc;font-size:12.5px;color:var(--mut);font-weight:700}
+  tbody tr:last-child td{border-bottom:0}
+  tbody tr:hover{background:#fafbfe}
+  td.id{font-weight:800;color:var(--navy);width:42px}
+  .st{display:inline-flex;align-items:center;gap:6px;padding:3px 11px;border-radius:30px;font-size:12.5px;font-weight:700;white-space:nowrap}
+  .st.ok{background:#dcfce7;color:#15803d} .st.work{background:#dbeafe;color:#1d4ed8}
+  .st.wait{background:#eef1f6;color:#64748b} .st.block{background:#ffe4e6;color:#be123c}
+  .st.staged{background:#fef9c3;color:#a16207}
+  .note{font-size:13px;color:var(--mut)}
+  a.lnk{color:var(--work);text-decoration:none;font-weight:600;border-bottom:1px dashed rgba(37,99,235,.4)}
+  a.lnk:hover{border-bottom-style:solid}
+
+  .log{list-style:none;margin:0;padding:4px 0}
+  .log li{display:flex;gap:12px;padding:9px 18px;border-bottom:1px solid var(--line);font-size:13.5px}
+  .log li:last-child{border-bottom:0}
+  .log .t{color:var(--mut);font-weight:700;white-space:nowrap;min-width:92px}
+  .log .b{color:#2563eb;font-weight:800;min-width:26px}
+  .legend{display:flex;flex-wrap:wrap;gap:14px;font-size:12.5px;color:var(--mut);padding:12px 18px;background:#f6f8fc;border-top:1px solid var(--line)}
+  footer{text-align:center;color:var(--mut);font-size:12.5px;margin-top:24px}
+  @media(max-width:720px){.kpis{grid-template-columns:repeat(2,1fr)} th.hcol,td.hcol{display:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <div class="brand"><span class="dot"></span> CARE · نظام الرعاية</div>
+    <h1>لوحة متابعة التطوير</h1>
+    <div class="sub">متابعة لحظية لكل الطلبات قيد التنفيذ — سجلّ تاريخي حيّ</div>
+    <div class="upd"><span class="pulse"></span> آخر تحديث: <b>2026-11-23 · 15:05</b> (توقيت الكويت) — يُحدَّث تلقائيًّا كل 60ث</div>
+  </header>
+
+  <div class="kpis">
+    <div class="kpi all"><div class="n" id="k_all">27</div><div class="l">إجمالي الطلبات</div></div>
+    <div class="kpi ok"><div class="n" id="k_ok">22</div><div class="l">مُنجَز ومنشور</div></div>
+    <div class="kpi work"><div class="n" id="k_work">3</div><div class="l">قيد العمل</div></div>
+    <div class="kpi wait"><div class="n" id="k_wait">2</div><div class="l">بالانتظار</div></div>
+  </div>
+
+  <div class="barlbl"><span>نسبة الإنجاز الكلّية (منشور ومُختبَر)</span><span id="pct">81%</span></div>
+  <div class="bar"><i id="barfill" style="width:81%"></i></div>
+
+  <p class="note" style="background:#dcfce7;border:1px solid #86efac;border-radius:12px;padding:10px 14px;">
+    ✅ <b>A·B·C·D منشورة؛ موجة E (تطوير الأسطول + تطبيق السائق) جارية:</b> E1 صفحة السيارة · E2 استلام مطوّر · E3 تطبيق السائق · E5 تأشير D8 · E6 تقرير التأمين — كلها منشورة. المتبقّي: E4 تابات الفورم · E7 صفحة /my.
+  </p>
+
+  <!-- ===== A ===== -->
+  <section class="blk A">
+    <h2>🏷️ A — طلبات المناقصات (purchase_tender) <span class="tag">✅ منشور ومُختبَر</span></h2>
+    <table>
+      <thead><tr><th>#</th><th>الطلب</th><th class="hcol">الموديول</th><th>الحالة</th><th class="hcol">ملاحظات</th></tr></thead>
+      <tbody>
+        <tr><td class="id">A1</td><td>طلب شراء كراسة مناقصة (نموذج + سلسلة اعتماد ثلاثية + تقرير معتمد)</td><td class="hcol">purchase_tender</td><td><span class="st ok">✅ منشور ومُختبَر</span></td><td class="hcol note">سير الاعتماد + الرفض + PDF ✓</td></tr>
+        <tr><td class="id">A2</td><td>طلب تجديد كفالة بنكية (يسحب تفاصيل الكفالة + يُحدّث انتهاءها على المناقصة)</td><td class="hcol">purchase_tender</td><td><span class="st ok">✅ منشور ومُختبَر</span></td><td class="hcol note">اعتماد + كتابة الانتهاء + PDF ✓</td></tr>
+        <tr><td class="id">A3</td><td>تحسين تقارير المناقصات (4 تقارير أعيد تصميمها؛ القويّان كما هما)</td><td class="hcol">purchase_tender</td><td><span class="st ok">✅ منشور ومُختبَر</span></td><td class="hcol note">رندر الستّة ✓</td></tr>
+        <tr><td class="id">A3b</td><td>إصلاح 403 (صلاحية bid.type → sudo) + باركود الرفرنس الفارغ (Code128 لا يشفّر العربية → رفرنس آمن)</td><td class="hcol">purchase_tender</td><td><span class="st ok">✅ منشور ومُختبَر</span></td><td class="hcol note">8 تقارير + تحقّق id=6 ✓</td></tr>
+        <tr><td class="id">A4</td><td>أزرار «طلب شراء الكراسة»/«تجديد الكفالة» على فورم المناقصة + الرسوم=سعر المناقصة + الموعد=قبل الإغلاق بيوم + «مصدر المناقصة»→المستفيد + التجديد لذوات الكفالات فقط</td><td class="hcol">purchase_tender</td><td><span class="st ok">✅ منشور ومُختبَر</span></td><td class="hcol note">الحقول المحسوبة ✓</td></tr>
+        <tr><td class="id">A6</td><td>أزرار ذكية منفصلة على المناقصة لكل نوع طلب (عدّاد طلبات الشراء + تجديد الكفالة، تفتح الطلبات المرتبطة)</td><td class="hcol">purchase_tender</td><td><span class="st ok">✅ منشور ومُختبَر</span></td><td class="hcol note">عدّاد 1 ✓</td></tr>
+        <tr><td class="id">A5</td><td>دعم التوقيع الإلكتروني في التقارير (التقاط توقيع عند كل مرحلة اعتماد + صناديق esign بسيريال وQR) + تقارير أكثر احترافية</td><td class="hcol">purchase_tender</td><td><span class="st ok">✅ منشور ومُتحقَّق بصريًّا</span></td><td class="hcol note">3 تواقيع + QR ✓</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- ===== B ===== -->
+  <section class="blk B">
+    <h2>🗓️ B — تبويبا التايم شيت (care_timesheet) <span class="tag">✅ منشور ومُختبَر</span></h2>
+    <table>
+      <thead><tr><th>#</th><th>الطلب</th><th class="hcol">الموديول</th><th>الحالة</th><th class="hcol">ملاحظات</th></tr></thead>
+      <tbody>
+        <tr><td class="id">B1</td><td>تبويب «🔳 الشبكة اليومية» — شبكة أصلية مطابقة للبورتال (عنوان + رقائق حالات + 31 يوم + خلايا بنفس الألوان + مفتاح)، تعمل لأي مستخدم باك-اند</td><td class="hcol">care_pms_timesheet</td><td><span class="st ok">✅ منشور ومُتحقَّق بصريًّا</span></td><td class="hcol note">iframe فشل (SPA يتطلّب PM)؛ شبكة أصلية بديلة</td></tr>
+        <tr><td class="id">B2</td><td>تبويب «الإحصائيات» — بطاقات مؤشّرات + توزيع الحالات + جدول لكل موظّف</td><td class="hcol">care_pms_timesheet</td><td><span class="st ok">✅ منشور ومُختبَر</span></td><td class="hcol note">iframe = نسخة البورتال</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- ===== C ===== -->
+  <section class="blk C">
+    <h2>🚐 C — تطوير موديول النقل (care_transport) <span class="tag">كبير — بالانتظار</span></h2>
+    <table>
+      <thead><tr><th>#</th><th>الطلب</th><th class="hcol">السطح</th><th>الحالة</th></tr></thead>
+      <tbody>
+        <tr><td class="id">C1</td><td>نموذج طلب مواصلات (طلب→إشعار مدير النقل→قائمة طلبات→موافقة+تكلفة+تحويل لرحلة) — <b>الباك-اند منشور ومُختبَر ✓</b>؛ البوابة+التطبيق لاحقًا</td><td class="hcol">باك ✓ / بوابة+تطبيق</td><td><span class="st work">🔨 باك-اند تمّ</span></td></tr>
+        <tr><td class="id">C2</td><td>قسم «المواصلات» بكل مشروع — <b>ظهر ببوابة SPA لمدراء المشاريع للقراءة ✓</b> (الطلب/الحالة/الوسيلة/المسار/التاريخ + بطاقة KPI + إحصائيات بانتظار/محوّلة)؛ تبقّى زرّ تقديم الطلب من البوابة + التطبيق</td><td class="hcol">باك ✓ / SPA ✓ / تطبيق ✓</td><td><span class="st ok">✅ باك+بوابة+تطبيق</span></td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- ===== D ===== -->
+  <section class="blk D">
+    <h2>🔧 D — دفعة الكراج/الفليت <span class="tag">7 بنود — بالانتظار</span></h2>
+    <table>
+      <thead><tr><th>#</th><th>الطلب</th><th class="hcol">الموديول</th><th>الحالة</th></tr></thead>
+      <tbody>
+        <tr><td class="id">D1</td><td>زر «🧾 إنشاء أمر شراء» على طلب الصيانة (يجمع بنود القطع→purchase.order واحد مربوط بالعهدة، <b>بعد الاعتماد فقط</b>) + إعداد «معتمِد طلبات شراء الصيانة» بالإعدادات + <b>قفل التعديل بعد الاعتماد النهائي</b> (حرّاس write + لافتة 🔒 + إعادة فتح) — <b>منشور ومُختبَر ✓</b> (P16615)</td><td class="hcol">care_garage</td><td><span class="st ok">✅ منشور ومُختبَر</span></td></tr>
+        <tr><td class="id">D2</td><td>«قيود الصيانة»: نموذج قيد (نوع خدمة + مدّة تبديل كم/أشهر) + تنبيه «صيانة مبكرة» على طلب الصيانة + قائمة إعداد</td><td class="hcol">care_garage</td><td><span class="st ok">✅ منشور ومُختبَر</span></td></tr>
+        <tr><td class="id">D3</td><td>الصيانة التاريخية لنفس النوع — زرّ ذكيّ يفتح السجلّات في ديالوج</td><td class="hcol">care_garage</td><td><span class="st ok">✅ منشور ومُختبَر</span></td></tr>
+        <tr><td class="id">D4</td><td>جعل الموديول مُسيطِرًا ومُدقِّقًا (منع الخلل/السرقات/الإهمال)</td><td class="hcol">care_garage</td><td><span class="st wait">⏳ بالانتظار</span></td></tr>
+        <tr><td class="id">D5</td><td>سبب العطل (منها «إهمال السائق») + السائق تلقائيًّا من المركبة (قابل للتغيير) + علم «بمسؤولية السائق»</td><td class="hcol">care_garage</td><td><span class="st ok">✅ منشور ومُختبَر</span></td></tr>
+        <tr><td class="id">D6</td><td>موديول «استلام السيارات»: نموذج مطابق للمرجع + صور 4 جوانب إلزامية + اعتماد مدير الفليت + توقيع إلكتروني + PDF — باك-اند ✓ · API تطبيق ✓ · <b>شاشة Flutter ✓ (إنشاء بالكاميرا + اعتماد) — بُني ودُفع .aab 3.243.0</b></td><td class="hcol">care_garage + mobile</td><td><span class="st ok">✅ باك+API+تطبيق منشور</span></td></tr>
+        <tr><td class="id">D7</td><td>طلب صرف تأمين إجباري: سطور مركبات + <b>تعرفة تلقائية حسب نوع الهيكل</b> + اعتماد + صرف → عهدة صيانة + تكلفة بكل مركبة <b>بجدول تكاليف السيارة</b> — باك ✓ (INS/2026/0001) · <b>API + شاشة Flutter عرض ✓</b></td><td class="hcol">care_garage + mobile</td><td><span class="st ok">✅ باك+API+تطبيق منشور</span></td></tr>
+        <tr><td class="id">D8</td><td>«فحص الفرق بين تسليمين»: ربط تسليمين + 8 صور قبل/بعد + <b>أداة تعليم احترافية على الصور OWL</b> + سطور أعطال تُرحَّل لملفّ السيارة + PDF بتوقيع الفاحص — باك ✓ (VINS/2026/0002) · <b>API + شاشة Flutter عرض ✓</b></td><td class="hcol">care_garage + mobile</td><td><span class="st ok">✅ باك+API+تطبيق منشور</span></td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- ===== E — تطوير الأسطول وتطبيق السائق ===== -->
+  <section class="blk D">
+    <h2>🚗 E — تطوير الأسطول + تطبيق السائق <span class="tag">موجة 2026-11-20 م</span></h2>
+    <table>
+      <thead><tr><th>#</th><th>الطلب</th><th class="hcol">الموديول</th><th>الحالة</th></tr></thead>
+      <tbody>
+        <tr><td class="id">E1</td><td>موكاب صفحة السيارة (3 شاشات: قائمة+كانبان+سجلّ بـ9 تابات كل الحقول) + <b>تنفيذ مرحلة 1</b>: حالة تشغيلية محسوبة من السجلات + قائمة/كانبان مطوّران + ترويسة-بطل بالفورم + زر الشكل القديم</td><td class="hcol">care_garage</td><td><span class="st ok">✅ موكاب + مرحلة 1 منشورة</span></td></tr>
+        <tr><td class="id">E2</td><td>D6 المطوّر: سائق خارجي (جهة اتصال) + نقل السائق عند الاعتماد + سجلّ تاريخي للسائقين + نقل المنيوهات للأسطول + تأسيس 49 سجلًّا من السائقين الحاليين</td><td class="hcol">care_garage</td><td><span class="st ok">✅ منشور ومُختبَر</span></td></tr>
+        <tr><td class="id">E3</td><td>تطبيق السائق: موكاب 7 شاشات + <b>باك-اند + API معزول صارم</b> (سيارته+مخالفاته+دفع أونلاين) + تفعيل من الأسطول + <b>شاشات Flutter (رئيسية/مخالفاتي/دفع/إشعارات/ملفّي)</b> — <b>مُختبَر ومنشور ودُفع .aab 3.244.0</b></td><td class="hcol">care_driver_app + mobile</td><td><span class="st ok">✅ باك+API+تطبيق منشور</span></td></tr>
+        <tr><td class="id">E4</td><td>فورم السيارة: <b>ترويسة-بطل بالإحصائيات</b> (صورة+لوحة+عدّاد+سائق+قيمة+مخالفات) + <b>تبويب «نظرة عامة» منظّم</b> (حالة/قيمة/سجلّات/مواصفات كراج) + أزرار KPI + زر الشكل القديم — الحقول تبقى قابلة للتعديل بالتابات الأصلية — <b>منشور ومُتحقَّق ✓</b></td><td class="hcol">care_garage</td><td><span class="st ok">✅ منشور ومُتحقَّق</span></td></tr>
+        <tr><td class="id">E5</td><td>D8 التأشير: <b>أداة OWL للنقاط</b> (ضغط الصورة→نقطة+ملاحظة+متسبّب) + نسب العطل للسائق السابق + <b>مقارنة تعرض نقاط الفحوصات السابقة (حتى 10)</b> + ربط الصيانة (عطل مُصان لا يتكرّر) + ملاحظات صغيرة تحت الصور + تبويب «أعطال السائق السابق» — <b>منشور ومُختبَر ✓</b></td><td class="hcol">care_garage</td><td><span class="st ok">✅ منشور ومُختبَر</span></td></tr>
+        <tr><td class="id">E6</td><td>تقرير طلب صرف التأمين (D7) بالتوقيع الإلكتروني + <b>سلسلة اعتماد الرئيس التنفيذي ثم الإدارة المالية</b> — PDF بترويسة CARE + جدول المركبات + 3 تواقيع (مُقدّم/CEO/مالية) — <b>منشور ومُختبَر ✓</b></td><td class="hcol">care_garage</td><td><span class="st ok">✅ منشور ومُختبَر</span></td></tr>
+        <tr><td class="id">E7</td><td>صفحة /my: <b>بطاقات لكل بورتال بأيقونة حسب الصلاحيات</b> (مشاريع/CAFM/مورّدين/أمن/ورش/سائق) ✓ · <b>مطابقة شبكة التايم شيت في التطبيق بالبورتال</b> (ألوان 9 رموز + أفاتار/باركود/وظيفة + يوم الأسبوع + X مخطّط + عمود الإضافي + مفتاح كامل) — <b>منشور ودُفع .aab 3.245.0 ✓</b></td><td class="hcol">care_portal_home + mobile</td><td><span class="st ok">✅ منشور ومُطابَق</span></td></tr>
+        <tr><td class="id">E8</td><td>حالات السيارة: <b>تلقائية من السجلات (بدون سائق↔في الخدمة عند الإسناد)</b> + <b>تجاوز يدوي</b> (مركونة/محجوزة/مسروقة/توالف — مقتبسة من الحالات القديمة) + زر العودة للتلقائي + فلاتر + شارة ✋ يدوية — <b>منشور ومُختبَر ✓</b></td><td class="hcol">care_garage</td><td><span class="st ok">✅ منشور ومُختبَر</span></td></tr>
+        <tr><td class="id">E9</td><td>🔄 <b>نظام البديل عن الغائب</b> (الموكاب مطبَّق بالكامل): نموذج + حالة «B» بالشبكة + 3 قواعد تسعير + كشف انشغال + اعتماد HR (X=غائب،Y=بديل، B لأيام الراتب) · <b>قسم «الإحلال» ببورتال PM</b> · <b>API + شاشة Flutter (إرسال+اعتماد)</b> — منشور ومُختبَر</td><td class="hcol">care_substitution + mobile</td><td><span class="st ok">✅ باك+بوابة+تطبيق</span></td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section class="blk D">
+    <h2>🐞 F — إصلاحات وبلاغات <span class="tag">فورية</span></h2>
+    <table>
+      <thead><tr><th>#</th><th>الطلب</th><th class="hcol">الموديول</th><th>الحالة</th></tr></thead>
+      <tbody>
+        <tr><td class="id">F1</td><td>🐞 إصلاح: زر «دخول» بالموقع كان يظهر دائمًا حتى للمُسجَّل دخوله → أصبح <b>«حسابي» (بوّابتي+النظام الإداري+خروج)</b> للمُسجَّل و«دخول» للزائر (مكتبي+جوّال) — <b>منشور ومُتحقَّق ✓</b></td><td class="hcol">care_website</td><td><span class="st ok">✅ منشور ومُتحقَّق</span></td></tr>
+        <tr><td class="id">F2</td><td>🔄 <b>«إعادة لمسودة» من بورتال PM</b>: زر يُظهَر لمدير المشروع ما دام الكشف غير معتمد (الحالة submit) — يفكّ أي اعتماد جزئي للأسطر (line_state→pending، تصفير أيام الراتب المعتمدة) + حذف التواقيع — <b>منشور ومُختبَر ✓</b></td><td class="hcol">care_pms_timesheet</td><td><span class="st ok">✅ منشور ومُختبَر</span></td></tr>
+        <tr><td class="id">F3</td><td>🔄 <b>زر «إرسال بديل» على خلية الغياب</b> ببورتال PM: شارة 🔄 على خلايا (A) عند المرور → نموذج إحلال معبّأ (الموظف+التاريخ) → إنشاء+تقديم — <b>منشور ✓</b></td><td class="hcol">care_substitution</td><td><span class="st ok">✅ منشور</span></td></tr>
+        <tr><td class="id">F4</td><td>🔒 <b>تدقيق أمني</b>: إصلاح 3 ثغرات نطاق في API البديل (_accessible_project/sub_list/sub_action كانت تتيح الوصول لأي مشروع) → عزل صارم بمدير المشروع — <b>مُصلَح ومنشور ✓</b></td><td class="hcol">care_substitution</td><td><span class="st ok">✅ مُصلَح</span></td></tr>
+        <tr><td class="id">F5</td><td>🔄 <b>ديالوج «إرسال بديل» على خلية الغياب</b> (بدل الانتقال لصفحة): نافذة منبثقة بالشبكة تجلب البدلاء عبر JSON وتُنشئ+تُقدّم الطلب دون مغادرة — <b>منشور ✓</b></td><td class="hcol">care_substitution + care_pms_timesheet</td><td><span class="st ok">✅ منشور</span></td></tr>
+        <tr><td class="id">F6</td><td>🐞 إصلاح 3 مشاكل تايم شيت: <b>(أ)</b> الكشف المعتمد بلا أيام شبكة كان يظهر فارغًا → يعرض جدول الأيام · <b>(ب)</b> زر «إعادة للمسوّدة» أُضيف لجدول الأيام (submit) · <b>(ج)</b> طباعة PM «ليس لديه صلاحية» → رندر superuser — <b>مُصلَح ومُختبَر ✓</b></td><td class="hcol">care_pms_timesheet</td><td><span class="st ok">✅ مُصلَح</span></td></tr>
+        <tr><td class="id">F7</td><td>🚌 <b>سدّ فجوة App↔Portal: المواصلات في التطبيق</b> (API معزول + شاشة قائمة/طلب) — دُفع .aab 3.248.0 ✓</td><td class="hcol">care_transport + mobile</td><td><span class="st ok">✅ منشور</span></td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- ===== G — جولة الصلاحيات والإصلاحات 2026-11-23 ===== -->
+  <section class="blk E">
+    <h2>🛡️ G — منظومة الصلاحيات + إصلاحات (2026-11-23) <span class="tag">منشور ومُتحقَّق</span></h2>
+    <table>
+      <thead><tr><th>#</th><th>الطلب</th><th class="hcol">الموديول</th><th>الحالة</th></tr></thead>
+      <tbody>
+        <tr><td class="id">G1</td><td>إزالة التوقيع الإلكتروني من عقد العمل الحكومي (نموذج 2) → توقيع يدوي + حذف حقول التاريخ — النماذج الحكومية لا تخضع للتوقيع الإلكتروني</td><td class="hcol">purchase_report</td><td><span class="st ok">✅ منشور ومُتحقَّق</span></td></tr>
+        <tr><td class="id">G2</td><td>🐞 إصلاح «Access Error» عند فتح البروفايل <b>لكل المستخدمين</b> (res.users.attendance_manager_id المقيّد بمجموعة → groups=False)</td><td class="hcol">care_access_hub</td><td><span class="st ok">✅ منشور ومُتحقَّق</span></td></tr>
+        <tr><td class="id">G3</td><td>دور «منسق الكراج» (مجموعات مشتريات/كراج/مركبات/أسطول + قراءة الموظفين) + إسناد علاء يوسف + إظهار البترول — يرى 6 تطبيقات فقط</td><td class="hcol">care_access_hub</td><td><span class="st ok">✅ منشور ومُتحقَّق</span></td></tr>
+        <tr><td class="id">G4</td><td>دور «مشرف مشروع» مُعاد ضبطه: مشروعه + عهدته النقدية + قائمة الموظفين فقط (حصر «own» عبر قواعد سجلّات موجودة) — 3 تطبيقات</td><td class="hcol">care_access_hub</td><td><span class="st ok">✅ مُتحقَّق</span></td></tr>
+        <tr><td class="id">G5</td><td>التحصيل: كل دفعة تُعيَّن «محصّل» مباشرة عند التسجيل + تحويل 429 دفعة قائمة «تحت التحصيل» → «محصّل»</td><td class="hcol">care_collections</td><td><span class="st ok">✅ منشور ومُتحقَّق</span></td></tr>
+        <tr><td class="id">G6</td><td>تقييد المدير المالي/المحاسب (إخفاء كل التطبيقات عدا نطاقهم) + <b>مجموعة «محاسب — قراءة مالية» (476) + 27 ACL قراءة</b> على نماذج الصرف + تحكّم دقيق بقوائم الموظفين</td><td class="hcol">care_access_hub</td><td><span class="st ok">✅ منشور ومُتحقَّق</span></td></tr>
+        <tr><td class="id">G7</td><td>🔒 تنظيف مركز الموافقات للمحاسبين: إزالة hr.group_hr_user → اختفت الجوازات/الاستقالات/الإجازات (3/4 نظيف تمامًا)</td><td class="hcol">care_access_hub</td><td><span class="st ok">✅ منشور ومُتحقَّق</span></td></tr>
+        <tr><td class="id">G8</td><td>تجريد مديري/موظفي المشتريات (لوحتي+مشتريات+مبيعات+مخازن) + مساعد مدير التطوير (9 تطبيقات) — مجموعات + إخفاء منيو + strip</td><td class="hcol">care_access_hub</td><td><span class="st ok">✅ منشور ومُتحقَّق</span></td></tr>
+        <tr><td class="id">G9</td><td>«لوحتي» متاحة لكل المستخدمين (أُزيلت من كل الإخفاءات) + أيقونة التواقيع الإلكترونية لمدير التواقيع فقط</td><td class="hcol">care_access_hub + care_esignature</td><td><span class="st ok">✅ منشور ومُتحقَّق</span></td></tr>
+        <tr><td class="id">G10</td><td>🐞 إصلاح تعارض نظامَي إخفاء القوائم: «الملف الوصولي» القديم كان يُعيد إظهار تطبيق «الموظفين» متجاوزًا إخفاء care_access_hub → صار الإخفاء الموحّد حاكمًا</td><td class="hcol">care_hr</td><td><span class="st ok">✅ منشور ومُتحقَّق</span></td></tr>
+        <tr><td class="id">G11</td><td>بحث مركز الموافقات <b>برقم بادج العامل</b> — الويب منشور ✓ · التطبيق كودُه مدفوع (ينتظر بناء .aab بعد 4 عصرًا)</td><td class="hcol">care_approval_center + mobile</td><td><span class="st ok">✅ ويب منشور</span></td></tr>
+        <tr><td class="id">G12</td><td>الشكوى التأديبية «ملغاة» (سحب مستقلّ عن «مرفوضة») بالباك-اند + البورتال + التطبيق + «إعادة لمسودة» + سحب المتقدّمة من البورتال</td><td class="hcol">care_discipline + care_pms_portal_x</td><td><span class="st ok">✅ منشور ومُتحقَّق</span></td></tr>
+        <tr><td class="id">G13</td><td>⚠️ <b>اكتشاف معماري موثَّق</b>: مصفوفة الصلاحيات تجميلية لا تفرض شيئًا؛ الفرض الحقيقي عبر مجموعات أودو + إخفاء المنيو + أقنعة الحقول + قواعد السجلّات. كاش القوائم يحتاج clear_cache بعد تغيير menu_hide</td><td class="hcol">توثيق</td><td><span class="st ok">✅ موثَّق</span></td></tr>
+        <tr><td class="id">G14</td><td>🔴 إصلاح حادثة بطء النظام الشديد: بناء Flutter محلّي كان يلتهم ذاكرة الخادم (3.8GB) → تبديل swap مكثّف → أوقفته، تحرّرت الموارد (البناء يتمّ بعد الدوام بإيقاف أودو)</td><td class="hcol">بنية تحتية</td><td><span class="st ok">✅ مُصلَح</span></td></tr>
+        <tr><td class="id">G15</td><td>⏸️ خطأا موظف HR (hr.attendance / care.transport.driver عند فتح الموظفين/الشكل القديم) — الإصلاح الشامل محجوب أمنيًّا؛ بانتظار تحديد الدور لمنحه مجموعة 411 بدقّة</td><td class="hcol">care_access_hub</td><td><span class="st wait">⏳ بانتظار قرارك</span></td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- ===== M (هذه اللوحة) ===== -->
+  <section class="blk M">
+    <h2>📊 M — لوحة المتابعة (هذه الصفحة) <span class="tag">حيّة</span></h2>
+    <table>
+      <thead><tr><th>#</th><th>الطلب</th><th>الحالة</th></tr></thead>
+      <tbody>
+        <tr><td class="id">M1</td><td>تقرير موحّد لكل الطلبات على السيرفر، يُحدَّث لحظيًّا، سجلّ تاريخي احترافي</td><td><span class="st ok">✅ مُنجَز وحيّ</span></td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- ===== السجلّ التاريخي ===== -->
+  <section class="blk M">
+    <h2>🕒 السجلّ التاريخي (الأحدث أولًا)</h2>
+    <ul class="log" id="log">
+      <li><span class="t">11-23 15:00</span><span class="b">G6·G7</span><span>✅ المحاسب: مجموعة «قراءة مالية» (476)+27 ACL على نماذج الصرف + تنظيف مركز الموافقات (إزالة hr_user → اختفت الجوازات/الاستقالات) لـ3/4 محاسبين.</span></li>
+      <li><span class="t">11-23 14:10</span><span class="b">G9·G10</span><span>✅ «لوحتي» لكل المستخدمين + أيقونة التواقيع لمديرها فقط + إصلاح تعارض نظامَي إخفاء القوائم (تسرّب تطبيق «الموظفين»).</span></li>
+      <li><span class="t">11-23 13:30</span><span class="b">G2</span><span>✅ إصلاح «Access Error» عند فتح البروفايل لكل المستخدمين (attendance_manager_id → groups=False) — منشور.</span></li>
+      <li><span class="t">11-23 12:40</span><span class="b">G3·G4·G8</span><span>✅ أدوار مقيّدة بالفرض الحقيقي: منسق الكراج (+علاء)، مشرف المشروع، مديرو/موظفو المشتريات، مساعد مدير التطوير — مجموعات+إخفاء منيو+strip.</span></li>
+      <li><span class="t">11-23 11:20</span><span class="b">G14</span><span>🔴 أُصلحت حادثة بطء النظام: بناء Flutter كان يلتهم ذاكرة الخادم → أُوقف، تحرّرت الموارد.</span></li>
+      <li><span class="t">11-23 10:30</span><span class="b">G5·G11·G12</span><span>✅ التحصيل→«محصّل» (429 دفعة) + بحث الموافقات بالبادج (ويب) + الشكوى التأديبية «ملغاة» على كل الأسطح.</span></li>
+      <li><span class="t">11-23 09:40</span><span class="b">G1·G13</span><span>✅ إزالة التوقيع الإلكتروني من عقد العمل الحكومي (توقيع يدوي+حذف التواريخ) + توثيق أن مصفوفة الصلاحيات تجميلية والفرض عبر المجموعات.</span></li>
+      <li><span class="t">11-20 18:55</span><span class="b">E5</span><span>✅ تأشير D8: أداة OWL للنقاط على الصور + نسب السائق السابق + مقارنة حتى 10 فحوصات + ربط الصيانة — منشور ومُختبَر.</span></li>
+      <li><span class="t">11-20 18:20</span><span class="b">E6</span><span>✅ تقرير صرف التأمين بالتوقيع الإلكتروني + اعتماد الرئيس التنفيذي ثم الإدارة المالية — PDF مطابق ومُختبَر.</span></li>
+      <li><span class="t">11-20 17:40</span><span class="b">E3</span><span>✅ تطبيق السائق: باك-اند + API معزول صارم + 5 شاشات Flutter + دفع أونلاين — بُني ودُفع .aab 3.244.0.</span></li>
+      <li><span class="t">11-20 15:30</span><span class="b">E1·E2</span><span>✅ صفحة السيارة: موكاب 3 شاشات + حالة محسوبة من السجلات + قائمة/كانبان/ترويسة-بطل؛ D6 مطوّر (سائق خارجي + نقل + سجل + نقل منيوهات للأسطول + 49 سجلًّا).</span></li>
+      <li><span class="t">11-20 11:50</span><span class="b">A5</span><span>✅ التوقيع الإلكتروني في تقارير المناقصات (3 تواقيع/سيريال/QR) + إصلاح 403+الباركود + أزرار المناقصة + مصدر المناقصة — كلها منشورة ومُتحقَّقة بصريًّا.</span></li>
+      <li><span class="t">11-20 10:54</span><span class="b">A·B</span><span>✅ نُشِر الثريدان A و B حيًّا واختُبرا (12/12): سير اعتماد المناقصات + 6 تقارير + تبويبا CT247. أُصلح خطأ رندر تقرير التجديد (selection مرتبط).</span></li>
+      <li><span class="t">11-20 10:50</span><span class="b">A</span><span><code>-u purchase_tender</code> نجح (42ث): 4 نماذج + جدولان + 6 تقارير + مجموعتان + تسلسلان + 3 قوائم.</span></li>
+      <li><span class="t">11-20 10:45</span><span class="b">A</span><span>أنهى 4 وكلاء تحسين تقارير المناقصات الأربعة (XML الستّة سليم).</span></li>
+      <li><span class="t">11-20 10:26</span><span class="b">B</span><span>اكتمل بناء تبويبَي التايم شيت (الشبكة الكاملة + الإحصائيات).</span></li>
+      <li><span class="t">11-20 10:20</span><span class="b">M</span><span>أُنشئت لوحة المتابعة الحيّة ونُشرت على السيرفر.</span></li>
+      <li><span class="t">11-20 10:05</span><span class="b">B</span><span>بدء الطلب B — تحليل نموذج care.timesheet وشبكة الأيام (موجودة أصلًا line→day).</span></li>
+      <li><span class="t">11-20 09:50</span><span class="b">A</span><span>اكتمل بناء نموذجَي طلبات المناقصات + التقارير + الأمان والتحقّق من البناء (مُجهَّز للنشر).</span></li>
+    </ul>
+    <div class="legend">
+      <span>✅ مُنجَز</span><span>⏳ مبنيّ — ينتظر النشر (بعد 4 عصرًا)</span><span>🔨 قيد العمل</span><span>⏳ بالانتظار</span><span>📎 ينتظر مرفقًا منك</span>
+    </div>
+  </section>
+
+  <footer>CARE Group — لوحة متابعة التطوير الداخلية · يُحدّثها المساعد لحظيًّا أثناء العمل.</footer>
+</div>
+<script>
+  // عدّاد تلقائي: يحسب المؤشّرات من صفوف الجداول مباشرةً فلا تثبت أبدًا
+  (function(){
+    var rows = document.querySelectorAll('td.id').length;
+    var ok = document.querySelectorAll('.st.ok').length;
+    var work = document.querySelectorAll('.st.work').length;
+    var wait = document.querySelectorAll('.st.wait').length;
+    function set(id,v){ var e=document.getElementById(id); if(e) e.textContent=v; }
+    set('k_all', rows); set('k_ok', ok); set('k_work', work); set('k_wait', wait);
+    var pct = rows ? Math.round(ok*100/rows) : 0;
+    set('pct', pct+'%');
+    var bf = document.getElementById('barfill'); if(bf) bf.style.width = pct+'%';
+  })();
+</script>
+</body>
+</html>
