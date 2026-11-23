@@ -4878,6 +4878,9 @@ class PmsSectionsApi(Controller):
             rec = env[model].browse(int(id))
             rec.check_access_rule('read')
             rec.read(['id'])
+            # بعد تأكيد صلاحية القراءة على السجل، نقرأ الحقول بـsudo كي لا ترفع
+            # الحقولُ المقيّدة بمجموعات (مثل attendance_manager_id على res.users) خطأ وصول
+            rec = rec.sudo()
         except Exception:
             return _err('غير موجود أو لا صلاحية', 403)
         skip = ('binary', 'image', 'one2many', 'many2many', 'html')
@@ -6062,6 +6065,25 @@ class PmsSectionsApi(Controller):
         r = env['care.complaint'].sudo().browse(int(rid)).exists()
         if not r or not self._emp_viewable(env, r.employee_id.id):
             return _err('غير موجود أو ليس ضمن مشاريعك', 404)
+        return _ok(self._complaint_json(env, r))
+
+    @route(API + '/pms/complaint/<int:rid>/cancel', type='http', auth='public', methods=['POST'], csrf=False, cors='*')
+    def pms_complaint_cancel(self, rid, **kw):
+        """إلغاء/سحب الشكوى من مُقدّمها عبر التطبيق → الحالة «ملغاة» (لا «مرفوضة»)."""
+        env = _auth()
+        if not env:
+            return _err('غير مصرّح', 401)
+        if 'care.complaint' not in env:
+            return _err('الوحدة غير مثبّتة', 404)
+        r = env['care.complaint'].sudo().browse(int(rid)).exists()
+        if not r:
+            return _err('غير موجود', 404)
+        if r.complainant_id.id != env.user.id and not self._emp_viewable(env, r.employee_id.id):
+            return _err('لا صلاحية لإلغاء هذه الشكوى', 403)
+        try:
+            r.action_cancel()   # env.user الحقيقي محفوظ مع sudo؛ الفحص بالداخل يسمح للمُقدّم
+        except Exception as e:
+            return _err(str(e) or 'تعذّر الإلغاء', 422)
         return _ok(self._complaint_json(env, r))
 
     @route(API + '/pms/employee/<int:eid>/complaint-create', type='http', auth='public', methods=['POST'], csrf=False, cors='*')
