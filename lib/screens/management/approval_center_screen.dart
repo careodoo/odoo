@@ -20,7 +20,8 @@ class _ApprovalCenterScreenState extends State<ApprovalCenterScreen> {
   Map<String, dynamic>? _data;
   bool _loading = true;
   String? _err;
-  String? _filter; // group key, null = all
+  String? _filter; // group key within the selected category, null = all
+  String? _catFilter; // category key, null = all
 
   @override
   void initState() {
@@ -40,6 +41,18 @@ class _ApprovalCenterScreenState extends State<ApprovalCenterScreen> {
 
   List<Map> get _groups => ((_data?['groups'] as List?) ?? const []).cast<Map>();
   int get _total => (_data?['count'] ?? 0) as int;
+  // الأقسام (التبويب حسب الإدارة) — يعيدها الخادم مرتّبة بعدّاداتها
+  List<Map> get _cats => ((_data?['cats'] as List?) ?? const []).cast<Map>();
+  Map? _catMeta(String key) {
+    for (final c in _cats) { if ('${c['key']}' == key) return c; }
+    return null;
+  }
+  // المجموعات الظاهرة حسب القسم المختار ثم النوع المختار داخله
+  List<Map> _visibleGroups() => _groups.where((g) {
+    if (_catFilter != null && '${g['cat']}' != _catFilter) return false;
+    if (_filter != null && '${g['key']}' != _filter) return false;
+    return true;
+  }).toList();
 
   Color _groupColor(Map g) {
     final hex = '${g['color'] ?? ''}'.replaceAll('#', '');
@@ -68,6 +81,12 @@ class _ApprovalCenterScreenState extends State<ApprovalCenterScreen> {
     }
     _data!['groups'] = _groups.where((g) => (g['count'] as int) > 0).toList();
     _data!['count'] = _groups.fold<int>(0, (a, g) => a + (g['count'] as int));
+    // أعِد احتساب عدّادات الأقسام وأسقِط الفارغ
+    final Map<String, int> cc = {};
+    for (final g in _groups) { final k = '${g['cat']}'; cc[k] = (cc[k] ?? 0) + (g['count'] as int); }
+    _data!['cats'] = _cats.map((c) => {...c, 'count': cc['${c['key']}'] ?? 0})
+        .where((c) => (c['count'] as int) > 0).toList();
+    if (_catFilter != null && !_cats.any((c) => '${c['key']}' == _catFilter)) _catFilter = null;
     if (mounted) setState(() {});
   }
 
@@ -151,7 +170,7 @@ class _ApprovalCenterScreenState extends State<ApprovalCenterScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final groups = _filter == null ? _groups : _groups.where((g) => '${g['key']}' == _filter).toList();
+    final groups = _visibleGroups();
     return Scaffold(
       backgroundColor: Mgmt.bg,
       appBar: AppBar(
@@ -176,8 +195,9 @@ class _ApprovalCenterScreenState extends State<ApprovalCenterScreen> {
         : _err != null ? _errorView()
         : _total == 0 ? _emptyView()
         : RefreshIndicator(onRefresh: _load, child: CustomScrollView(slivers: [
-            SliverToBoxAdapter(child: _chips()),
-            ...groups.map((g) => _groupSliver(g)),
+            SliverToBoxAdapter(child: _catTabs()),
+            SliverToBoxAdapter(child: _subChips()),
+            ..._buildGroupSlivers(groups),
             const SliverToBoxAdapter(child: SizedBox(height: 90)),
           ])),
     );
@@ -199,13 +219,67 @@ class _ApprovalCenterScreenState extends State<ApprovalCenterScreen> {
         style: const TextStyle(fontWeight: FontWeight.w800, color: Mgmt.ink)),
   ]));
 
-  Widget _chips() {
-    return SizedBox(height: 46, child: ListView(
-      scrollDirection: Axis.horizontal, padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
+  // المستوى الأول: تبويب الأقسام حسب الإدارة (مع عدّاداتها)
+  Widget _catTabs() {
+    return SizedBox(height: 48, child: ListView(
+      scrollDirection: Axis.horizontal, padding: const EdgeInsets.fromLTRB(12, 9, 12, 4),
       children: [
-        _chip(tr('الكل', 'All'), null, _total),
-        ..._groups.map((g) => _chip('${g['icon']} ${g['module']}', '${g['key']}', g['count'] as int)),
+        _catChip('🗳️ ${tr('الكل', 'All')}', null, _total),
+        ..._cats.map((c) => _catChip('${c['icon']} ${c['label']}', '${c['key']}', c['count'] as int)),
       ]));
+  }
+
+  Widget _catChip(String label, String? key, int count) {
+    final on = _catFilter == key;
+    return Padding(padding: const EdgeInsets.only(left: 7), child: ChoiceChip(
+      label: Text('$label ($count)', style: TextStyle(
+        fontWeight: FontWeight.w900, fontSize: 12.5, color: on ? Colors.white : Mgmt.ink)),
+      selected: on, selectedColor: Mgmt.deep, backgroundColor: Colors.white,
+      shape: StadiumBorder(side: BorderSide(color: on ? Mgmt.deep : const Color(0xFFE2E8F0))),
+      onSelected: (_) => setState(() { _catFilter = on ? null : key; _filter = null; }),
+    ));
+  }
+
+  // المستوى الثاني: شرائح الأنواع داخل القسم المختار (تظهر فقط لقسم فيه أكثر من نوع)
+  Widget _subChips() {
+    if (_catFilter == null) return const SizedBox.shrink();
+    final gs = _groups.where((g) => '${g['cat']}' == _catFilter).toList();
+    if (gs.length <= 1) return const SizedBox.shrink();
+    return SizedBox(height: 44, child: ListView(
+      scrollDirection: Axis.horizontal, padding: const EdgeInsets.fromLTRB(12, 2, 12, 4),
+      children: [
+        _chip('● ${tr('الكل', 'All')}', null, gs.fold<int>(0, (a, g) => a + (g['count'] as int))),
+        ...gs.map((g) => _chip('${g['icon']} ${g['module']}', '${g['key']}', g['count'] as int)),
+      ]));
+  }
+
+  // فواصل الأقسام في عرض «الكل» (المجموعات مُرتّبة من الخادم حسب القسم)
+  List<Widget> _buildGroupSlivers(List<Map> groups) {
+    final out = <Widget>[];
+    String? lastCat;
+    for (final g in groups) {
+      if (_catFilter == null && '${g['cat']}' != lastCat) {
+        lastCat = '${g['cat']}';
+        out.add(SliverToBoxAdapter(child: _catDivider(lastCat)));
+      }
+      out.add(_groupSliver(g));
+    }
+    return out;
+  }
+
+  Widget _catDivider(String catKey) {
+    final cm = _catMeta(catKey);
+    final icon = '${cm?['icon'] ?? '🗂️'}';
+    final label = '${cm?['label'] ?? tr('أخرى', 'Other')}';
+    return Padding(padding: const EdgeInsets.fromLTRB(14, 14, 14, 2), child: Row(children: [
+      Text(icon, style: const TextStyle(fontSize: 17)),
+      const SizedBox(width: 8),
+      Text(label, style: const TextStyle(fontWeight: FontWeight.w900, color: Mgmt.deep, fontSize: 15.5)),
+      const SizedBox(width: 10),
+      Expanded(child: Container(height: 2, decoration: BoxDecoration(
+        gradient: const LinearGradient(colors: [Color(0xFFE2E8F0), Color(0x00E2E8F0)]),
+        borderRadius: BorderRadius.circular(2)))),
+    ]));
   }
 
   Widget _chip(String label, String? key, int count) {
