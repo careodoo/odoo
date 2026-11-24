@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../core/auth.dart';
 import '../../core/i18n.dart';
 import '../pdf_report_screen.dart';
+import '../odoo_backend_screen.dart';
 import 'management_home.dart' show Mgmt;
 
 /// مركز الموافقات على التطبيق — بيانات حقيقية بالحالة من `care.approval.center`.
@@ -345,6 +346,13 @@ class _ApprovalCenterScreenState extends State<ApprovalCenterScreen> {
     }
   }
 
+  /// يفتح صفحة السجل الفعلية في أودو (WebView ملء الشاشة عبر جسر SSO بالـtoken)
+  void _openRecord(String model, int id) {
+    Navigator.push(context, MaterialPageRoute(builder: (_) => OdooBackendScreen(
+      path: '/web#id=$id&model=$model&view_type=form',
+      title: tr('صفحة السجل', 'Record page'))));
+  }
+
   Widget _recCard(Map r, Color color) {
     final fields = ((r['fields'] as List?) ?? const []).cast<List>();
     return Container(
@@ -392,9 +400,14 @@ class _ApprovalCenterScreenState extends State<ApprovalCenterScreen> {
             const SizedBox(width: 8),
             Expanded(child: _actBtn(tr('رفض', 'Reject'), Icons.close_rounded, const Color(0xFFB91C1C),
               () => _reject('${r['model']}', r['id'] as int))),
+          ]),
+          const SizedBox(height: 7),
+          Row(children: [
+            Expanded(child: _actBtn(tr('عرض', 'Open'), Icons.open_in_full_rounded, Mgmt.deep,
+              () => _openDetail(r, color), outline: true)),
             const SizedBox(width: 8),
-            _actBtn(tr('عرض', 'Open'), Icons.open_in_full_rounded, Mgmt.deep,
-              () => _openDetail(r, color), outline: true),
+            Expanded(child: _actBtn(tr('فتح السجل', 'Open record'), Icons.description_outlined, const Color(0xFF1B3A6B),
+              () => _openRecord('${r['model']}', r['id'] as int), outline: true)),
           ]),
         ])),
       )),
@@ -587,12 +600,24 @@ class _DetailSheetState extends State<_DetailSheet> {
             ? const Center(child: CircularProgressIndicator())
             : _err != null ? Center(child: Text('$_err', style: const TextStyle(color: Mgmt.slate)))
             : ListView(controller: ctrl, padding: const EdgeInsets.fromLTRB(14, 14, 14, 14), children: [
-                OutlinedButton.icon(onPressed: widget.onForm,
-                  icon: const Icon(Icons.picture_as_pdf_outlined, size: 18),
-                  style: OutlinedButton.styleFrom(foregroundColor: Mgmt.deep,
-                    minimumSize: const Size.fromHeight(44)),
-                  label: Text(tr('عرض النموذج (PDF)', 'View form (PDF)'),
-                    style: const TextStyle(fontWeight: FontWeight.w800))),
+                Row(children: [
+                  Expanded(child: OutlinedButton.icon(onPressed: widget.onForm,
+                    icon: const Icon(Icons.picture_as_pdf_outlined, size: 18),
+                    style: OutlinedButton.styleFrom(foregroundColor: Mgmt.deep,
+                      minimumSize: const Size.fromHeight(44)),
+                    label: Text(tr('النموذج (PDF)', 'Form (PDF)'),
+                      style: const TextStyle(fontWeight: FontWeight.w800)))),
+                  const SizedBox(width: 8),
+                  Expanded(child: OutlinedButton.icon(
+                    onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => OdooBackendScreen(
+                      path: '/web#id=${widget.resId}&model=${widget.model}&view_type=form',
+                      title: tr('صفحة السجل', 'Record page')))),
+                    icon: const Icon(Icons.description_outlined, size: 18),
+                    style: OutlinedButton.styleFrom(foregroundColor: const Color(0xFF1B3A6B),
+                      minimumSize: const Size.fromHeight(44)),
+                    label: Text(tr('فتح السجل', 'Open record'),
+                      style: const TextStyle(fontWeight: FontWeight.w800)))),
+                ]),
                 const SizedBox(height: 12),
                 ..._decisionWidgets(d!),
                 Container(
